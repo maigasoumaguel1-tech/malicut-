@@ -178,13 +178,16 @@ def get_free_port(preferred):
     return port
 
 def main():
-    port=get_free_port(PREFERRED_PORT)
-    server=ReusableHTTPServer(('127.0.0.1',port),Handler)
+    def main():
+    # Render fournit le port via la variable d'environnement PORT.
+    # Le serveur doit écouter sur 0.0.0.0 pour être accessible publiquement.
+    port=int(os.environ.get('PORT', PREFERRED_PORT))
+    server=ThreadingHTTPServer(('0.0.0.0', port), Handler)
     print('='*56)
     print(' MALICUT V3.1 — ÉDITEUR VIDÉO')
     print('='*56)
     print('Éditeur actif.')
-    print('Adresse : http://127.0.0.1:'+str(port))
+    print('Adresse : http://0.0.0.0:'+str(port))
     print('Laisse cette console ouverte.')
     print('Ctrl+C pour arrêter.')
     print('='*56)
