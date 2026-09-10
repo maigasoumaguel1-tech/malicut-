@@ -1,1 +1,1 @@
-# MaliCut utilise uniquement la bibliothèque standard Python.
+# MaliCut V6 utilise la bibliothèque standard Python.
