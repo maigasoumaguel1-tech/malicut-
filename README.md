@@ -1,23 +1,23 @@
-# MaliCut V8 — dépôt complet
+# MaliCut V8 — dépôt fonctionnel corrigé
 
-Tout est regroupé dans ce dépôt : authentification, profils, publication vidéo,
-miniatures, stockage Supabase, flux communauté, recherche, populaires,
-likes, commentaires, abonnements, notifications, statistiques et éditeur vidéo.
+Version reconstruite à partir du dépôt V8 travaillé dans cette conversation.
 
-## Supabase
-1. Ouvre Supabase → SQL Editor.
-2. Exécute `supabase_schema.sql` en entier.
-3. Dans Render, configure :
-   - `SUPABASE_URL` = URL du projet Supabase.
-   - `SUPABASE_PUBLISHABLE_KEY` = clé `sb_publishable_...`.
-4. Ne mets jamais une clé Secret/service_role dans le navigateur ou GitHub.
+## Correction principale
+Le JavaScript V8 contenait une erreur de syntaxe dans `renderPost()` et `toggleComments()`. Cette erreur empêchait tout le script JavaScript de s'exécuter, ce qui expliquait pourquoi les boutons et menus ne réagissaient plus.
+
+Les fonctions ont été corrigées sans supprimer les fonctionnalités V8.
+
+## Fichiers à mettre dans le dépôt GitHub
+- `app.html`
+- `malicut.py`
+- `requirements.txt`
+- `render.yaml`
+- `supabase_schema.sql`
+- `favicon.svg`
+
+Ne pas ajouter l'ancien `malicut_v8_touch_fix.js` : la panne principale était dans le JavaScript du V8.
 
 ## Render
 Start command : `python malicut.py`
-Le fichier `render.yaml` est inclus.
 
-## ZIP
-Le ZIP est uniquement un emballage pour transférer le dépôt.
-Après extraction, GitHub doit recevoir les fichiers extraits, pas le ZIP à l'intérieur.
-Tu peux supprimer le ZIP après avoir vérifié l'extraction. C'est normal et sans danger :
-le ZIP n'est pas nécessaire au fonctionnement de MaliCut une fois les fichiers extraits.
+Après l'envoi des fichiers sur la branche `principal`, utiliser `Deploy latest commit` dans Render.
