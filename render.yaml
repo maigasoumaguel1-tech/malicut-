@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: malicut-
+    runtime: python
+    plan: free
+    buildCommand: ""
+    startCommand: python malicut.py
+    autoDeploy: true
