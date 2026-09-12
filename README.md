@@ -1,39 +1,23 @@
-# MaliCut V6 — Fondation multi-utilisateurs 🇲🇱
+# MaliCut V8 — dépôt complet
 
-Cette version conserve l'éditeur MaliCut V5 et prépare le passage à une vraie plateforme multi-utilisateurs.
+Tout est regroupé dans ce dépôt : authentification, profils, publication vidéo,
+miniatures, stockage Supabase, flux communauté, recherche, populaires,
+likes, commentaires, abonnements, notifications, statistiques et éditeur vidéo.
 
-## Chapitre 1 livré
-- Connexion par email + mot de passe
-- Inscription avec nom et nom d'utilisateur
-- Session persistante via Supabase Auth
-- Déconnexion
-- Profil relié à la base PostgreSQL Supabase
-- Schéma préparé pour vidéos, miniatures, likes, commentaires, abonnements, notifications, signalements et rôles admin/modérateur
-- RLS (Row Level Security) dans `supabase_schema.sql`
+## Supabase
+1. Ouvre Supabase → SQL Editor.
+2. Exécute `supabase_schema.sql` en entier.
+3. Dans Render, configure :
+   - `SUPABASE_URL` = URL du projet Supabase.
+   - `SUPABASE_PUBLISHABLE_KEY` = clé `sb_publishable_...`.
+4. Ne mets jamais une clé Secret/service_role dans le navigateur ou GitHub.
 
-## Architecture choisie
-- Render : héberge le serveur Python et l'interface
-- Supabase Auth : comptes et sessions
-- Supabase PostgreSQL : données sociales
-- Supabase Storage : vidéos et miniatures (à brancher au chapitre Publications)
+## Render
+Start command : `python malicut.py`
+Le fichier `render.yaml` est inclus.
 
-Le serveur MaliCut ne contient **aucune clé service_role**. La clé publique/publishable Supabase peut être utilisée côté navigateur, mais les tables restent protégées par RLS.
-
-## Mise en route
-1. Créer un projet Supabase.
-2. Ouvrir **SQL Editor** et exécuter tout `supabase_schema.sql`.
-3. Dans Supabase, récupérer l'URL du projet et la clé publishable/anon.
-4. Dans Render > malicut- > Environment, ajouter :
-   - `SUPABASE_URL` = URL du projet
-   - `SUPABASE_ANON_KEY` = clé publique/publishable
-5. Redéployer.
-
-## Prochains chapitres
-- V7 : publication réelle + stockage vidéo + miniature + feed
-- V8 : likes + commentaires + abonnements réels
-- V9 : recherche + populaires + tendances
-- V10 : notifications + statistiques créateurs
-- V11 : modération + espace administrateur
-- V12 : sécurité, performances, gros fichiers et finition
-
-Pour les vidéos de plus de quelques Mo, le stockage devra utiliser l'upload adapté/resumable de Supabase Storage plutôt que de faire transiter les gros fichiers par Render.
+## ZIP
+Le ZIP est uniquement un emballage pour transférer le dépôt.
+Après extraction, GitHub doit recevoir les fichiers extraits, pas le ZIP à l'intérieur.
+Tu peux supprimer le ZIP après avoir vérifié l'extraction. C'est normal et sans danger :
+le ZIP n'est pas nécessaire au fonctionnement de MaliCut une fois les fichiers extraits.
