@@ -1,0 +1,15 @@
+{
+  "name": "malicut-android",
+  "version": "8.0.0",
+  "private": true,
+  "scripts": {
+    "sync": "npx cap sync android",
+    "open": "npx cap open android",
+    "build": "npx cap build android --androidreleasetype AAB"
+  },
+  "dependencies": {
+    "@capacitor/core": "latest",
+    "@capacitor/android": "latest",
+    "@capacitor/cli": "latest"
+  }
+}
