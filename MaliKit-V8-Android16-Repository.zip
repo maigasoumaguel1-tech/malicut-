@@ -1,0 +1,14 @@
+settings.gradle
+build.gradle
+gradle.properties
+README.md
+
+app/
+  build.gradle
+  src/main/AndroidManifest.xml
+  src/main/java/com/malikit/v8/MainActivity.java
+  src/main/res/values/styles.xml
+
+.github/
+  workflows/
+    android-release.yml
