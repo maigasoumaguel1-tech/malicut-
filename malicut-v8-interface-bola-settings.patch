@@ -1,0 +1,62 @@
+# MaliCut V8 — patch à appliquer à app.html
+# Objectif :
+# 1. Supprimer CATÉGORIQUEMENT le mot « BOLA » de l'interface visible, y compris « V8 • BOLA ».
+# 2. Conserver uniquement le concept visuel de l'interface inspiré du tissu malien BOLA dans les paramètres.
+# 3. Ajouter Centre de sécurité, confidentialité, aide, réinitialisation et performance.
+# 4. Réduire le chargement initial des vidéos communautaires.
+
+--- app.html
++++ app.html
+@@
+-<style>
++<style>
+@@
+ .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.stat{text-align:center;background:#15221a;border-radius:9px;padding:9px}.stat b{display:block;font-size:18px}@media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.editor{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:450px){.grid{grid-template-columns:1fr}.brand{font-size:18px}}
++.settings-surface{position:relative;overflow:hidden;background:#101b14;border:1px solid #31503a;border-radius:18px;padding:16px;box-shadow:0 12px 35px #0006}
++.settings-surface:before{content:"";position:absolute;inset:0;opacity:.14;pointer-events:none;background-image:repeating-linear-gradient(0deg,transparent 0 7px,#d6b35a 8px 9px,transparent 10px 16px),repeating-linear-gradient(90deg,transparent 0 9px,#4ca66b 10px 11px,transparent 12px 20px);background-size:34px 34px,42px 42px}
++.settings-content{position:relative;z-index:1}.settings-card{background:#0c1510e8;border:1px solid #31503a;border-radius:14px;padding:13px;margin:10px 0}.settings-card h3{margin:0 0 8px}.settings-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.danger{border-color:#7b3939;background:#351919}
+ </style></head><body>
+@@
+-<header><div class="head"><div><div class="brand">MaliCut 🇲🇱 <span class="badge">V8 • BOLA</span></div><small class="muted">Créer • Monter • Publier • Communauté</small></div><div><span id="userLabel">Visiteur</span> <button id="loginBtn" onclick="openAuth()">🔐</button><button id="logoutBtn" onclick="logout()" style="display:none">↪</button></div></div></header>
++<header><div class="head"><div><div class="brand">MaliCut 🇲🇱 <span class="badge">V8</span></div><small class="muted">Créer • Monter • Publier • Communauté</small></div><div><span id="userLabel">Visiteur</span> <button id="loginBtn" onclick="openAuth()">🔐</button><button id="logoutBtn" onclick="logout()" style="display:none">↪</button></div></div></header>
+@@
+-<div class="card"><h3>🇲🇱 BOLA</h3><p class="muted">Format social MaliCut vertical 720×1280.</p><button onclick="go('create');setRatio('BOLA')">Créer en BOLA</button></div>
++<div class="card"><h3>🇲🇱 Format vertical</h3><p class="muted">Format social MaliCut vertical 720×1280.</p><button onclick="go('create');setRatio('9:16')">Créer en vertical</button></div>
+@@
+-<div class="section"><h3>📐 Format & BOLA</h3><select id="ratio"><option>16:9</option><option>9:16</option><option>1:1</option><option>4:5</option><option>BOLA</option></select><div class="notice">BOLA = canevas social MaliCut 720×1280.</div></div>
++<div class="section"><h3>📐 Format</h3><select id="ratio"><option>16:9</option><option>9:16</option><option>1:1</option><option>4:5</option></select><div class="notice">Le format vertical 9:16 est optimisé pour les vidéos sociales.</div></div>
+@@
+-<section id="settings" class="page"><h1>⚙️ Paramètres</h1><div class="panel"><label>Thème</label><select id="theme"><option>Sombre</option><option>Clair</option></select><label>Lecture automatique</label><select id="autoplay"><option>Activée</option><option>Désactivée</option></select><button onclick="saveSettings()">💾 Enregistrer</button></div></section>
++<section id="settings" class="page"><h1>⚙️ Paramètres</h1><div class="settings-surface"><div class="settings-content">
++<div class="settings-card"><h3>🎨 Interface</h3><p class="muted">Habillage textile malien inspiré du tissage traditionnel, appliqué à l'espace des paramètres.</p><label>Style de l'interface</label><select id="interfaceStyle"><option value="textile">Textile malien</option><option value="classic">Classique</option></select></div>
++<div class="settings-card"><h3>🛡️ Centre de sécurité</h3><p class="muted">Contrôle de session et protections de base du compte.</p><div class="settings-actions"><button onclick="openSecurityCenter()">🔐 Ouvrir</button><button onclick="clearLocalPreferences()">🧹 Nettoyer les préférences locales</button></div><div id="securityCenter" class="notice" style="display:none;margin-top:9px">Les préférences locales peuvent être nettoyées ici. Les données du compte et les publications ne sont pas supprimées.</div></div>
++<div class="settings-card"><h3>🔐 Centre de confidentialité</h3><p class="muted">Gère les préférences locales liées à la lecture et à la personnalisation.</p><label>Lecture automatique</label><select id="autoplay"><option>Activée</option><option>Désactivée</option></select></div>
++<div class="settings-card"><h3>❓ Centre d'aide</h3><p class="muted">Accès rapide aux informations essentielles.</p><div class="settings-actions"><button onclick="showHelp('performance')">⚡ Performance</button><button onclick="showHelp('account')">👤 Compte</button></div><div id="helpCenter" class="notice" style="display:none;margin-top:9px"></div></div>
++<div class="settings-card"><h3>⚡ Performance</h3><p class="muted">Les vidéos de la communauté utilisent un chargement initial réduit.</p><label>Chargement initial des vidéos</label><select id="communityLoading"><option value="metadata">Réduit — recommandé</option><option value="auto">Standard</option></select></div>
++<div class="settings-card"><h3>🧹 Réinitialisation des préférences</h3><p class="muted">Restaure les préférences locales sans supprimer le compte ni les publications.</p><button class="danger" onclick="resetPreferences()">Réinitialiser les préférences</button></div>
++<div class="settings-card"><label>Thème</label><select id="theme"><option>Sombre</option><option>Clair</option></select><button class="primary" onclick="saveSettings()">💾 Enregistrer les paramètres</button><p id="settingsMsg" class="muted"></p></div>
++</div></div></section>
+@@
+-const models=['🇲🇱 BOLA Mali','🟢 BOLA Culture','🟡 BOLA Business','🎵 Music Clip','📱 Vidéo 9:16','🏫 Éducation','💼 Business','🎉 Événement','✨ Mali Vibes'];
++const models=['🇲🇱 Culture Mali','🟢 Culture','🟡 Business Mali','🎵 Music Clip','📱 Vidéo 9:16','🏫 Éducation','💼 Business','🎉 Événement','✨ Mali Vibes'];
+@@
+-function setRatio(x){$('ratio').value=x;ratioChange()}function ratioChange(){let x=$('ratio').value,r=(x==='BOLA'?'9:16':x).split(':');$('video').style.aspectRatio=r[0]+'/'+r[1]}$('ratio').onchange=ratioChange;
++function setRatio(x){$('ratio').value=x;ratioChange()}function ratioChange(){let r=$('ratio').value.split(':');$('video').style.aspectRatio=r[0]+'/'+r[1]}$('ratio').onchange=ratioChange;
+@@
+-async function loadFeed(mode='latest'){let b=$('feed');b.innerHTML='<div class="notice">Chargement…</div>';if(!sb){b.innerHTML='<div class="notice">Supabase non configuré.</div>';return}let q=sb.from('videos').select('id,user_id,title,description,video_url,thumbnail_url,views,created_at,profile:profiles!videos_user_id_fkey(username,display_name)');q=mode==='popular'?q.order('views',{ascending:false}):q.order('created_at',{ascending:false});let r=await q.limit(30);if(r.error){b.innerHTML='<div class="notice">'+esc(r.error.message)+'</div>';return}b.innerHTML=(r.data||[]).map(renderPost).join('')||'<div class="notice">Aucune vidéo.</div>'}
++async function loadFeed(mode='latest'){let b=$('feed');b.innerHTML='<div class="notice">Chargement…</div>';if(!sb){b.innerHTML='<div class="notice">Supabase non configuré.</div>';return}let q=sb.from('videos').select('id,user_id,title,description,video_url,thumbnail_url,views,created_at,profile:profiles!videos_user_id_fkey(username,display_name)');q=mode==='popular'?q.order('views',{ascending:false}):q.order('created_at',{ascending:false});let r=await q.limit(30);if(r.error){b.innerHTML='<div class="notice">'+esc(r.error.message)+'</div>';return}b.innerHTML=(r.data||[]).map(renderPost).join('')||'<div class="notice">Aucune vidéo.</div>'}
+@@
+-function renderPost(v){let p=v.profile||{};return`<article class="post"><div class="posthead"><div><b>${esc(p.display_name||p.username||'Créateur MaliCut')}</b><div class="muted">@${esc(p.username||'createur_malicut')}</div></div><button onclick="follow('${v.user_id}')">👤 Suivre</button></div><video src="${esc(v.video_url)}" controls playsinline preload="metadata"${v.thumbnail_url?` poster="${esc(v.thumbnail_url)}"`:''}></video><h3>${esc(v.title)}</h3><p class="muted">${esc(v.description)}</p><div class="controls"><button onclick="like('${v.id}',this)">❤️ <span>0</span></button><button onclick="comments('${v.id}')">💬 Commenter</button><button onclick="share('${esc(v.video_url)}')">↗️ Partager</button></div><div id="c-${v.id}" class="comments" style="display:none"></div></article>`}
++function renderPost(v){let p=v.profile||{};return`<article class="post"><div class="posthead"><div><b>${esc(p.display_name||p.username||'Créateur MaliCut')}</b><div class="muted">@${esc(p.username||'createur_malicut')}</div></div><button onclick="follow('${v.user_id}')">👤 Suivre</button></div><video src="${esc(v.video_url)}" controls playsinline preload="metadata" loading="lazy"${v.thumbnail_url?` poster="${esc(v.thumbnail_url)}"`:''}></video><h3>${esc(v.title)}</h3><p class="muted">${esc(v.description)}</p><div class="controls"><button onclick="like('${v.id}',this)">❤️ <span>0</span></button><button onclick="comments('${v.id}')">💬 Commenter</button><button onclick="share('${esc(v.video_url)}')">↗️ Partager</button></div><div id="c-${v.id}" class="comments" style="display:none"></div></article>`}
+@@
+-function saveSettings(){localStorage.setItem('malicut_theme',$('theme').value);localStorage.setItem('malicut_autoplay',$('autoplay').value)}
++function saveSettings(){localStorage.setItem('malicut_theme',$('theme').value);localStorage.setItem('malicut_autoplay',$('autoplay').value);localStorage.setItem('malicut_interface_style',$('interfaceStyle').value);localStorage.setItem('malicut_community_loading',$('communityLoading').value);$('settingsMsg').textContent='Paramètres enregistrés.'}
++function loadSettings(){const t=localStorage.getItem('malicut_theme'),a=localStorage.getItem('malicut_autoplay'),i=localStorage.getItem('malicut_interface_style'),c=localStorage.getItem('malicut_community_loading');if(t)$('theme').value=t;if(a)$('autoplay').value=a;if(i)$('interfaceStyle').value=i;if(c)$('communityLoading').value=c}
++function resetPreferences(){['malicut_theme','malicut_autoplay','malicut_interface_style','malicut_community_loading'].forEach(k=>localStorage.removeItem(k));loadSettings();$('settingsMsg').textContent='Préférences réinitialisées. Le compte et les publications sont conservés.'}
++function clearLocalPreferences(){['malicut_theme','malicut_autoplay','malicut_interface_style','malicut_community_loading'].forEach(k=>localStorage.removeItem(k));loadSettings();$('settingsMsg').textContent='Préférences locales nettoyées.'}
++function openSecurityCenter(){$('securityCenter').style.display=$('securityCenter').style.display==='none'?'block':'none'}
++function showHelp(topic){const b=$('helpCenter');b.style.display='block';b.textContent=topic==='performance'?'Les vidéos de la communauté utilisent preload="metadata" afin de réduire le chargement initial.':'Pour gérer ton compte, connecte-toi puis utilise Profil et les fonctions d’authentification disponibles.'}
+@@
+-init();ratioChange();
++loadSettings();init();ratioChange();
+*** End of patch
