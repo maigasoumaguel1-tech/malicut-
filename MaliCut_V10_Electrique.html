@@ -1,0 +1,54 @@
+<!doctype html><html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07130e"><title>MaliCut V10 Électrique</title>
+<style>
+:root{--bg:#07130e;--p:#0d1d16;--p2:#123524;--t:#f4f7f4;--m:#9eafa5;--g:#18c77a;--y:#f0c75e;--r:#d94b4b;--l:#20392c}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#123524,#07130e 48%,#040a07);color:var(--t);font:15px system-ui,sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}.app{max-width:1180px;margin:auto;min-height:100vh;padding-bottom:80px}
+.top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:15px 18px;background:#07130ee8;backdrop-filter:blur(18px);border-bottom:1px solid var(--l)}
+.logo{font-weight:900;font-size:21px}.logo span{color:var(--g)}.badge{font-size:11px;border:1px solid #2e6049;padding:5px 9px;border-radius:99px;color:var(--y);margin-left:8px}
+main{padding:22px 16px}.hero{padding:28px;border:1px solid var(--l);border-radius:26px;background:linear-gradient(135deg,#123b28,#0a1912);box-shadow:0 20px 70px #0005}
+.hero h1{font-size:clamp(30px,6vw,58px);margin:8px 0}.hero p,.muted{color:var(--m)}.hero p{max-width:700px;line-height:1.6}
+.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:13px;padding:12px 16px;background:var(--g);color:#04140c;font-weight:800}.alt{background:#183426;color:var(--t);border:1px solid var(--l)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.card,.tool{background:#0b1a13;border:1px solid var(--l);border-radius:18px;padding:16px}.card strong{font-size:25px}
+.section{margin-top:26px}.templates{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.tpl{min-height:135px;border-radius:20px;padding:17px;background:linear-gradient(145deg,#173d2b,#0b1711);border:1px solid var(--l);display:flex;flex-direction:column;justify-content:space-between}
+.editor{display:grid;grid-template-columns:1.3fr .7fr;gap:14px}.preview{background:#020503;border:1px solid var(--l);border-radius:22px;min-height:480px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.preview video{max-width:100%;max-height:70vh}.tools{display:grid;gap:10px}label{display:block;color:var(--m);margin-bottom:7px}input[type=range]{width:100%}
+.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(1180px,100%);display:flex;justify-content:space-around;padding:9px;background:#07130ef2;border-top:1px solid var(--l);z-index:10}
+.bottom button{background:none;border:0;color:var(--m);padding:8px}.bottom button.active{color:var(--g);font-weight:800}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.templates{grid-template-columns:1fr 1fr}.editor{grid-template-columns:1fr}.preview{min-height:360px}}
+@media(max-width:500px){main{padding:16px 12px}.templates{grid-template-columns:1fr}.hero{padding:22px}}
+</style></head><body><div class="app">
+<header class="top"><div class="logo">Mali<span>Cut</span><span class="badge">V10 • ÉLECTRIQUE</span></div>
+<button class="btn alt" onclick="file.click()">＋ Importer</button></header>
+<main>
+<section class="hero"><div class="muted">CRÉATION • MONTAGE • COMMUNAUTÉ</div><h1>Ton studio créatif malien.</h1>
+<p>MaliCut V10 Électrique réunit montage vidéo, modèles créatifs, réglages avancés, sauvegarde locale et export dans une interface premium pensée pour mobile.</p><div class="actions"><button class="btn" onclick="file.click()">Créer une vidéo</button><button class="btn alt" onclick="templates.scrollIntoView({behavior:'smooth'})">Explorer les modèles</button></div></section>
+<section class="grid"><div class="card"><div class="muted">Créateur</div><strong>Leader</strong></div><div class="card"><div class="muted">Modèles</div><strong>06</strong></div><div class="card"><div class="muted">Studio</div><strong>V10</strong></div><div class="card"><div class="muted">Export</div><strong>WebM</strong></div></section>
+<section id="templates" class="section"><h2>Modèles populaires</h2><div class="templates">
+<div class="tpl"><b>🇲🇱 Mali Story</b><span class="muted">Story verticale premium</span><button class="btn" onclick="selectTemplate('Mali Story')">Utiliser</button></div><div class="tpl"><b>⚡ Électrique</b><span class="muted">Énergie & impact</span><button class="btn" onclick="selectTemplate('Électrique')">Utiliser</button></div><div class="tpl"><b>🎬 Ciné Creator</b><span class="muted">Look cinématique</span><button class="btn" onclick="selectTemplate('Ciné Creator')">Utiliser</button></div><div class="tpl"><b>🎵 Beat Sync</b><span class="muted">Montage musical</span><button class="btn" onclick="selectTemplate('Beat Sync')">Utiliser</button></div><div class="tpl"><b>👑 Leader</b><span class="muted">Personal branding</span><button class="btn" onclick="selectTemplate('Leader')">Utiliser</button></div><div class="tpl"><b>🔥 Impact</b><span class="muted">Shorts & réseaux</span><button class="btn" onclick="selectTemplate('Impact')">Utiliser</button></div>
+</div></section>
+<section class="section"><h2>Studio V10</h2><div class="editor"><div class="preview" id="preview"><span class="muted">Importe une vidéo pour commencer</span></div>
+<div class="tools">
+<div class="tool"><label>Vitesse <span id="speedVal">1×</span></label><input id="speed" type="range" min=".25" max="2" step=".25" value="1" oninput="speedVal.textContent=this.value+'×';if(video)video.playbackRate=+this.value"></div>
+<div class="tool"><label>Volume</label><input type="range" min="0" max="1" step=".05" value="1" oninput="if(video)video.volume=+this.value"></div>
+<div class="tool"><label>Luminosité</label><input id="bright" type="range" min=".5" max="1.5" step=".05" value="1" oninput="filter()"></div>
+<div class="tool"><label>Contraste</label><input id="contrast" type="range" min=".5" max="1.5" step=".05" value="1" oninput="filter()"></div>
+<div class="tool"><label>Texte</label><input id="caption" placeholder="Ton texte..." oninput="overlay.textContent=this.value"></div>
+<div class="tool"><label>Début / fin</label><div style="display:flex;gap:8px"><input type="number" min="0" step=".1" value="0" style="width:50%"><input type="number" min="0" step=".1" placeholder="fin" style="width:50%"></div></div>
+<div class="tool"><label>Rotation</label><select onchange="if(video)video.style.transform='rotate('+this.value+'deg)'"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>
+<div class="tool"><label>Format</label><select onchange="setFormat(this.value)"><option value="9/16">9:16 — Vertical</option><option value="16/9">16:9 — Paysage</option><option value="1/1">1:1 — Carré</option></select></div>
+<button class="btn" onclick="downloadProject()">Exporter le projet</button>
+</div></div></section>
+</main>
+<nav class="bottom"><button class="active" onclick="scrollTo({top:0,behavior:'smooth'})">⌂ Accueil</button><button onclick="templates.scrollIntoView({behavior:'smooth'})">▦ Modèles</button><button onclick="file.click()">＋ Créer</button><button onclick="alert('Communauté MaliCut')">◉ Communauté</button><button onclick="alert('Profil : Leader Maiga Mindset')">◉ Profil</button></nav>
+<input id="file" type="file" accept="video/*" hidden></div>
+<script>
+let video=null,overlay=document.createElement('div');
+overlay.style.cssText='position:absolute;z-index:2;top:12%;left:50%;transform:translateX(-50%);font-size:26px;font-weight:900;text-align:center;text-shadow:0 2px 8px #000;pointer-events:none;color:white';
+file.onchange=e=>{let f=e.target.files[0];if(!f)return;let u=URL.createObjectURL(f);video=document.createElement('video');video.src=u;video.controls=true;video.playsInline=true;preview.innerHTML='';preview.append(video,overlay)};
+function filter(){if(video)video.style.filter=`brightness(${bright.value}) contrast(${contrast.value})`}
+function setFormat(v){let p=v.split('/');preview.style.aspectRatio=p[0]+'/'+p[1]}
+function downloadProject(){if(!video){alert('Importe d’abord une vidéo.');return}let a=document.createElement('a');a.href=video.src;a.download='malicut-v10-source.webm';a.click()}
+function selectTemplate(n){alert('Modèle sélectionné : '+n)}
+</script></div></body></html>
