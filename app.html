@@ -27,6 +27,15 @@
 
 <section id="calls" class="page">
 <div class="head"><div><h2>Appels MaliCut</h2><span class="muted">Audio · Vidéo · Groupe</span></div><span class="muted">📞</span></div>
+<div id="callAuthPanel" class="panel hidden">
+<b>Connexion à MaliCut</b>
+<p class="muted">Connecte-toi ou crée un compte pour appeler les autres membres.</p>
+<input id="callEmail" type="email" autocomplete="email" placeholder="Adresse e-mail" style="margin-top:8px">
+<input id="callPassword" type="password" autocomplete="current-password" placeholder="Mot de passe" style="margin-top:8px">
+<input id="callDisplayName" type="text" autocomplete="name" placeholder="Nom affiché (pour inscription)" style="margin-top:8px">
+<div class="call-actions" style="margin-top:10px"><button class="btn green" onclick="signInMaliCut()">Se connecter</button><button class="btn gold" onclick="signUpMaliCut()">Créer un compte</button></div>
+<div id="callAuthMsg" class="muted" style="margin-top:8px"></div>
+</div>
 <div id="callSetup">
 <div class="panel"><b>Appels entrants</b><div id="incomingCalls"><div class="notice">Chargement des invitations…</div></div></div>
 <div class="panel"><b>Rechercher des membres</b><div style="display:flex;gap:7px;margin-top:8px"><input id="callSearch" placeholder="Nom ou identifiant…" onkeydown="if(event.key==='Enter')searchCallMembers()"><button class="btn gold" onclick="searchCallMembers()">Chercher</button></div><div id="callResults" style="margin-top:8px"><div class="notice">Recherche un membre pour l’appeler.</div></div><div id="selectedCallCount" class="muted" style="margin-top:10px">0 membre sélectionné</div><div class="call-actions" style="margin-top:10px"><button class="btn green" onclick="startMaliCutCall('audio')">📞 Appel audio</button><button class="btn gold" onclick="startMaliCutCall('video')">🎥 Appel vidéo</button></div></div>
