@@ -78,7 +78,7 @@
   async function media(type){
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) throw new Error('Micro/caméra indisponible. Vérifie HTTPS et les autorisations du navigateur.');
     state.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:type==='video'?{facingMode:'user',width:{ideal:640},height:{ideal:480}}:false});
-    if($('localCallVideo')){$('localCallVideo').srcObject=state.stream;$('localCallVideo').classList.toggle('hidden',type!=='video');}
+    if($('localCallVideo')){$('localCallVideo').srcObject=state.stream;$('localCallVideo').muted=true;$('localCallVideo').classList.toggle('hidden',type!=='video');if(type==='video'){const preview=$('localCallVideo').play();if(preview&&preview.catch)preview.catch(()=>{});}}
   }
 
   async function roomChannel(id){
@@ -120,18 +120,24 @@
     let tile=document.querySelector('[data-peer="'+id+'"]');
     if(!tile){tile=document.createElement('div');tile.className='remote-call-tile';tile.dataset.peer=id;tile.innerHTML='<video autoplay playsinline></video><audio autoplay></audio><span class="remote-name">Membre MaliCut</span>';$('remoteCallTiles').appendChild(tile);}
     const v=tile.querySelector('video'),a=tile.querySelector('audio');
+    // Le flux vidéo distant doit toujours être lisible sans dépendre de l'autoplay audio.
+    // La vidéo distante reste muette; le son passe par l'élément audio séparé.
+    v.srcObject=stream;v.muted=true;v.volume=state.remoteVolume;
+    a.srcObject=stream;a.muted=!state.remoteAudioEnabled;a.volume=state.remoteVolume;
     if(state.type==='video'){
-      v.srcObject=stream;v.muted=false;v.volume=state.remoteVolume;v.classList.remove('hidden');a.classList.add('hidden');
-      const p=v.play();if(p&&p.catch)p.catch(()=>showAudioEnable());
+      v.classList.remove('hidden');a.classList.remove('hidden');
+      tile.classList.remove('audio-only-tile');
+      const vp=v.play();if(vp&&vp.catch)vp.catch(()=>notice('Lecture vidéo distante bloquée par le navigateur.',true));
     }else{
-      a.srcObject=stream;a.muted=!state.remoteAudioEnabled;a.volume=state.remoteVolume;v.classList.add('hidden');a.classList.remove('hidden');tile.classList.add('audio-only-tile');
-      const p=a.play();if(p&&p.catch)p.catch(()=>showAudioEnable());
+      v.classList.add('hidden');a.classList.remove('hidden');tile.classList.add('audio-only-tile');
     }
+    const ap=a.play();if(ap&&ap.catch)ap.catch(()=>showAudioEnable());
   }
   function showAudioEnable(){const b=$('speakerCallBtn');if(b){b.textContent='Activer le son';b.classList.add('gold');}}
   window.enableRemoteAudio=async()=>{
     state.remoteAudioEnabled=true;
-    document.querySelectorAll('#remoteCallTiles video,#remoteCallTiles audio').forEach(el=>{el.muted=false;el.volume=state.remoteVolume;const p=el.play();if(p&&p.catch)p.catch(()=>notice('Le navigateur bloque encore le son. Vérifie le volume du téléphone.',true));});
+    document.querySelectorAll('#remoteCallTiles video').forEach(el=>{el.muted=true;el.volume=state.remoteVolume;const p=el.play();if(p&&p.catch)p.catch(()=>{});});
+    document.querySelectorAll('#remoteCallTiles audio').forEach(el=>{el.muted=false;el.volume=state.remoteVolume;const p=el.play();if(p&&p.catch)p.catch(()=>notice('Le navigateur bloque encore le son. Vérifie le volume du téléphone.',true));});
     const b=$('speakerCallBtn');if(b){b.textContent='Son activé';b.classList.remove('gold');}
   };
   window.setRemoteVolume=value=>{state.remoteVolume=Math.max(0,Math.min(1,Number(value)));document.querySelectorAll('#remoteCallTiles video,#remoteCallTiles audio').forEach(el=>{el.volume=state.remoteVolume;});};
@@ -172,7 +178,7 @@
     }catch(e){notice('Connexion avec un participant interrompue : '+e.message,true);}
   }
   async function activate(id,pid,host,type){
-    state.roomId=id;state.participantId=pid;state.hostId=host;state.type=type;state.muted=false;state.cameraOff=false;state.remoteAudioEnabled=true;state.remoteVolume=1;
+    state.roomId=id;state.participantId=pid;state.hostId=host;state.type=type;state.muted=false;state.cameraOff=false;state.remoteAudioEnabled=false;state.remoteVolume=1;
     $('callTypeLabel').textContent=type==='video'?'Appel vidéo':'Appel audio';
     $('callRoomLabel').textContent='Connexion sécurisée MaliCut';$('cameraCallBtn').classList.toggle('hidden',type!=='video');
     $('remoteCallTiles').innerHTML='';panels(true);
