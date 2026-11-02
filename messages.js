@@ -91,7 +91,7 @@ async function uploadVoice(blob,mime){
  const ext=mime.includes('mp4')?'m4a':mime.includes('ogg')?'ogg':mime.includes('mpeg')?'mp3':'webm';
  const path=window.user.id+'/'+crypto.randomUUID()+'.'+ext;
  $m('recordingStatus').textContent='Envoi du message vocal…';
- const upload=await window.sb.storage.from('message-audio').upload(path,blob,{contentType:mime,upsert:false});
+ const upload=await window.sb.storage.from('message-audio').upload(path,blob,{contentType:(mime||'audio/webm').split(';')[0],upsert:false});
  if(upload.error){$m('recordingStatus').textContent='Échec du téléversement audio : '+upload.error.message;return;}
  const row=await window.sb.from('direct_messages').insert({sender_id:window.user.id,recipient_id:selectedUser.id,message_type:'audio',audio_path:path});
  if(row.error){await window.sb.storage.from('message-audio').remove([path]);$m('recordingStatus').textContent='Le vocal a été téléversé, mais son envoi a échoué : '+row.error.message;return;}
