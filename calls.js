@@ -168,10 +168,12 @@
       if(r.error)throw r.error;
       const rows=[{room_id:r.data.id,user_id:window.user.id,invited_by:window.user.id,status:'joined',joined_at:new Date().toISOString()}];
       [...state.selected].forEach(id=>rows.push({room_id:r.data.id,user_id:id,invited_by:window.user.id,status:'invited'}));
-      const p=await window.sb.from('call_participants').insert(rows).select('id,user_id').eq('user_id',window.user.id).single();
+      const p=await window.sb.from('call_participants').insert(rows).select('id,user_id');
       if(p.error){await window.sb.from('call_rooms').update({status:'ended',ended_at:new Date().toISOString()}).eq('id',r.data.id);throw p.error;}
+      const ownParticipant=(p.data||[]).find(row=>row.user_id===window.user.id);
+      if(!ownParticipant){await window.sb.from('call_rooms').update({status:'ended',ended_at:new Date().toISOString()}).eq('id',r.data.id);throw new Error('La salle a été créée, mais ton inscription comme participant n’a pas été confirmée.');}
       state.selected.clear();updateCount();
-      await activate(r.data.id,p.data.id,window.user.id,type);
+      await activate(r.data.id,ownParticipant.id,window.user.id,type);
       await window.sb.from('call_rooms').update({status:'active',started_at:new Date().toISOString()}).eq('id',r.data.id);
       await sendRoster();notice('Appel lancé. En attente des autres membres…');
     }catch(e){await cleanup('Appel non démarré.');notice(e.message||'Impossible de lancer cet appel.',true);}
