@@ -45,6 +45,74 @@ input,textarea{background:#fff;color:#171713;border-color:var(--line)}
 #welcomeCard h2{font-size:23px;margin:0 0 14px}
 #welcomeCard .welcome-phrase{font-size:18px;line-height:1.55;font-weight:750;margin:0 0 20px}
 #welcomeCard .welcome-signature{font-weight:850;color:#426b4d;margin:0 0 20px}
+
+/* MaliKit Studio — thème Bogolan sombre, doré et motifs pointillés */
+:root{
+ --bg:#171713;--p:#211f1a;--p2:#2b2821;--line:#a98543;
+ --txt:#f2eee4;--mut:#c0b7a4;--gold:#d0aa61;--green:#477a58;
+}
+html,body{background:#11110f;color:var(--txt)}
+.app{
+ background-color:#191814;
+ background-image:
+  radial-gradient(circle,rgba(239,232,214,.19) .8px,transparent 1px),
+  radial-gradient(circle,rgba(191,151,79,.13) .8px,transparent 1px),
+  linear-gradient(135deg,#1b1a16,#141410);
+ background-size:13px 13px,19px 19px,auto;
+ background-position:0 0,6px 7px,0 0;
+}
+.top,.bottom{
+ background:rgba(20,19,16,.97);border-color:#9b793e;color:#f2eee4;
+}
+.hero,.panel,.card,.post,.quick button,.stat,.format,.chip,.tool,.search,.track,
+.call-person,.call-invite,.call-volume{
+ background-color:#211f1a;color:#f2eee4;border-color:#a98543;
+}
+.hero{
+ background-image:
+  radial-gradient(circle,rgba(244,238,223,.23) .8px,transparent 1px),
+  linear-gradient(145deg,#29251d,#171612);
+ background-size:12px 12px,auto;
+ border:1px solid #c29b56;
+ box-shadow:inset 0 0 0 3px rgba(208,170,97,.08);
+}
+.panel,.card,.post,.stat,.quick button,.format,.tool{
+ background-image:radial-gradient(circle,rgba(240,233,216,.13) .65px,transparent .9px);
+ background-size:11px 11px;
+ border:1px solid #92713d;
+}
+input,textarea{
+ background:#151410;color:#f2eee4;border:1px solid #a98543;
+}
+input::placeholder,textarea::placeholder{color:#aaa18f}
+.btn{background:#302b22;color:#f4eddd;border:1px solid #b18c4c}
+.btn.gold,.gold{background:#b68a43;color:#17140e;border-color:#d4b16d}
+.btn.green,.green{background:#416b4a;color:#fff;border-color:#8da77b}
+.chip,.tool{color:#eee5d2}
+.format.active{color:#f0c979;border-color:#e1bd76;background:#302719}
+.thumb{
+ background:
+  radial-gradient(circle,rgba(255,255,255,.2) .8px,transparent 1px),
+  repeating-linear-gradient(45deg,#29261f 0 8px,#201e19 8px 16px);
+ background-size:12px 12px,auto;color:#eee5d2;
+}
+.nav{color:#b5aa95}.nav.active{color:#f0ca79}
+.plus{background:#b68a43;color:#17140e}
+.sheet{background:#1e1c17;color:#f2eee4;border:1px solid #b08b4a}
+.notice{color:#d0c5ae;border-color:#9c7b43;background:rgba(25,23,18,.8)}
+.remote-call-tile,.local-call-tile{background:#151410;border-color:#c09a55}
+.call-stage{background:#0c0c0a}
+.track{background:repeating-linear-gradient(90deg,#3b3325 0 12px,#28241d 12px 24px);border-color:#a98543}
+.text-position-tools button{background:#242119;color:#f2eee4;border-color:#a98543}
+#communityViewer{background:#080807;color:#f4eee1}
+#welcomeCard{background:#211f1a;color:#f2eee4;border-color:#b68a43}
+#welcomeCard .welcome-phrase{color:#f2eee4}
+#welcomeCard .welcome-signature{color:#c9a45e}
+.modal{background:#000c}
+::selection{background:#b68a43;color:#17140e}
+@media(prefers-reduced-motion:no-preference){
+ .btn,.nav,.top-action,.chip{transition:background .18s ease,border-color .18s ease,color .18s ease}
+}
 </style></head><body><div class="app"><header class="top"><div style="display:flex;justify-content:space-between;align-items:center"><div class="brand"><span class="brand-flag"><span>Mali</span><b>K</b><i>it</i></span><div class="sub">STUDIO CRÉATIF · <span style="border:1px solid #b9a985;padding:2px 5px;background:#eee8da">BOGOLAN</span></div></div><div class="top-actions"><button class="top-action" onclick="openPage('calls')" aria-label="Appels" title="Appels">📞</button><button class="top-action message-action" id="messagesTopButton" onclick="openPage('messages')" aria-label="Messagerie" title="Messagerie">💬<span id="messageUnreadDot" class="message-dot hidden"></span></button><button class="top-action" onclick="openPage('profile')" aria-label="Profil" title="Profil">👤</button></div></div><div class="search">⌕<input id="search" placeholder="Rechercher modèles, vidéos…" oninput="searchAll(this.value)"></div></header>
 <main>
 <section id="home" class="page active"><div class="hero"><h1>Crée. Monte.<br>Publie.</h1><p class="muted">Un studio vidéo mobile-first pour créer, monter et partager tes contenus.</p><button class="btn gold" onclick="openPage('create')">＋ Nouveau projet</button></div><div class="quick"><button onclick="openPage('create')"><b>🎬</b>Nouveau</button><button onclick="openPage('models')"><b>✦</b>Modèles</button><button onclick="openPage('community')"><b>🔥</b>Tendances</button><button onclick="openPage('profile')"><b>👤</b>Profil</button><button onclick="openPage('calls')"><b>📞</b>Appels</button></div><div class="section"><div class="head"><h3>Ton espace</h3></div><div class="stats"><div class="stat"><strong id="projects">0</strong><span class="muted">Projets</span></div><div class="stat"><strong id="exports">0</strong><span class="muted">Exports</span></div><div class="stat"><strong>—</strong><span class="muted">Stockage</span></div></div></div><div class="section"><div class="head"><h3>Modèles populaires</h3><button class="muted" onclick="openPage('models')">Tout voir</button></div><div id="homeModels" class="grid"></div></div></section>
