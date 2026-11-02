@@ -5,7 +5,8 @@ import os, json, time, urllib.request, urllib.error
 BASE = os.path.dirname(__file__)
 HTML = open(os.path.join(BASE, "app.html"), "r", encoding="utf-8").read()
 CALLS_JS = open(os.path.join(BASE, "calls.js"), "r", encoding="utf-8").read()
-AI_REQUESTS = {}\nSTATIC_JS = {name: open(os.path.join(BASE, name), "r", encoding="utf-8").read() for name in ("messages.js", "studio-enhancements.js", "settings-center.js", "ai-assistant.js")}
+AI_REQUESTS = {}
+STATIC_JS = {name: open(os.path.join(BASE, name), "r", encoding="utf-8").read() for name in ("messages.js", "studio-enhancements.js", "settings-center.js", "ai-assistant.js")}
 
 class Handler(BaseHTTPRequestHandler):
     def send_text(self, body, content_type="text/html; charset=utf-8", status=200):
