@@ -1,5 +1,5 @@
 (() => {
-  const state = { channel:null, roomId:null, participantId:null, hostId:null, type:'audio', stream:null, peers:new Map(), candidates:new Map(), selected:new Set(), inviteSub:null, muted:false, cameraOff:false };
+  const state = { channel:null, roomId:null, participantId:null, hostId:null, type:'audio', stream:null, peers:new Map(), candidates:new Map(), selected:new Set(), inviteSub:null, muted:false, cameraOff:false, remoteAudioEnabled:true, remoteVolume:1 };
   const $ = id => document.getElementById(id);
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const iceConfig = () => ({ iceServers: window.MALICUT_CONFIG && Array.isArray(window.MALICUT_CONFIG.iceServers) && window.MALICUT_CONFIG.iceServers.length ? window.MALICUT_CONFIG.iceServers : [{urls:'stun:stun.l.google.com:19302'}] });
@@ -105,7 +105,11 @@
     const pc=new RTCPeerConnection(iceConfig());
     if(state.stream)state.stream.getTracks().forEach(track=>pc.addTrack(track,state.stream));
     pc.onicecandidate=e=>{if(e.candidate)send('signal',{from:window.user.id,to:id,kind:'candidate',candidate:e.candidate});};
-    pc.ontrack=e=>attachRemote(id,e.streams[0]);
+    pc.ontrack=e=>{
+      let remoteStream=e.streams&&e.streams[0];
+      if(!remoteStream){const tile=document.querySelector('[data-peer="'+id+'"]');const existing=tile&&(tile.querySelector('video').srcObject||tile.querySelector('audio').srcObject);remoteStream=existing||new MediaStream();if(!remoteStream.getTracks().includes(e.track))remoteStream.addTrack(e.track);}
+      attachRemote(id,remoteStream);
+    };
     pc.onconnectionstatechange=()=>{const tile=document.querySelector('[data-peer="'+id+'"]');if(tile)tile.classList.toggle('call-disconnected',['failed','disconnected'].includes(pc.connectionState));};
     state.peers.set(id,pc);return pc;
   }
@@ -113,9 +117,22 @@
     let tile=document.querySelector('[data-peer="'+id+'"]');
     if(!tile){tile=document.createElement('div');tile.className='remote-call-tile';tile.dataset.peer=id;tile.innerHTML='<video autoplay playsinline></video><audio autoplay></audio><span class="remote-name">Membre MaliCut</span>';$('remoteCallTiles').appendChild(tile);}
     const v=tile.querySelector('video'),a=tile.querySelector('audio');
-    if(state.type==='video'){v.srcObject=stream;v.classList.remove('hidden');a.classList.add('hidden');}
-    else{a.srcObject=stream;v.classList.add('hidden');a.classList.remove('hidden');tile.classList.add('audio-only-tile');}
+    if(state.type==='video'){
+      v.srcObject=stream;v.muted=false;v.volume=state.remoteVolume;v.classList.remove('hidden');a.classList.add('hidden');
+      const p=v.play();if(p&&p.catch)p.catch(()=>showAudioEnable());
+    }else{
+      a.srcObject=stream;a.muted=!state.remoteAudioEnabled;a.volume=state.remoteVolume;v.classList.add('hidden');a.classList.remove('hidden');tile.classList.add('audio-only-tile');
+      const p=a.play();if(p&&p.catch)p.catch(()=>showAudioEnable());
+    }
   }
+  function showAudioEnable(){const b=$('speakerCallBtn');if(b){b.textContent='Activer le son';b.classList.add('gold');}}
+  window.enableRemoteAudio=async()=>{
+    state.remoteAudioEnabled=true;
+    document.querySelectorAll('#remoteCallTiles video,#remoteCallTiles audio').forEach(el=>{el.muted=false;el.volume=state.remoteVolume;const p=el.play();if(p&&p.catch)p.catch(()=>notice('Le navigateur bloque encore le son. Vérifie le volume du téléphone.',true));});
+    const b=$('speakerCallBtn');if(b){b.textContent='Son activé';b.classList.remove('gold');}
+  };
+  window.setRemoteVolume=value=>{state.remoteVolume=Math.max(0,Math.min(1,Number(value)));document.querySelectorAll('#remoteCallTiles video,#remoteCallTiles audio').forEach(el=>{el.volume=state.remoteVolume;});};
+
   async function roster(payload){
     const members=payload&&payload.members||[];
     const others=members.filter(m=>m.id!==window.user.id);
@@ -151,7 +168,7 @@
     }catch(e){notice('Connexion avec un participant interrompue : '+e.message,true);}
   }
   async function activate(id,pid,host,type){
-    state.roomId=id;state.participantId=pid;state.hostId=host;state.type=type;state.muted=false;state.cameraOff=false;
+    state.roomId=id;state.participantId=pid;state.hostId=host;state.type=type;state.muted=false;state.cameraOff=false;state.remoteAudioEnabled=true;state.remoteVolume=1;
     $('callTypeLabel').textContent=type==='video'?'Appel vidéo':'Appel audio';
     $('callRoomLabel').textContent='Connexion sécurisée MaliCut';$('cameraCallBtn').classList.toggle('hidden',type!=='video');
     $('remoteCallTiles').innerHTML='';panels(true);
@@ -202,6 +219,8 @@
     state.roomId=null;state.participantId=null;state.hostId=null;
     if($('localCallVideo'))$('localCallVideo').srcObject=null;
     if($('remoteCallTiles'))$('remoteCallTiles').innerHTML='';
+    if($('speakerCallBtn')){$('speakerCallBtn').textContent='Activer le son';$('speakerCallBtn').classList.add('gold');}
+    if($('remoteVolume'))$('remoteVolume').value='1';
     panels(false);if(message)notice(message);
   }
   window.endMaliCutCall=async()=>{
