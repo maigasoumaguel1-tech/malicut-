@@ -188,13 +188,13 @@
     const s=await window.sb.auth.getSession();window.user=s.data.session?s.data.session.user:(window.user||null);
     if(window.user){
       await loadInvites();
-      state.inviteSub=window.sb.channel('malicut-invites:'+window.user.id)
+      state.inviteSub=window.sb.channel('malicut-invites:'+window.user.id,{config:{private:true}})
         .on('postgres_changes',{event:'*',schema:'public',table:'call_participants',filter:'user_id=eq.'+window.user.id},()=>loadInvites()).subscribe();
       notice('Recherche un membre pour démarrer un appel audio ou vidéo.');
     }else notice('Connecte-toi à MaliCut pour lancer ou recevoir des appels.');
     window.sb.auth.onAuthStateChange(async(_event,session)=>{
       window.user=session?session.user:null;
-      if(window.user){await loadInvites();if(!state.inviteSub)state.inviteSub=window.sb.channel('malicut-invites:'+window.user.id).on('postgres_changes',{event:'*',schema:'public',table:'call_participants',filter:'user_id=eq.'+window.user.id},()=>loadInvites()).subscribe();}
+      if(window.user){await loadInvites();if(!state.inviteSub)state.inviteSub=window.sb.channel('malicut-invites:'+window.user.id,{config:{private:true}}).on('postgres_changes',{event:'*',schema:'public',table:'call_participants',filter:'user_id=eq.'+window.user.id},()=>loadInvites()).subscribe();}
       else{if(state.inviteSub)await window.sb.removeChannel(state.inviteSub);state.inviteSub=null;await cleanup('Session fermée.');}
     });
   });
