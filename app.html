@@ -149,9 +149,10 @@ html,body{background:#f3ecdc!important;color:#302719!important}
  background:rgba(255,252,244,.97)!important;color:#302719!important;
  border-color:#bd9140!important;backdrop-filter:blur(12px);
 }
-.brand-flag.malicut-brand{display:inline-flex;align-items:baseline;gap:6px;font-size:23px;letter-spacing:-.8px}
-.brand-flag.malicut-brand strong{color:#c52d32;font-weight:950}
-.brand-flag.malicut-brand i{color:#bd9140;font-style:normal;font-weight:900}
+.brand-flag.malicut-brand{display:inline-flex;align-items:baseline;gap:0;font-size:23px;letter-spacing:-.8px}
+.brand-flag.malicut-brand .brand-mali{color:#168447;font-weight:950}
+.brand-flag.malicut-brand .brand-cut{color:#d6a900;font-weight:950}
+.brand-flag.malicut-brand .brand-studio{color:#d12d35;font-style:normal;font-weight:900}
 .hero,.panel,.card,.post,.quick button,.stat,.format,.chip,.tool,.search,.track,
 .message-thread,.message-user,.message-thread-head,.message-compose{
  background-color:#fffdf7!important;color:#302719!important;border-color:#c49b52!important;
@@ -253,7 +254,7 @@ body{background:#fffefa!important}
 .model-legend{margin:7px 0!important}
 #modelsGrid{margin-top:7px!important}
 ::selection{background:#e8d29e!important;color:#302719!important}
-</style></head><body><div class="app"><header class="top"><div style="display:flex;justify-content:space-between;align-items:center"><div class="brand"><span class="brand-flag malicut-brand"><strong>MaliCut</strong> <i>Studio</i></span><div class="sub">STUDIO CRÉATIF · <span style="border:1px solid #b9a985;padding:2px 5px;background:#eee8da">BOGOLAN</span></div></div><div class="top-actions"><button class="top-action" onclick="openPage('calls')" aria-label="Appels" title="Appels">📞</button><button class="top-action message-action" id="messagesTopButton" onclick="openPage('messages')" aria-label="Messagerie" title="Messagerie">💬<span id="messageUnreadDot" class="message-dot hidden"></span></button><button class="top-action" onclick="openPage('profile')" aria-label="Profil" title="Profil">👤</button></div></div><div class="search">⌕<input id="search" placeholder="Rechercher modèles, vidéos…" oninput="searchAll(this.value)"></div></header>
+</style></head><body><div class="app"><header class="top"><div style="display:flex;justify-content:space-between;align-items:center"><div class="brand"><span class="brand-flag malicut-brand"><span class="brand-mali">Mali</span><b class="brand-cut">Cut</b> <i class="brand-studio">Studio</i></span><div class="sub">STUDIO CRÉATIF · <span style="border:1px solid #b9a985;padding:2px 5px;background:#eee8da">BOGOLAN</span></div></div><div class="top-actions"><button class="top-action" onclick="openPage('calls')" aria-label="Appels" title="Appels">📞</button><button class="top-action message-action" id="messagesTopButton" onclick="openPage('messages')" aria-label="Messagerie" title="Messagerie">💬<span id="messageUnreadDot" class="message-dot hidden"></span></button><button class="top-action" onclick="openPage('profile')" aria-label="Profil" title="Profil">👤</button></div></div><div class="search">⌕<input id="search" placeholder="Rechercher modèles, vidéos…" oninput="searchAll(this.value)"></div></header>
 <main>
 <section id="home" class="page active"><div class="hero"><h1>Crée. Monte.<br>Publie.</h1><p class="muted">Un studio vidéo mobile-first pour créer, monter et partager tes contenus.</p><button class="btn gold" onclick="openPage('create')">＋ Nouveau projet</button></div><div class="quick"><button onclick="openPage('create')"><b>🎬</b>Nouveau</button><button onclick="openPage('models')"><b>✦</b>Modèles</button><button onclick="openPage('community')"><b>🔥</b>Tendances</button><button onclick="openPage('profile')"><b>👤</b>Profil</button><button onclick="openPage('calls')"><b>📞</b>Appels</button></div><div class="section"><div class="head"><h3>Ton espace</h3></div><div class="stats"><div class="stat"><strong id="projects">0</strong><span class="muted">Projets</span></div><div class="stat"><strong id="exports">0</strong><span class="muted">Exports</span></div><div class="stat"><strong>—</strong><span class="muted">Stockage</span></div></div></div><div class="section"><div class="head"><h3>Modèles populaires</h3><button class="muted" onclick="openPage('models')">Tout voir</button></div><div id="homeModels" class="grid"></div></div></section>
 <section id="models" class="page"><div class="head"><h2>Modèles</h2><span class="muted">Prêts à personnaliser</span></div><div class="model-legend"><span class="tier-free">Gratuit</span><span class="tier-standard">Standard</span><span class="tier-pro">PRO · Premium</span><span class="tier-ai">IA · Bientôt</span></div><div class="chips"><button class="chip" onclick="renderModels('all')">Tous</button><button class="chip" onclick="renderModels('social')">Social</button><button class="chip" onclick="renderModels('business')">Business</button><button class="chip" onclick="renderModels('culture')">Culture</button></div><div id="modelsGrid" class="grid" style="margin-top:12px"></div></section>
@@ -430,25 +431,30 @@ async function signInProvider(provider){if(!sb){alert("La connexion à MaliCut n
 setAppLanguage(localStorage.getItem("malicut_language")||"fr");</script>
 <script>
 (function(){
- const welcomeKey="malikut_welcome_seen_v1";
- let alreadySeen=false;
- try{alreadySeen=localStorage.getItem(welcomeKey)==="1";}catch(_){}
- if(alreadySeen)return;
- const overlay=document.createElement("div");
- overlay.id="welcomeOverlay";
- overlay.setAttribute("role","dialog");
- overlay.setAttribute("aria-modal","true");
- overlay.setAttribute("aria-labelledby","welcomeTitle");
- overlay.innerHTML='<div id="welcomeCard"><div class="welcome-flag"><span>Mali</span><b>Kit</b><i> Studio</i> 🇲🇱</div><h2 id="welcomeTitle">Bienvenue !</h2><p class="welcome-phrase">Aw Bismillah malien denw ka vidéo glan application sanfé.</p><p class="welcome-signature">🇲🇱 Leader Maiga Mindset</p><button type="button" class="btn gold full" id="welcomeEnter">Entrer dans l’application</button></div>';
- document.body.appendChild(overlay);
- requestAnimationFrame(()=>overlay.classList.add("open"));
- function closeWelcome(){
-  try{localStorage.setItem(welcomeKey,"1");}catch(_){}
-  overlay.classList.remove("open");
-  setTimeout(()=>overlay.remove(),180);
+ function showWelcome(){
+  if(document.getElementById("welcomeOverlay"))return;
+  const overlay=document.createElement("div");
+  overlay.id="welcomeOverlay";
+  overlay.setAttribute("role","dialog");
+  overlay.setAttribute("aria-modal","true");
+  overlay.setAttribute("aria-labelledby","welcomeTitle");
+  overlay.innerHTML='<div id="welcomeCard"><div class="welcome-flag"><span>Mali</span><b>Cut</b><i> Studio</i> 🇲🇱</div><h2 id="welcomeTitle">Bienvenue !</h2><p class="welcome-phrase">Aw Bismillah malien denw ka vidéo glan application sanfé.</p><p class="welcome-signature">🇲🇱 Leader Maiga Mindset</p><button type="button" class="btn gold full" id="welcomeEnter">Entrer dans l’application</button></div>';
+  document.body.appendChild(overlay);
+  requestAnimationFrame(()=>overlay.classList.add("open"));
+  function closeWelcome(){
+   overlay.classList.remove("open");
+   setTimeout(()=>overlay.remove(),180);
+  }
+  overlay.querySelector("#welcomeEnter").addEventListener("click",closeWelcome);
+  overlay.addEventListener("click",e=>{if(e.target===overlay)closeWelcome();});
  }
- overlay.querySelector("#welcomeEnter").addEventListener("click",closeWelcome);
- overlay.addEventListener("click",e=>{if(e.target===overlay)closeWelcome();});
+ showWelcome();
+ let wasHidden=false;
+ document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){wasHidden=true;return;}
+  if(wasHidden){wasHidden=false;showWelcome();}
+ });
+ window.addEventListener("pageshow",event=>{if(event.persisted)showWelcome();});
 })();
 </script>
 <script src="/calls.js"></script><script src="/messages.js"></script><script src="/studio-enhancements.js"></script></body></html>
