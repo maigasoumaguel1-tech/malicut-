@@ -44,6 +44,12 @@
   }
   function updateCount(){const n=state.selected.size;if($('selectedCallCount'))$('selectedCallCount').textContent=n+' membre'+(n>1?'s':'')+' sélectionné'+(n>1?'s':'');}
 
+  window.signOutMaliCut=async()=>{
+    if(!window.sb)return;
+    const r=await window.sb.auth.signOut();
+    if(r.error){notice(r.error.message,true);return;}
+    window.user=null;panels(false);notice('Tu es déconnecté.');
+  };
   window.signInMaliCut=async()=>{
     if(!window.sb){$('callAuthMsg').textContent='Supabase n’est pas configuré.';return;}
     const email=($('callEmail').value||'').trim(),password=$('callPassword').value||'';
