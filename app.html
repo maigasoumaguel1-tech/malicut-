@@ -138,13 +138,14 @@ async function feed(){
  const profileResult=ids.length?await sb.from('profiles').select('id,display_name,username,avatar_url').in('id',ids):{data:[]};
  const people=new Map((profileResult.data||[]).map(p=>[p.id,p]));
  const esc=value=>String(value==null?'':value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- feedEl.innerHTML=videos.map(v=>{
+ window.MALICUT_COMMUNITY_VIDEOS=videos.map(v=>({url:v.video_url,title:v.title||'Vidéo MaliCut',description:v.description||''}));
+ feedEl.innerHTML=videos.map((v,index)=>{
   const profile=people.get(v.user_id)||{};
   const author=profile.display_name||profile.username||'Créateur MaliCut';
   const videoUrl=/^https:\/\//i.test(v.video_url||'')?esc(v.video_url):'';
   const poster=/^https:\/\//i.test(v.thumbnail_url||'')?esc(v.thumbnail_url):'';
   const date=v.created_at?new Date(v.created_at).toLocaleDateString('fr-FR'):'';
-  return '<article class="post"><div class="posthead"><div><b>'+esc(v.title||'Vidéo MaliCut')+'</b><div class="muted">Par '+esc(author)+(date?' · '+esc(date):'')+'</div></div><span class="muted">'+esc(v.views||0)+' vues</span></div><div class="postmedia">'+(videoUrl?'<video controls playsinline preload="metadata" src="'+videoUrl+'"'+(poster?' poster="'+poster+'"':'')+'></video>':'<div class="notice">Vidéo indisponible</div>')+'</div><div class="postbody muted">'+esc(v.description||'')+'</div></article>';
+  return '<article class="post"><div class="posthead"><div><b>'+esc(v.title||'Vidéo MaliCut')+'</b><div class="muted">Par '+esc(author)+(date?' · '+esc(date):'')+'</div></div><span class="muted">'+esc(v.views||0)+' vues</span></div><div class="postmedia">'+(videoUrl?'<video controls playsinline preload="metadata" src="'+videoUrl+'"'+(poster?' poster="'+poster+'"':'')+'></video><button class="community-open-viewer" onclick="openCommunityViewer('+index+')">⛶ Plein écran</button>':'<div class="notice">Vidéo indisponible</div>')+'</div><div class="postbody muted">'+esc(v.description||'')+'</div></article>';
  }).join('');
 }
 async function publish(){
