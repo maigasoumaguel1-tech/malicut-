@@ -5,6 +5,7 @@ import os, json
 BASE = os.path.dirname(__file__)
 HTML = open(os.path.join(BASE, "app.html"), "r", encoding="utf-8").read()
 CALLS_JS = open(os.path.join(BASE, "calls.js"), "r", encoding="utf-8").read()
+STATIC_JS = {name: open(os.path.join(BASE, name), "r", encoding="utf-8").read() for name in ("messages.js", "studio-enhancements.js", "settings-center.js")}
 
 class Handler(BaseHTTPRequestHandler):
     def send_text(self, body, content_type="text/html; charset=utf-8", status=200):
@@ -22,6 +23,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_text(HTML)
         elif path == "/calls.js":
             self.send_text(CALLS_JS, "application/javascript; charset=utf-8")
+        elif path in ("/messages.js", "/studio-enhancements.js", "/settings-center.js"):
+            self.send_text(STATIC_JS[path[1:]], "application/javascript; charset=utf-8")
         elif path == "/config.js":
             url = os.environ.get("SUPABASE_URL", "").strip()
             key = (os.environ.get("SUPABASE_PUBLISHABLE_KEY") or
