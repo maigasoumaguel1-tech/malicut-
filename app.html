@@ -33,7 +33,9 @@ input,textarea{background:#fff;color:#171713;border-color:var(--line)}
 .thumb{background:repeating-linear-gradient(45deg,#e9e1d0 0 8px,#f7f3e9 8px 16px);color:#29251d}
 .nav.active{color:#8a6424}.plus{background:#b68a35;color:white}
 .sheet{background:#fff;color:#171713;border-color:var(--line)}.notice{border-color:#c8bea9}
-.remote-call-tile,.local-call-tile{background:#eee9dc;border-color:var(--line)}\n/* Appels : le correspondant est prioritaire, l’aperçu local reste miniature */\n.call-stage{position:relative;display:block;min-height:280px;background:#080d09;border-radius:16px;padding:8px;overflow:hidden}\n.remote-call-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;min-height:260px}\n.remote-call-tile{min-height:260px;width:100%;position:relative}\n.remote-call-tile video{display:block;width:100%;height:100%;min-height:260px;object-fit:cover}\n.remote-call-tile audio{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}\n.local-call-tile{position:absolute;right:14px;bottom:14px;width:96px;height:132px;min-height:0;z-index:4;border:2px solid #fff;box-shadow:0 2px 12px #0008}\n.local-call-tile video{width:100%;height:100%;min-height:0;object-fit:cover}\n.call-volume{display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--line);border-radius:12px;background:var(--p);font-size:12px}\n.call-volume input{width:90px;padding:0}\n@media(max-width:420px){.call-volume{width:100%;justify-content:space-between}.call-volume input{width:65%}}\n</style></head><body><div class="app"><header class="top"><div style="display:flex;justify-content:space-between;align-items:center"><div class="brand">Mali<b>Cut</b><div class="sub">STUDIO CRÉATIF · <span style="border:1px solid #b9a985;padding:2px 5px;background:#eee8da">BOGOLAN</span></div></div><button onclick="openPage('calls')" aria-label="Appels">📞</button><button onclick="openPage('profile')">👤</button></div><div class="search">⌕<input id="search" placeholder="Rechercher modèles, vidéos…" oninput="searchAll(this.value)"></div></header>
+.remote-call-tile,.local-call-tile{background:#eee9dc;border-color:var(--line)}\n/* Appels : le correspondant est prioritaire, l’aperçu local reste miniature */\n.call-stage{position:relative;display:block;min-height:280px;background:#080d09;border-radius:16px;padding:8px;overflow:hidden}\n.remote-call-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;min-height:260px}\n.remote-call-tile{min-height:260px;width:100%;position:relative}\n.remote-call-tile video{display:block;width:100%;height:100%;min-height:260px;object-fit:cover}\n.remote-call-tile audio{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}\n.local-call-tile{position:absolute;right:14px;bottom:14px;width:96px;height:132px;min-height:0;z-index:4;border:2px solid #fff;box-shadow:0 2px 12px #0008}\n.local-call-tile video{width:100%;height:100%;min-height:0;object-fit:cover}\n.call-volume{display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--line);border-radius:12px;background:var(--p);font-size:12px}\n.call-volume input{width:90px;padding:0}\n@media(max-width:420px){.call-volume{width:100%;justify-content:space-between}.call-volume input{width:65%}}\n
+#communityViewer{position:fixed;inset:0;z-index:99999;background:#050505;color:white;display:none;flex-direction:column;touch-action:pan-y}#communityViewer.open{display:flex}#communityViewer .cv-head{display:flex;justify-content:space-between;align-items:center;padding:12px}#communityViewer .cv-stage{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center}#communityViewer video{width:100%;height:100%;object-fit:contain;background:#000}#communityViewer .cv-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;border:0;border-radius:50%;width:44px;height:44px;background:#333b;color:#fff;font-size:26px}#communityViewer .cv-prev{left:10px}#communityViewer .cv-next{right:10px}#communityViewer .cv-foot{padding:12px 16px calc(16px + env(safe-area-inset-bottom));max-height:22%;overflow:auto}#communityViewer .cv-close{background:#292929;color:#fff;border:1px solid #777;border-radius:20px;padding:8px 13px}.community-open-viewer{position:absolute;right:9px;bottom:9px;z-index:3;border:1px solid #ffffff77;border-radius:20px;padding:8px 12px;background:#111d;color:#fff;font-weight:700}.postmedia{position:relative}.postmedia video{max-height:520px;object-fit:contain;background:#000}
+</style></head><body><div class="app"><header class="top"><div style="display:flex;justify-content:space-between;align-items:center"><div class="brand">Mali<b>Cut</b><div class="sub">STUDIO CRÉATIF · <span style="border:1px solid #b9a985;padding:2px 5px;background:#eee8da">BOGOLAN</span></div></div><button onclick="openPage('calls')" aria-label="Appels">📞</button><button onclick="openPage('profile')">👤</button></div><div class="search">⌕<input id="search" placeholder="Rechercher modèles, vidéos…" oninput="searchAll(this.value)"></div></header>
 <main>
 <section id="home" class="page active"><div class="hero"><h1>Crée. Monte.<br>Publie.</h1><p class="muted">Un studio vidéo mobile-first pour créer, monter et partager tes contenus.</p><button class="btn gold" onclick="openPage('create')">＋ Nouveau projet</button></div><div class="quick"><button onclick="openPage('create')"><b>🎬</b>Nouveau</button><button onclick="openPage('models')"><b>✦</b>Modèles</button><button onclick="openPage('community')"><b>🔥</b>Tendances</button><button onclick="openPage('profile')"><b>👤</b>Profil</button><button onclick="openPage('calls')"><b>📞</b>Appels</button></div><div class="section"><div class="head"><h3>Ton espace</h3></div><div class="stats"><div class="stat"><strong id="projects">0</strong><span class="muted">Projets</span></div><div class="stat"><strong id="exports">0</strong><span class="muted">Exports</span></div><div class="stat"><strong>—</strong><span class="muted">Stockage</span></div></div></div><div class="section"><div class="head"><h3>Modèles populaires</h3><button class="muted" onclick="openPage('models')">Tout voir</button></div><div id="homeModels" class="grid"></div></div></section>
 <section id="models" class="page"><div class="head"><h2>Modèles</h2><span class="muted">Prêts à personnaliser</span></div><div class="chips"><button class="chip" onclick="renderModels('all')">Tous</button><button class="chip" onclick="renderModels('social')">Social</button><button class="chip" onclick="renderModels('business')">Business</button><button class="chip" onclick="renderModels('culture')">Culture</button></div><div id="modelsGrid" class="grid" style="margin-top:12px"></div></section>
@@ -91,6 +93,39 @@ async function init(){
  }
 }
 init();projects.textContent=localStorage.getItem('malicut_projects')||0;exports.textContent=localStorage.getItem('malicut_exports')||0;
+let communityVideoIndex=0;
+function communityViewerData(){return window.MALICUT_COMMUNITY_VIDEOS||[];}
+function ensureCommunityViewer(){
+ let el=$('communityViewer');if(el)return el;
+ el=document.createElement('div');el.id='communityViewer';
+ el.innerHTML='<div class="cv-head"><span id="cvCount">Vidéo</span><button class="cv-close" onclick="closeCommunityViewer()">✕ Fermer</button></div><div class="cv-stage"><button class="cv-nav cv-prev" onclick="stepCommunityVideo(-1)">‹</button><video id="cvVideo" controls playsinline></video><button class="cv-nav cv-next" onclick="stepCommunityVideo(1)">›</button></div><div class="cv-foot"><b id="cvTitle"></b><div id="cvDescription"></div><small>Glisse vers le haut/bas ou la gauche/droite pour changer de vidéo.</small></div>';
+ document.body.appendChild(el);
+ let sx=0,sy=0;const stage=el.querySelector('.cv-stage');
+ stage.addEventListener('touchstart',e=>{sx=e.changedTouches[0].clientX;sy=e.changedTouches[0].clientY},{passive:true});
+ stage.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))>55)stepCommunityVideo((Math.abs(dx)>Math.abs(dy)?dx<0:dy<0)?1:-1)},{passive:true});
+ stage.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>25)stepCommunityVideo(e.deltaY>0?1:-1)},{passive:true});
+ return el;
+}
+function showCommunityVideo(){
+ const list=communityViewerData();if(!list.length)return;
+ communityVideoIndex=Math.max(0,Math.min(communityVideoIndex,list.length-1));
+ const item=list[communityVideoIndex],video=$('cvVideo');video.pause();video.src=item.url;video.load();video.play().catch(()=>{});
+ $('cvCount').textContent=(communityVideoIndex+1)+' / '+list.length;$('cvTitle').textContent=item.title;$('cvDescription').textContent=item.description;
+}
+function openCommunityViewer(index){
+ if(!communityViewerData().length)return;communityVideoIndex=index;
+ const el=ensureCommunityViewer();el.classList.add('open');document.body.style.overflow='hidden';showCommunityVideo();
+ if(el.requestFullscreen)el.requestFullscreen().catch(()=>{});
+}
+function stepCommunityVideo(delta){
+ const next=communityVideoIndex+delta;if(next<0||next>=communityViewerData().length)return;
+ communityVideoIndex=next;showCommunityVideo();
+}
+function closeCommunityViewer(){
+ const el=$('communityViewer');if(!el)return;const v=$('cvVideo');v.pause();v.removeAttribute('src');v.load();el.classList.remove('open');document.body.style.overflow='';
+ if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
+}
+document.addEventListener('keydown',e=>{if(!$('communityViewer')?.classList.contains('open'))return;if(e.key==='Escape')closeCommunityViewer();if(e.key==='ArrowDown'||e.key==='ArrowRight')stepCommunityVideo(1);if(e.key==='ArrowUp'||e.key==='ArrowLeft')stepCommunityVideo(-1);});
 async function feed(){
  const feedEl=$('feed');
  if(!sb){feedEl.innerHTML='<div class="notice">Connexion à Supabase en cours. Réessaie dans un instant.</div>';return;}
