@@ -4,7 +4,7 @@
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const iceConfig = () => ({ iceServers: window.MALICUT_CONFIG && Array.isArray(window.MALICUT_CONFIG.iceServers) && window.MALICUT_CONFIG.iceServers.length ? window.MALICUT_CONFIG.iceServers : [{urls:'stun:stun.l.google.com:19302'}] });
   function notice(msg, error) { const n=$('callNotice'); if(n){n.textContent=msg;n.style.color=error?'#ff9b91':'';} }
-  function panels(active) { if($('callActive')) $('callActive').classList.toggle('hidden',!active); if($('callSetup')) $('callSetup').classList.toggle('hidden',active); }
+  function panels(active) { if($('callActive')) $('callActive').classList.toggle('hidden',!active); if($('callSetup')) $('callSetup').classList.toggle('hidden',active||!window.user); if($('callAuthPanel')) $('callAuthPanel').classList.toggle('hidden',!!window.user); }
   function signedIn(){if(!window.sb||!window.user){notice('Connecte-toi à ton compte MaliCut pour utiliser les appels.',true);return false;}return true;}
 
   async function loadInvites(){
@@ -43,6 +43,28 @@
     updateCount();
   }
   function updateCount(){const n=state.selected.size;if($('selectedCallCount'))$('selectedCallCount').textContent=n+' membre'+(n>1?'s':'')+' sélectionné'+(n>1?'s':'');}
+
+  window.signInMaliCut=async()=>{
+    if(!window.sb){$('callAuthMsg').textContent='Supabase n’est pas configuré.';return;}
+    const email=($('callEmail').value||'').trim(),password=$('callPassword').value||'';
+    if(!email||!password){$('callAuthMsg').textContent='Renseigne ton e-mail et ton mot de passe.';return;}
+    $('callAuthMsg').textContent='Connexion…';
+    const r=await window.sb.auth.signInWithPassword({email:email,password:password});
+    if(r.error){$('callAuthMsg').textContent=r.error.message;return;}
+    window.user=r.data.user;panels(false);await loadInvites();notice('Connexion réussie.');
+  };
+  window.signUpMaliCut=async()=>{
+    if(!window.sb){$('callAuthMsg').textContent='Supabase n’est pas configuré.';return;}
+    const email=($('callEmail').value||'').trim(),password=$('callPassword').value||'';
+    const displayName=($('callDisplayName').value||'').trim();
+    if(!email||password.length<8){$('callAuthMsg').textContent='Saisis un e-mail valide et un mot de passe d’au moins 8 caractères.';return;}
+    $('callAuthMsg').textContent='Création du compte…';
+    const r=await window.sb.auth.signUp({email:email,password:password,options:{data:{display_name:displayName||email.split('@')[0]}}});
+    if(r.error){$('callAuthMsg').textContent=r.error.message;return;}
+    if(r.data.session){window.user=r.data.user;panels(false);await loadInvites();notice('Compte créé et connecté.');}
+    else $('callAuthMsg').textContent='Compte créé. Vérifie ta boîte e-mail pour confirmer ton adresse avant de te connecter.';
+  };
+
   window.toggleCallMember=(id,checked)=>{if(checked)state.selected.add(id);else state.selected.delete(id);updateCount();};
   window.searchCallMembers=searchMembers;
 
@@ -185,7 +207,7 @@
   window.addEventListener('load',async()=>{
     for(let i=0;i<40&&!window.sb;i++)await new Promise(r=>setTimeout(r,250));
     if(!window.sb){notice('Configure Supabase pour activer les appels.');return;}
-    const s=await window.sb.auth.getSession();window.user=s.data.session?s.data.session.user:(window.user||null);
+    const s=await window.sb.auth.getSession();window.user=s.data.session?s.data.session.user:(window.user||null);panels(false);
     if(window.user){
       await loadInvites();
       state.inviteSub=window.sb.channel('malicut-invites:'+window.user.id,{config:{private:true}})
@@ -193,7 +215,7 @@
       notice('Recherche un membre pour démarrer un appel audio ou vidéo.');
     }else notice('Connecte-toi à MaliCut pour lancer ou recevoir des appels.');
     window.sb.auth.onAuthStateChange(async(_event,session)=>{
-      window.user=session?session.user:null;
+      window.user=session?session.user:null;panels(!!state.roomId);
       if(window.user){await loadInvites();if(!state.inviteSub)state.inviteSub=window.sb.channel('malicut-invites:'+window.user.id,{config:{private:true}}).on('postgres_changes',{event:'*',schema:'public',table:'call_participants',filter:'user_id=eq.'+window.user.id},()=>loadInvites()).subscribe();}
       else{if(state.inviteSub)await window.sb.removeChannel(state.inviteSub);state.inviteSub=null;await cleanup('Session fermée.');}
     });
