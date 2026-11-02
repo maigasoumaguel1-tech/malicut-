@@ -124,7 +124,7 @@ window.feed=async function(){
 const oldShow=window.showCommunityVideo;
 window.showCommunityVideo=function(){
  const items=list();if(!items.length)return;
- const i=Math.max(0,Math.min(window.communityVideoIndex||0,items.length-1)),v=items[i];
+ const i=Math.max(0,Math.min(communityVideoIndex||0,items.length-1)),v=items[i];
  const video=$('cvVideo');if(!video)return;
  video.pause();video.src=v.url;video.load();video.play().catch(()=>{});
  $('cvCount').textContent=(i+1)+' / '+items.length;$('cvTitle').textContent=v.title;$('cvDescription').textContent=v.description;
