@@ -4,6 +4,7 @@ import os, json
 
 BASE = os.path.dirname(__file__)
 HTML = open(os.path.join(BASE, "app.html"), "r", encoding="utf-8").read()
+CALLS_JS = open(os.path.join(BASE, "calls.js"), "r", encoding="utf-8").read()
 
 class Handler(BaseHTTPRequestHandler):
     def send_text(self, body, content_type="text/html; charset=utf-8", status=200):
@@ -19,6 +20,8 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
         if path == "/":
             self.send_text(HTML)
+        elif path == "/calls.js":
+            self.send_text(CALLS_JS, "application/javascript; charset=utf-8")
         elif path == "/config.js":
             url = os.environ.get("SUPABASE_URL", "").strip()
             key = (os.environ.get("SUPABASE_PUBLISHABLE_KEY") or
