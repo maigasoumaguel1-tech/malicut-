@@ -75,7 +75,7 @@ class Handler(BaseHTTPRequestHandler):
                     self.send_text(json.dumps({"error": "ChatGPT n’est pas encore configuré sur le serveur."}), "application/json; charset=utf-8", 503)
                     return
                 prompt = [{"role": "system", "content": "Tu es l’assistant de MaliCut Studio. Aide clairement à la création vidéo, au montage et au design. Réponds en français sauf demande contraire."}] + messages
-                body = json.dumps({"model": os.environ.get("OPENAI_MODEL", "gpt-6"), "input": prompt, "max_output_tokens": 900}).encode("utf-8")
+                body = json.dumps({"model": os.environ.get("OPENAI_MODEL", "gpt-6-astra"), "input": prompt, "max_output_tokens": 900}).encode("utf-8")
                 request = urllib.request.Request("https://api.openai.com/v1/responses", data=body, headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"}, method="POST")
                 with urllib.request.urlopen(request, timeout=45) as response:
                     result = json.loads(response.read().decode("utf-8"))
