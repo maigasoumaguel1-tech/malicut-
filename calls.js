@@ -90,7 +90,9 @@
   }
   async function roster(payload){
     const members=payload&&payload.members||[];
-    const others=members.filter(m=>m.id!==window.user.id);\n    const alive=new Set(others.map(m=>m.id));\n    state.peers.forEach((pc,id)=>{if(!alive.has(id)){try{pc.close();}catch(_){}state.peers.delete(id);const tile=document.querySelector('[data-peer=\"'+id+'\"]');if(tile)tile.remove();}});
+    const others=members.filter(m=>m.id!==window.user.id);
+    const alive=new Set(others.map(m=>m.id));
+    state.peers.forEach((pc,id)=>{if(!alive.has(id)){try{pc.close();}catch(_){}state.peers.delete(id);const tile=document.querySelector('[data-peer=\"'+id+'\"]');if(tile)tile.remove();}});
     const p=others.length?await window.sb.from('profiles').select('id,display_name,username').in('id',others.map(x=>x.id)):{data:[]};
     const names=new Map((p.data||[]).map(x=>[x.id,x.display_name||x.username||'Membre MaliCut']));
     others.forEach(m=>{
