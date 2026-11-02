@@ -90,7 +90,7 @@
   }
   async function roster(payload){
     const members=payload&&payload.members||[];
-    const others=members.filter(m=>m.id!==window.user.id);
+    const others=members.filter(m=>m.id!==window.user.id);\n    const alive=new Set(others.map(m=>m.id));\n    state.peers.forEach((pc,id)=>{if(!alive.has(id)){try{pc.close();}catch(_){}state.peers.delete(id);const tile=document.querySelector('[data-peer=\"'+id+'\"]');if(tile)tile.remove();}});
     const p=others.length?await window.sb.from('profiles').select('id,display_name,username').in('id',others.map(x=>x.id)):{data:[]};
     const names=new Map((p.data||[]).map(x=>[x.id,x.display_name||x.username||'Membre MaliCut']));
     others.forEach(m=>{
@@ -123,7 +123,7 @@
   async function activate(id,pid,host,type){
     state.roomId=id;state.participantId=pid;state.hostId=host;state.type=type;state.muted=false;state.cameraOff=false;
     $('callTypeLabel').textContent=type==='video'?'Appel vidéo':'Appel audio';
-    $('callRoomLabel').textContent='Connexion sécurisée MaliCut';
+    $('callRoomLabel').textContent='Connexion sécurisée MaliCut';$('cameraCallBtn').classList.toggle('hidden',type!=='video');
     $('remoteCallTiles').innerHTML='';panels(true);
     if(!state.stream)await media(type);await roomChannel(id);
   }
@@ -153,7 +153,7 @@
       const r=await window.sb.from('call_participants').update({status:'joined',joined_at:new Date().toISOString()}).eq('id',pid).eq('user_id',window.user.id);
       if(r.error)throw r.error;
       await activate(rid,pid,host,type);await send('participant_joined',{user_id:window.user.id});await loadInvites();
-    }catch(e){await cleanup('Impossible de rejoindre cet appel.');notice(e.message||'Erreur lors de la connexion.',true);}
+    }catch(e){await window.sb.from('call_participants').update({status:'invited',joined_at:null}).eq('id',pid).eq('user_id',window.user.id);await cleanup('Impossible de rejoindre cet appel.');await loadInvites();notice(e.message||'Erreur lors de la connexion.',true);}
   };
   window.declineCall=async pid=>{
     if(!signedIn())return;
