@@ -125,7 +125,7 @@
     $('callTypeLabel').textContent=type==='video'?'Appel vidéo':'Appel audio';
     $('callRoomLabel').textContent='Connexion sécurisée MaliCut';
     $('remoteCallTiles').innerHTML='';panels(true);
-    await media(type);await roomChannel(id);
+    if(!state.stream)await media(type);await roomChannel(id);
   }
 
   window.startMaliCutCall=async type=>{
