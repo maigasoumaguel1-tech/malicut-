@@ -266,8 +266,8 @@ function ensureCommunityViewer(){
  el.innerHTML='<div class="cv-head"><span id="cvCount">Vidéo</span><div class="cv-controls"><button class="cv-nav" onclick="stepCommunityVideo(-1)" aria-label="Vidéo précédente">↑</button><button class="cv-nav" onclick="stepCommunityVideo(1)" aria-label="Vidéo suivante">↓</button><button class="cv-close" onclick="closeCommunityViewer()" aria-label="Fermer">×</button></div></div><div class="cv-stage"><video id="cvVideo" controls playsinline></video></div><div class="cv-foot"><b id="cvTitle"></b><div id="cvDescription"></div><div class="cv-hint">Balaye vers le haut pour la vidéo suivante · vers le bas pour revenir</div></div>';
  document.body.appendChild(el);
  let sx=0,sy=0;const stage=el.querySelector('.cv-stage');
- stage.addEventListener('touchstart',e=>{if(e.target.closest("video"))return;sx=e.changedTouches[0].clientX;sy=e.changedTouches[0].clientY},{passive:true});
- stage.addEventListener('touchend',e=>{if(e.target.closest("video"))return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dy)>55&&Math.abs(dy)>Math.abs(dx)*1.15)stepCommunityVideo(dy<0?1:-1)},{passive:true});
+ stage.addEventListener('touchstart',e=>{sx=e.changedTouches[0].clientX;sy=e.changedTouches[0].clientY},{passive:true});
+ stage.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dy)>65&&Math.abs(dy)>Math.abs(dx)*1.15)stepCommunityVideo(dy<0?1:-1)},{passive:true});
  stage.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>25)stepCommunityVideo(e.deltaY>0?1:-1)},{passive:true});
  return el;
 }
