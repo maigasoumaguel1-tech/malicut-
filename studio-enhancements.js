@@ -72,7 +72,7 @@
   let rec=null,raf=0;
   try{
    const v=window.video,canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
-   const dims={'9/16':[720,1280],'16/9':[1280,720],'1/1':[900,900],'4/5':[900,1125]}[window.ratio]||[720,1280];
+   const dims={'9/16':[720,1280],'16/9':[1280,720],'1/1':[900,900],'4/5':[900,1125]}[ratio]||[720,1280];
    canvas.width=dims[0];canvas.height=dims[1];
    const start=Math.max(0,+byId('start').value||0),end=Math.min(v.duration||Infinity,+byId('end').value||v.duration);
    if(!(end>start))throw new Error('La durée de début et de fin est incorrecte.');
@@ -111,10 +111,10 @@
     const sc=Math.min(canvas.width/v.videoWidth,canvas.height/v.videoHeight),w=v.videoWidth*sc,h=v.videoHeight*sc;
     let opacity=1;if(inFade&&elapsed<1)opacity=Math.min(opacity,elapsed);if(outFade&&duration-elapsed<1)opacity=Math.min(opacity,duration-elapsed);
     const userFade=+(byId('videoFade').value||0);opacity*=1-userFade/100*.65;
-    ctx.save();ctx.globalAlpha=clamp(opacity,0,1);ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate((window.rotation||0)*Math.PI/180);ctx.scale(window.mirrorOn?-1:1,1);
+    ctx.save();ctx.globalAlpha=clamp(opacity,0,1);ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate((rotation||0)*Math.PI/180);ctx.scale(mirrorOn?-1:1,1);
     ctx.filter=v.style.filter||'none';ctx.drawImage(v,-w/2,-h/2,w,h);ctx.restore();ctx.filter='none';
-    if(window.textValue){
-      let x=(window.editorTextX/100-.5)*canvas.width,y=(window.editorTextY/100-.5)*canvas.height,scale=1,alpha=1;
+    if(textValue){
+      let x=(editorTextX/100-.5)*canvas.width,y=(editorTextY/100-.5)*canvas.height,scale=1,alpha=1;
       if(animation==='fade')alpha=clamp(elapsed/.6,0,1);
       if(animation==='zoom')scale=.7+.3*clamp(elapsed/.6,0,1);
       if(animation==='slide')y+=40*(1-clamp(elapsed/.6,0,1));
@@ -125,7 +125,7 @@
     if(v.currentTime>=end){v.pause();if(rec.state!=='inactive')rec.stop();return;}
     raf=requestAnimationFrame(draw);
    }
-   v.volume=0;v.muted=true;await v.play();draw();
+   v.muted=false;v.volume=1;await v.play();draw();
    await finished;cancelAnimationFrame(raf);musicAudio.pause();v.pause();v.muted=false;v.volume=baseVideoVolume;
    const blob=new Blob(chunks,{type:rec.mimeType||'video/webm'});
    if(!blob.size)throw new Error('Le fichier exporté est vide.');
