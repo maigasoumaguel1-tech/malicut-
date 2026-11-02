@@ -105,15 +105,17 @@
     const pc=new RTCPeerConnection(iceConfig());
     if(state.stream)state.stream.getTracks().forEach(track=>pc.addTrack(track,state.stream));
     pc.onicecandidate=e=>{if(e.candidate)send('signal',{from:window.user.id,to:id,kind:'candidate',candidate:e.candidate});};
+    pc.oniceconnectionstatechange=()=>{if(pc.iceConnectionState==='failed')notice('Le réseau bloque la connexion directe. Un serveur TURN est probablement nécessaire.',true);};
     pc.ontrack=e=>{
       let remoteStream=e.streams&&e.streams[0];
       if(!remoteStream){const tile=document.querySelector('[data-peer="'+id+'"]');const existing=tile&&(tile.querySelector('video').srcObject||tile.querySelector('audio').srcObject);remoteStream=existing||new MediaStream();if(!remoteStream.getTracks().includes(e.track))remoteStream.addTrack(e.track);}
       attachRemote(id,remoteStream);
     };
-    pc.onconnectionstatechange=()=>{const tile=document.querySelector('[data-peer="'+id+'"]');if(tile)tile.classList.toggle('call-disconnected',['failed','disconnected'].includes(pc.connectionState));};
+    pc.onconnectionstatechange=()=>{const tile=document.querySelector('[data-peer="'+id+'"]');if(tile)tile.classList.toggle('call-disconnected',['failed','disconnected'].includes(pc.connectionState));if(pc.connectionState==='failed')notice('Connexion réseau impossible avec le correspondant. Un relais TURN peut être nécessaire sur ce réseau.',true);};
     state.peers.set(id,pc);return pc;
   }
   function attachRemote(id,stream){
+    if($('remoteCallWaiting'))$('remoteCallWaiting').classList.add('hidden');
     let tile=document.querySelector('[data-peer="'+id+'"]');
     if(!tile){tile=document.createElement('div');tile.className='remote-call-tile';tile.dataset.peer=id;tile.innerHTML='<video autoplay playsinline></video><audio autoplay></audio><span class="remote-name">Membre MaliCut</span>';$('remoteCallTiles').appendChild(tile);}
     const v=tile.querySelector('video'),a=tile.querySelector('audio');
@@ -138,6 +140,7 @@
     const others=members.filter(m=>m.id!==window.user.id);
     const alive=new Set(others.map(m=>m.id));
     state.peers.forEach((pc,id)=>{if(!alive.has(id)){try{pc.close();}catch(_){}state.peers.delete(id);const tile=document.querySelector('[data-peer=\"'+id+'\"]');if(tile)tile.remove();}});
+    if($('remoteCallWaiting')&&!alive.size)$('remoteCallWaiting').classList.remove('hidden');
     const p=others.length?await window.sb.from('profiles').select('id,display_name,username').in('id',others.map(x=>x.id)):{data:[]};
     const names=new Map((p.data||[]).map(x=>[x.id,x.display_name||x.username||'Membre MaliCut']));
     others.forEach(m=>{
