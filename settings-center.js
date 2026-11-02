@@ -66,7 +66,7 @@
     async mediaPermission(){if(!navigator.mediaDevices?.getUserMedia){alert('Cette fonction nécessite un navigateur compatible et une connexion sécurisée.');return}try{const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:true});stream.getTracks().forEach(t=>t.stop());alert('Caméra et microphone autorisés.')}catch(e){alert('Autorisation non accordée : '+(e.message||e))}},
     async notificationPermission(){if(!('Notification' in window)){alert('Notifications non prises en charge par ce navigateur.');return}const p=await Notification.requestPermission();alert('État des notifications : '+p)},
     clearPrefs(){if(confirm('Effacer les préférences locales MaliCut ?')){localStorage.removeItem('malicut_settings');render()}},
-    support(){const subject=encodeURIComponent('Assistance MaliCut Studio');const body=encodeURIComponent('Bonjour,\n\nJe rencontre le problème suivant dans MaliCut Studio :\n\nAppareil : '+navigator.userAgent+'\nCompte : '+(window.user?.email||'non connecté'));location.href='mailto:support@malicut.app?subject='+subject+'&body='+body}
+    support(){const body='ASSISTANCE MALICUT STUDIO\n\nProblème rencontré :\n\nAppareil : '+navigator.userAgent+'\nCompte : '+(window.user?.email||'non connecté');if(navigator.clipboard?.writeText){navigator.clipboard.writeText(body).then(()=>alert('Le modèle de signalement a été copié. Colle-le dans ton canal de contact MaliCut habituel.')).catch(()=>prompt('Copie ce signalement :',body))}else{prompt('Copie ce signalement :',body)}}
   };
   document.querySelector('.top-actions')?.insertAdjacentHTML('beforeend','<button class="top-action" onclick="openPage(\'settings\')" aria-label="Paramètres" title="Paramètres">⚙️</button>');
   const profile=document.getElementById('profile');
