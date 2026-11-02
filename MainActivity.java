@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
                 if (pendingWebPermission == request) pendingWebPermission = null;
             }
         });
-        webView.loadUrl("https://malikit.oranda.com/");
+        webView.loadUrl("https://malicut.onrender.com/");
     }
 
     private void requestWebMediaPermissions(PermissionRequest request) {
