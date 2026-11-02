@@ -19,7 +19,21 @@
 .call-disconnected{opacity:.55}
 .call-controls{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
 .call-controls .btn{flex:1;min-width:100px}
-</style></head><body><div class="app"><header class="top"><div style="display:flex;justify-content:space-between;align-items:center"><div class="brand">Mali<b>Cut</b><div class="sub">STUDIO CRÉATIF</div></div><button onclick="openPage('calls')" aria-label="Appels">📞</button><button onclick="openPage('profile')">👤</button></div><div class="search">⌕<input id="search" placeholder="Rechercher modèles, vidéos…" oninput="searchAll(this.value)"></div></header>
+/* MaliCut Bogolan visual refresh */
+:root{--bg:#f7f5ef;--p:#fff;--p2:#eee9dc;--line:#d8d0bf;--txt:#171713;--mut:#716b5f;--gold:#b68a35;--green:#426b4d}
+body{background:#eee9dc;color:var(--txt)}
+.app{background-color:var(--bg);background-image:repeating-linear-gradient(135deg,rgba(30,28,22,.035) 0 2px,transparent 2px 13px),repeating-linear-gradient(45deg,rgba(30,28,22,.025) 0 1px,transparent 1px 17px)}
+.top,.bottom{background:rgba(255,255,255,.97);border-color:var(--line)}
+.hero{background-color:#fff;background-image:repeating-linear-gradient(45deg,rgba(40,35,25,.055) 0 2px,transparent 2px 12px);border-color:#b9a985}
+.panel,.card,.post,.quick button,.stat,.format,.chip,.tool,.search,.track{background-color:#fff;border-color:var(--line);color:var(--txt)}
+input,textarea{background:#fff;color:#171713;border-color:var(--line)}
+.btn{background:#f2eee5;color:#171713;border-color:var(--line)}
+.btn.gold,.gold{background:#b68a35;color:#fff;border-color:#b68a35}
+.btn.green,.green{background:#426b4d;color:#fff;border-color:#426b4d}
+.thumb{background:repeating-linear-gradient(45deg,#e9e1d0 0 8px,#f7f3e9 8px 16px);color:#29251d}
+.nav.active{color:#8a6424}.plus{background:#b68a35;color:white}
+.sheet{background:#fff;color:#171713;border-color:var(--line)}.notice{border-color:#c8bea9}
+.remote-call-tile,.local-call-tile{background:#eee9dc;border-color:var(--line)}</style></head><body><div class="app"><header class="top"><div style="display:flex;justify-content:space-between;align-items:center"><div class="brand">Mali<b>Cut</b><div class="sub">STUDIO CRÉATIF · <span style="border:1px solid #b9a985;padding:2px 5px;background:#eee8da">BOGOLAN</span></div></div><button onclick="openPage('calls')" aria-label="Appels">📞</button><button onclick="openPage('profile')">👤</button></div><div class="search">⌕<input id="search" placeholder="Rechercher modèles, vidéos…" oninput="searchAll(this.value)"></div></header>
 <main>
 <section id="home" class="page active"><div class="hero"><h1>Crée. Monte.<br>Publie.</h1><p class="muted">Un studio vidéo mobile-first pour créer, monter et partager tes contenus.</p><button class="btn gold" onclick="openPage('create')">＋ Nouveau projet</button></div><div class="quick"><button onclick="openPage('create')"><b>🎬</b>Nouveau</button><button onclick="openPage('models')"><b>✦</b>Modèles</button><button onclick="openPage('community')"><b>🔥</b>Tendances</button><button onclick="openPage('profile')"><b>👤</b>Profil</button><button onclick="openPage('calls')"><b>📞</b>Appels</button></div><div class="section"><div class="head"><h3>Ton espace</h3></div><div class="stats"><div class="stat"><strong id="projects">0</strong><span class="muted">Projets</span></div><div class="stat"><strong id="exports">0</strong><span class="muted">Exports</span></div><div class="stat"><strong>—</strong><span class="muted">Stockage</span></div></div></div><div class="section"><div class="head"><h3>Modèles populaires</h3><button class="muted" onclick="openPage('models')">Tout voir</button></div><div id="homeModels" class="grid"></div></div></section>
 <section id="models" class="page"><div class="head"><h2>Modèles</h2><span class="muted">Prêts à personnaliser</span></div><div class="chips"><button class="chip" onclick="renderModels('all')">Tous</button><button class="chip" onclick="renderModels('social')">Social</button><button class="chip" onclick="renderModels('business')">Business</button><button class="chip" onclick="renderModels('culture')">Culture</button></div><div id="modelsGrid" class="grid" style="margin-top:12px"></div></section>
@@ -33,7 +47,7 @@
 <input id="callEmail" type="email" autocomplete="email" placeholder="Adresse e-mail" style="margin-top:8px">
 <input id="callPassword" type="password" autocomplete="current-password" placeholder="Mot de passe" style="margin-top:8px">
 <input id="callDisplayName" type="text" autocomplete="name" placeholder="Nom affiché (pour inscription)" style="margin-top:8px">
-<div class="call-actions" style="margin-top:10px"><button class="btn green" onclick="signInMaliCut()">Se connecter</button><button class="btn gold" onclick="signUpMaliCut()">Créer un compte</button></div>
+<div class="call-actions" style="margin-top:10px"><button class="btn green" onclick="signInMaliCut()">Se connecter</button><button class="btn gold" onclick="signUpMaliCut()">Créer un compte</button></div><div class="call-actions" style="margin-top:8px"><button class="btn full" onclick="signInProvider('google')">Continuer avec Google / Gmail</button><button class="btn full" onclick="signInProvider('apple')">Continuer avec Apple / iCloud</button></div><div class="muted">Google et Apple doivent être activés dans Supabase.</div>
 <div id="callAuthMsg" class="muted" style="margin-top:8px"></div>
 </div>
 <div id="callSetup">
@@ -50,7 +64,7 @@
 </section>
 <section id="community" class="page"><div class="head"><h2>Communauté</h2><button class="btn" onclick="feed()">↻</button></div><div id="feed" class="notice">Chargement…</div></section>
 <section id="profile" class="page"><div class="hero"><h2 id="pname">Mon profil MaliCut</h2><span id="phandle" class="muted">@identifiant</span></div><div class="panel"><b>Profil</b><input id="name" placeholder="Nom affiché" style="margin-top:8px"><input id="handle" placeholder="@identifiant" style="margin-top:8px"><button class="btn gold full" onclick="saveProfile()" style="margin-top:8px">Enregistrer</button><div id="pmsg" class="muted"></div></div></section>
-<section id="settings" class="page"><div class="head"><h2>Réglages</h2></div><div class="panel">⚙️ <b>Performance</b><p class="muted">Les préférences locales sont conservées dans ton navigateur.</p><button class="btn" onclick="localStorage.clear();location.reload()">Réinitialiser</button></div></section>
+<section id="settings" class="page"><div class="head"><h2>Réglages</h2></div><div class="panel"><b>Langue / Language</b><select id="appLanguage" onchange="setAppLanguage(this.value)" style="margin-top:8px"><option value="fr">Français</option><option value="bm">Bamanankan (Bambara)</option><option value="en">English</option></select><p class="muted">Tu peux changer de langue à tout moment.</p></div><div class="panel">⚙️ <b>Performance</b><p class="muted">Les préférences locales sont conservées dans ton navigateur.</p><button class="btn" onclick="localStorage.clear();location.reload()">Réinitialiser</button></div></section>
 </main><nav class="bottom"><button class="nav active" data-p="home" onclick="openPage('home')">⌂<span>Accueil</span></button><button class="nav" data-p="models" onclick="openPage('models')">✦<span>Modèles</span></button><button class="nav" data-p="create" onclick="openPage('create')"><span class="plus">＋</span><span>Créer</span></button><button class="nav" data-p="community" onclick="openPage('community')">◉<span>Communauté</span></button><button class="nav" data-p="profile" onclick="openPage('profile')">○<span>Profil</span></button></nav></div>
 <div id="textModal" class="modal"><div class="sheet"><button onclick="textModal.classList.remove('open')" style="float:right">✕</button><h3>Ajouter du texte</h3><textarea id="text" rows="3" placeholder="Ton texte…"></textarea><input id="font" type="range" min="14" max="72" value="28" oninput="textLayer.style.fontSize=this.value+'px'"><button class="btn gold full" onclick="applyText()">Appliquer</button></div></div>
 <script>
@@ -149,4 +163,7 @@ async function saveProfile(){
  phandle.textContent='@'+(username||'identifiant');
  msg.textContent='Profil enregistré dans MaliCut.';
 }
-</script><script src="/calls.js"></script></body></html>
+const LANGS={fr:{home:"Accueil",models:"Modèles",create:"Créer",community:"Communauté",profile:"Profil",search:"Rechercher modèles, vidéos…",newproject:"＋ Nouveau projet",studio:"Studio de montage"},en:{home:"Home",models:"Templates",create:"Create",community:"Community",profile:"Profile",search:"Search templates, videos…",newproject:"＋ New project",studio:"Editing studio"},bm:{home:"So",models:"Nin tulon",create:"Da",community:"Jɛkulu",profile:"Yèrè",search:"Nin tulon ni videwo ɲini…",newproject:"＋ Baara kura",studio:"Videwo labɛnni"}};
+function setAppLanguage(lang){if(!LANGS[lang])lang="fr";localStorage.setItem("malicut_language",lang);const t=LANGS[lang];document.querySelectorAll(".nav").forEach((n,i)=>{const s=n.querySelector("span:last-child");if(s)s.textContent=[t.home,t.models,t.create,t.community,t.profile][i]});$("search").placeholder=t.search;const b=$("home").querySelector(".hero .btn");if(b)b.textContent=t.newproject;const h=$("create").querySelector("h2");if(h)h.textContent=t.studio;$("appLanguage").value=lang;}
+async function signInProvider(provider){if(!sb){alert("La connexion à MaliCut n’est pas prête.");return;}try{const {error}=await sb.auth.signInWithOAuth({provider,options:{redirectTo:location.origin}});if(error)throw error;}catch(e){alert("Connexion "+provider+" indisponible : "+(e.message||e));}}
+setAppLanguage(localStorage.getItem("malicut_language")||"fr");</script><script src="/calls.js"></script></body></html>
