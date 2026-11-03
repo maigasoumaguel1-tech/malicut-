@@ -70,7 +70,8 @@ create table if not exists private.payout_methods (
   phone_last4 text not null check (phone_last4 ~ '^[0-9]{4}$'),
   active boolean not null default true,
   verified_at timestamptz,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (id, creator_id, provider)
 );
 
 create table if not exists private.creator_wallet_ledger (
@@ -89,9 +90,11 @@ create table if not exists private.creator_wallet_ledger (
 create table if not exists private.payout_requests (
   id uuid primary key default gen_random_uuid(),
   creator_id uuid not null references private.agency_creators(user_id) on delete restrict,
-  payout_method_id uuid not null references private.payout_methods(id) on delete restrict,
+  payout_method_id uuid not null,
   amount_xof bigint not null check (amount_xof >= 5000),
   provider text not null check (provider in ('orange_money', 'wave', 'moov_money')),
+  foreign key (payout_method_id, creator_id, provider)
+    references private.payout_methods(id, creator_id, provider) on delete restrict,
   status text not null default 'pending_review'
     check (status in ('pending_review', 'approved', 'rejected', 'paid', 'cancelled')),
   request_idempotency_key text not null unique,
