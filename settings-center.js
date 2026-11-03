@@ -1,8 +1,10 @@
 /* MaliCut Studio — Centre de paramètres */
 (function(){
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const defaults={privateProfile:false,allowComments:true,allowMessages:true,autoplay:true,dataSaver:false,marketing:false};
-  const readPrefs=()=>{try{return {...defaults,...JSON.parse(localStorage.getItem('malicut_settings')||'{}')}}catch{return {...defaults}}};
+  const defaults={privateProfile:false,allowComments:true,allowMessages:true,allowAIProcessing:false,autoplay:true,dataSaver:false,marketing:false};
+  const serverKeys={privateProfile:'private_profile',allowComments:'allow_comments',allowMessages:'allow_messages',allowAIProcessing:'allow_ai_processing'};
+  let serverPreferences={};
+  const readPrefs=()=>{let local={};try{local=JSON.parse(localStorage.getItem('malicut_settings')||'{}')||{}}catch{}return {...defaults,...local,...serverPreferences}};
   const savePrefs=p=>localStorage.setItem('malicut_settings',JSON.stringify(p));
   const css=`
   #settings .settings-layout{display:grid;grid-template-columns:1fr;gap:12px}
@@ -45,7 +47,7 @@
       profile:['Profil','Modifie les informations visibles sur ton profil.',row('Nom affiché','Ton nom public sur MaliCut','<button class="btn" onclick="openPage(\'profile\')">Modifier le profil</button>')+row('Identifiant','Ton nom d’utilisateur','<button class="btn" onclick="openPage(\'profile\')">Modifier</button>')],
       security:['Connexion et sécurité','Options de connexion disponibles actuellement.',row('Session','Gérer la session de cet appareil',window.user?'<button class="btn" onclick="signOutMaliCut()">Se déconnecter</button>':'<button class="btn gold" onclick="openPage(\'profile\')">Se connecter</button>')+row('Mot de passe oublié','Recevoir un lien de réinitialisation par e-mail','<button class="btn" onclick="MaliCutSettings.resetPassword()">Réinitialiser</button>')+row('Connexion Google / Apple','Disponibilité selon les fournisseurs activés dans Supabase','<button class="btn" onclick="openPage(\'profile\')">Voir les options</button>')],
       permissions:['Droits de l’application','Les autorisations sont demandées par le navigateur au moment où une fonction en a besoin.',row('Caméra et microphone','Tester la demande d’autorisation','<button class="btn" onclick="MaliCutSettings.mediaPermission()">Tester</button>')+row('Notifications','Autoriser les notifications du navigateur','<button class="btn" onclick="MaliCutSettings.notificationPermission()">Autoriser</button>')+row('Photos et vidéos','L’accès est demandé lors de l’importation depuis ton appareil','<span class="muted">Géré par Android / navigateur</span>')],
-      privacy:['Confidentialité','Préférences locales de confidentialité. Les réglages serveur ne sont pas modifiés ici.',toggle('privateProfile','Profil privé','Préférence enregistrée sur cet appareil.')+toggle('allowComments','Autoriser les commentaires','Préférence d’affichage ; la règle serveur reste inchangée.')+toggle('allowMessages','Autoriser les messages','Préférence locale ; la réception dépend des règles du service.')],
+      privacy:['Confidentialité','Ces réglages sont enregistrés sur ton compte et appliqués par les règles de sécurité de la base de données.',toggle('privateProfile','Profil privé','Seuls toi et tes abonnés approuvés peuvent consulter ton profil.')+toggle('allowComments','Autoriser les commentaires','Empêche les autres comptes de commenter tes vidéos.')+toggle('allowMessages','Autoriser les messages','Empêche les autres comptes de t’envoyer de nouveaux messages.')+toggle('allowAIProcessing','Autoriser le traitement IA externe','Autorise l’envoi des messages que tu saisis volontairement à ChatGPT ou Gemini.')],
       notifications:['Notifications','Choisis les préférences de notification.',toggle('marketing','Actualités et nouveautés','Préférence mémorisée localement ; l’envoi de notifications produit n’est pas encore activé.')+row('Permission du navigateur','État actuel : '+(('Notification' in window)?Notification.permission:'Non pris en charge'),'<button class="btn" onclick="MaliCutSettings.notificationPermission()">Gérer</button>')],
       preferences:['Préférences','Personnalise l’expérience MaliCut.',row('Langue','Choisis la langue de l’application','<select onchange="setAppLanguage(this.value)"><option value="fr" '+(localStorage.getItem('malicut_language')!=='en'&&localStorage.getItem('malicut_language')!=='bm'?'selected':'')+'>Français</option><option value="bm" '+(localStorage.getItem('malicut_language')==='bm'?'selected':'')+'>Bamanankan</option><option value="en" '+(localStorage.getItem('malicut_language')==='en'?'selected':'')+'>English</option></select>')+toggle('autoplay','Lecture automatique','Préférence enregistrée sur cet appareil.')],
       storage:['Stockage et données','Contrôle quelques préférences locales de consommation.',toggle('dataSaver','Économiseur de données','Désactive la lecture automatique comme préférence locale.')+row('Données locales','Les préférences MaliCut sont conservées sur cet appareil.','<button class="btn" onclick="MaliCutSettings.clearPrefs()">Effacer les préférences</button>')],
@@ -62,7 +64,27 @@
   window.MaliCutSettings={
     open(id){active=id;render()},
     openLogin(){openPage('profile');document.getElementById('callEmail')?.focus();},
-    toggle(key,value){const p=readPrefs();p[key]=value;savePrefs(p);if(key==='dataSaver'&&value){p.autoplay=false;savePrefs(p)}const s=document.getElementById('settingsStatus');if(s)s.textContent='Préférence enregistrée sur cet appareil.'},
+    async toggle(key,value){
+      if(serverKeys[key]){
+        if(!window.sb||!window.user){const s=document.getElementById('settingsStatus');if(s)s.textContent='Connecte-toi pour enregistrer ce réglage sur ton compte.';render();return;}
+        const payload={user_id:window.user.id,[serverKeys[key]]:!!value,updated_at:new Date().toISOString()};
+        const result=await window.sb.from('account_preferences').upsert(payload,{onConflict:'user_id'});
+        if(result.error){const s=document.getElementById('settingsStatus');if(s)s.textContent='Enregistrement refusé : '+result.error.message;render();return;}
+        serverPreferences[key]=!!value;
+        const s=document.getElementById('settingsStatus');if(s)s.textContent='Réglage de confidentialité enregistré sur ton compte.';
+        return;
+      }
+      const p=readPrefs();p[key]=value;if(key==='dataSaver'&&value)p.autoplay=false;savePrefs(p);
+      const s=document.getElementById('settingsStatus');if(s)s.textContent='Préférence enregistrée sur cet appareil.';
+    },
+    async refresh(){
+      if(!window.sb||!window.user){serverPreferences={};if(active==='privacy')render();return;}
+      const r=await window.sb.from('account_preferences').select('private_profile,allow_comments,allow_messages,allow_ai_processing').eq('user_id',window.user.id).maybeSingle();
+      if(r.error){const s=document.getElementById('settingsStatus');if(s)s.textContent='Impossible de charger les réglages de confidentialité.';return;}
+      const d=r.data||{};
+      serverPreferences={privateProfile:d.private_profile??false,allowComments:d.allow_comments??true,allowMessages:d.allow_messages??true,allowAIProcessing:d.allow_ai_processing??false};
+      if(active==='privacy')render();
+    },
     async resetPassword(){if(!window.sb){alert('Le service de compte MaliCut n’est pas encore prêt.');return}const typed=document.getElementById('callEmail')?.value?.trim()||'';const email=window.user?.email||typed||prompt('Saisis l’adresse e-mail de ton compte MaliCut :');if(!email){alert('Adresse e-mail nécessaire pour envoyer le lien.');return}const r=await window.sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin});alert(r.error?'Erreur : '+r.error.message:'Si cette adresse correspond à un compte, un lien de récupération vient d’être envoyé. Vérifie ta boîte e-mail.')},
     async mediaPermission(){if(!navigator.mediaDevices?.getUserMedia){alert('Cette fonction nécessite un navigateur compatible et une connexion sécurisée.');return}try{const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:true});stream.getTracks().forEach(t=>t.stop());alert('Caméra et microphone autorisés.')}catch(e){alert('Autorisation non accordée : '+(e.message||e))}},
     async notificationPermission(){if(!('Notification' in window)){alert('Notifications non prises en charge par ce navigateur.');return}const p=await Notification.requestPermission();alert('État des notifications : '+p)},
@@ -74,4 +96,10 @@
   const hero=profile?.querySelector('.hero');
   if(hero&&!document.getElementById('profileSettingsButton'))hero.insertAdjacentHTML('beforeend','<button id="profileSettingsButton" class="btn gold full" style="margin-top:12px" onclick="openPage(\'settings\')">⚙️ Ouvrir les paramètres</button>');
   render();
+  window.addEventListener('load',async()=>{
+    for(let i=0;i<40&&!window.sb;i++)await new Promise(resolve=>setTimeout(resolve,250));
+    if(!window.sb)return;
+    await window.MaliCutSettings.refresh();
+    window.sb.auth.onAuthStateChange(async()=>{await window.MaliCutSettings.refresh()});
+  });
 })();
