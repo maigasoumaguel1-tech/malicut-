@@ -303,9 +303,9 @@ html,body{width:100%!important;height:100%!important;min-height:100%!important;m
 body{position:relative!important;inset:auto!important}
 .app{width:min(100%,720px)!important;height:100dvh!important;min-height:0!important;max-height:100dvh!important;margin:0 auto!important;padding:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;position:relative!important;top:0!important;transform:none!important}
 .app>.top{position:relative!important;inset:auto!important;top:0!important;flex:0 0 auto!important;margin:0!important;padding:8px 12px!important}
-.app>main{display:block!important;position:relative!important;flex:1 1 0!important;width:100%!important;height:0!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;inset:auto!important;top:0!important;overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-y:contain!important;touch-action:pan-y!important;transform:none!important}
+.app>main{display:block!important;position:relative!important;flex:1 1 auto!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;inset:auto!important;top:0!important;overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-y:auto!important;touch-action:pan-y!important;transform:none!important}
 .app>main>.page{display:none!important;position:relative!important;inset:auto!important;top:0!important;width:100%!important;min-height:0!important;margin:0!important;padding:12px 14px calc(var(--nav) + 20px)!important;transform:none!important;scroll-margin:0!important}
-.app>main>.page.active{display:block!important;margin-top:0!important;padding-top:12px!important}
+.app>main>.page.active{display:block!important;position:relative!important;visibility:visible!important;opacity:1!important;margin:0!important;padding:12px 14px calc(var(--nav) + 20px)!important;top:0!important;transform:none!important}
 .app>.bottom{position:fixed!important;left:50%!important;bottom:0!important;z-index:30!important;touch-action:pan-x!important}
 </style></head><body><div class="app"><header class="top"><div style="display:flex;justify-content:space-between;align-items:center"><div class="brand"><span class="brand-flag malicut-brand"><span class="brand-mali">Mali</span><b class="brand-cut">Cut</b> <i class="brand-studio">Studio</i></span><div class="sub">STUDIO CRÉATIF · <span style="border:1px solid #b9a985;padding:2px 5px;background:#eee8da">BOGOLAN</span></div></div><div class="top-actions"><button class="top-action" onclick="openPage('calls')" aria-label="Appels" title="Appels">📞</button><button class="top-action message-action" id="messagesTopButton" onclick="openPage('messages')" aria-label="Messagerie" title="Messagerie">💬<span id="messageUnreadDot" class="message-dot hidden"></span></button><button class="top-action" onclick="openPage('aiAssistant')" aria-label="Assistants IA" title="Assistants IA">✦ IA</button><button class="top-action" onclick="openPage('profile')" aria-label="Profil" title="Profil">👤</button></div></div><div class="search">⌕<input id="search" placeholder="Rechercher modèles, vidéos…" oninput="searchAll(this.value)"></div></header>
 <main>
@@ -507,11 +507,14 @@ async function publish(){
 }
 async function loadProfile(){
  const msg=$('pmsg');
- if(!sb){pname.textContent='Mon profil MaliCut';phandle.textContent='@identifiant';msg.textContent='Connexion à la base en cours…';return;}
- if(!user){window.MALICUT_PROFILE_ROLE='user';$('creatorCenterEntry')?.classList.add('hidden');$('creatorWalletEntry')?.classList.add('hidden');pname.textContent='Mon profil MaliCut';phandle.textContent='@identifiant';setIdentityBadge($('profileRoleBadge'),'user');$('name').value='';$('handle').value='';msg.textContent='Connecte-toi depuis la section Appels pour configurer ton profil.';return;}
- msg.textContent='Chargement du profil…';
+ const signedIn=!!user;
+ $('profileAuthStatus')?.classList.toggle('hidden',!signedIn);
+ $('callAuthPanel')?.classList.toggle('hidden',signedIn);
+ if(!sb){pname.textContent='Mon profil MaliCut';phandle.textContent='@identifiant';if(msg)msg.textContent='Connexion à la base en cours…';return;}
+ if(!user){window.MALICUT_PROFILE_ROLE='user';$('creatorCenterEntry')?.classList.add('hidden');$('creatorWalletEntry')?.classList.add('hidden');pname.textContent='Mon profil MaliCut';phandle.textContent='@identifiant';setIdentityBadge($('profileRoleBadge'),'user');$('name').value='';$('handle').value='';if(msg)msg.textContent='Connecte-toi ou crée ton compte pour configurer ton profil.';return;}
+ if(msg)msg.textContent='Chargement du profil…';
  const result=await sb.from('profiles').select('display_name,username,role').eq('id',user.id).maybeSingle();
- if(result.error){msg.textContent='Impossible de charger le profil : '+result.error.message;return;}
+ if(result.error){if(msg)msg.textContent='Impossible de charger le profil : '+result.error.message;return;}
  const displayName=result.data?.display_name||user.user_metadata?.display_name||'';
  const username=result.data?.username||'';
  $('name').value=displayName;
@@ -523,7 +526,7 @@ async function loadProfile(){
  const creatorAllowed=['creator','moderator','admin','owner'].includes(window.MALICUT_PROFILE_ROLE);
  $('creatorCenterEntry')?.classList.toggle('hidden',!creatorAllowed);
  $('creatorWalletEntry')?.classList.toggle('hidden',!creatorAllowed);
- msg.textContent='Profil chargé.';
+ if(msg)msg.textContent='Profil chargé.';
 }
 async function saveProfile(){
  const msg=$('pmsg');
