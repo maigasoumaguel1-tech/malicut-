@@ -69,7 +69,7 @@
         if(!window.sb||!window.user){render();const s=document.getElementById('settingsStatus');if(s)s.textContent='Connecte-toi pour enregistrer ce réglage sur ton compte.';return;}
         const payload={user_id:window.user.id,[serverKeys[key]]:!!value,updated_at:new Date().toISOString()};
         const result=await window.sb.from('account_preferences').upsert(payload,{onConflict:'user_id'});
-        if(result.error){const s=document.getElementById('settingsStatus');if(s)s.textContent='Enregistrement refusé : '+result.error.message;render();return;}
+        if(result.error){render();const s=document.getElementById('settingsStatus');if(s)s.textContent='Enregistrement refusé : '+result.error.message;return;}
         serverPreferences[key]=!!value;
         const s=document.getElementById('settingsStatus');if(s)s.textContent='Réglage de confidentialité enregistré sur ton compte.';
         return;
