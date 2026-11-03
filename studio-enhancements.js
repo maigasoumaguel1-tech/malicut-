@@ -11,14 +11,32 @@
  function applyFilter(){
   if(!window.video)return;
   const filters={
-   none:'none',warm:'sepia(.28) saturate(1.25) contrast(1.04)',
+   none:'none',
+   warm:'sepia(.28) saturate(1.25) contrast(1.04)',
    cinema:'contrast(1.22) saturate(.82) brightness(.94)',
    mono:'grayscale(1) contrast(1.12)',
    vivid:'saturate(1.55) contrast(1.08)',
-   vintage:'sepia(.42) contrast(.92) saturate(.82)'
+   vintage:'sepia(.42) contrast(.92) saturate(.82)',
+   cool:'hue-rotate(175deg) saturate(1.12) contrast(1.04)',
+   dream:'brightness(1.08) saturate(.82) blur(.25px)',
+   fade:'contrast(.82) brightness(1.08) saturate(.72)',
+   dramatic:'contrast(1.38) saturate(1.18) brightness(.88)',
+   retro:'sepia(.22) hue-rotate(-12deg) contrast(1.12) saturate(1.2)',
+   noir:'grayscale(1) contrast(1.55) brightness(.82)',
+   sunset:'sepia(.34) hue-rotate(-18deg) saturate(1.45) brightness(1.04)',
+   forest:'hue-rotate(28deg) saturate(1.35) contrast(1.08)',
+   neon:'saturate(2) contrast(1.28) hue-rotate(8deg)',
+   soft:'brightness(1.06) contrast(.88) saturate(.9)',
+   sharp:'contrast(1.2) saturate(1.08)',
+   golden:'sepia(.18) saturate(1.42) hue-rotate(-8deg) contrast(1.08)'
   };
   window.video.style.filter=filters[effectName]||'none';
  }
+ window.applyQuickSticker=function(emoji){
+  const field=byId('text');
+  if(field){field.value=emoji;byId('textModal')?.classList.add('open');}
+  else alert('Ouvre d’abord l’outil Légendes pour ajouter un sticker.');
+ };
  window.setVideoEffect=function(name,button){
   effectName=name;applyFilter();
   document.querySelectorAll('#create .panel .format').forEach(x=>{if(x.closest('.panel')?.querySelector('b')?.textContent.includes('Effets vidéo'))x.classList.remove('active')});
@@ -115,10 +133,14 @@
     ctx.filter=v.style.filter||'none';ctx.drawImage(v,-w/2,-h/2,w,h);ctx.restore();ctx.filter='none';
     if(textValue){
       let x=(editorTextX/100-.5)*canvas.width,y=(editorTextY/100-.5)*canvas.height,scale=1,alpha=1;
-      if(animation==='fade')alpha=clamp(elapsed/.6,0,1);
-      if(animation==='zoom')scale=.7+.3*clamp(elapsed/.6,0,1);
-      if(animation==='slide')y+=40*(1-clamp(elapsed/.6,0,1));
-      ctx.save();ctx.globalAlpha=alpha;ctx.translate(canvas.width/2+x,canvas.height/2+y);ctx.scale(scale,scale);
+      const intro=clamp(elapsed/.75,0,1);
+      if(animation==='fade')alpha=intro;
+      if(animation==='zoom')scale=.55+.45*intro;
+      if(animation==='slide')y+=55*(1-intro);
+      if(animation==='rise')y+=90*(1-intro);
+      if(animation==='bounce'){const t=1-intro; y-=Math.sin((1-t)*Math.PI*3)*18*t;scale=1+Math.sin((1-t)*Math.PI*4)*.08*t;}
+      if(animation==='pulse')scale=1+.07*Math.sin(elapsed*7);
+      ctx.save();ctx.globalAlpha=alpha;ctx.translate(canvas.width/2+x,canvas.height/2+y);if(animation==='rotate')ctx.rotate((1-intro)*-.22);ctx.scale(scale,scale);
       ctx.font='900 '+(+(byId('font')?.value||42))+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=5;ctx.strokeStyle='#000';ctx.fillStyle='#fff';ctx.strokeText(window.textValue,0,0);ctx.fillText(window.textValue,0,0);ctx.restore();
     }
     byId('bar').style.width=(progress*100)+'%';
