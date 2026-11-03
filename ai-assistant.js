@@ -5,6 +5,18 @@
  let provider='openai',history=[],busy=false;
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  function status(s){const el=document.getElementById('aiStatus');if(el)el.textContent=s}
+ async function updateAccessStatus(){
+  if(!window.sb){status('Connexion à MaliCut en cours…');return}
+  try{
+   const session=await window.sb.auth.getSession();
+   const current=session.data?.session;
+   if(!current){status('Connecte-toi à MaliCut pour utiliser ChatGPT ou Gemini.');return}
+   const consent=await window.sb.from('account_preferences').select('allow_ai_processing').eq('user_id',current.user.id).maybeSingle();
+   if(consent.error){status('Impossible de vérifier ton autorisation IA.');return}
+   if(!consent.data?.allow_ai_processing){status('Pour utiliser les assistants, active ton accord dans Paramètres > Confidentialité. Aucun message ne sera transmis sans cet accord.');return}
+   status('Assistant prêt · Choisis ChatGPT ou Gemini.');
+  }catch(_){status('Vérification de la connexion indisponible. Réessaie.')}
+ }
  function draw(){const el=document.getElementById('aiChat');if(!el)return;el.innerHTML=history.map(m=>'<div class="ai-msg '+(m.role==='user'?'user':'assistant')+'">'+esc(m.content)+'</div>').join('');el.scrollTop=el.scrollHeight}
  function choose(p){provider=p;document.querySelectorAll('#aiAssistant [data-ai-provider]').forEach(b=>b.classList.toggle('active',b.dataset.aiProvider===p));status(p==='openai'?'Assistant ChatGPT sélectionné.':'Assistant Gemini sélectionné.')}
  async function send(){
@@ -26,5 +38,8 @@
   finally{busy=false}
  }
  window.MaliCutAI={choose,send,clear(){history=[];draw();status('Conversation effacée sur cet appareil.')}};
+ window.addEventListener('malicut-auth-change',updateAccessStatus);
+ if(window.sb?.auth?.onAuthStateChange)window.sb.auth.onAuthStateChange(()=>updateAccessStatus());
+ updateAccessStatus();
  document.addEventListener('keydown',e=>{if(e.target?.id==='aiPrompt'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
 })();
