@@ -16,6 +16,44 @@ async function loadDirectory(){
  if(r.error){box.innerHTML='<div class="notice">Impossible de charger les utilisateurs : '+esc(r.error.message)+'</div>';return;}
  directory=r.data||[];renderDirectory();
 }
+async function loadInbox(){
+ if(!window.sb||!window.user)return;
+ const box=$m('messageInbox');if(!box)return;
+ box.innerHTML='<div class="notice">Chargement des conversations…</div>';
+ const me=window.user.id;
+ const r=await window.sb.from('direct_messages').select('id,sender_id,recipient_id,message_type,body,created_at,read_at').or('sender_id.eq.'+me+',recipient_id.eq.'+me).order('created_at',{ascending:false}).limit(300);
+ if(r.error){box.innerHTML='<div class="notice">Boîte de réception indisponible : '+esc(r.error.message)+'</div>';return;}
+ const latest=new Map();
+ for(const m of (r.data||[])){
+  const peer=m.sender_id===me?m.recipient_id:m.sender_id;
+  if(!peer)continue;
+  const item=latest.get(peer)||{peer,last:m,unread:0};
+  if(m.recipient_id===me&&!m.read_at)item.unread++;
+  latest.set(peer,item);
+ }
+ const ids=[...latest.keys()];
+ if(!ids.length){box.innerHTML='<div class="message-empty">Aucune conversation pour le moment. Choisis un membre ci-dessous pour commencer.</div>';return;}
+ const p=await window.sb.from('profiles').select('id,username,display_name,avatar_url').in('id',ids);
+ if(p.error){box.innerHTML='<div class="notice">Les noms des correspondants ne sont pas disponibles : '+esc(p.error.message)+'</div>';return;}
+ const people=new Map((p.data||[]).map(x=>[x.id,x]));
+ const rows=[...latest.values()].map(x=>({...x,person:people.get(x.peer)||{id:x.peer,username:'membre',display_name:'Membre MaliCut'}}));
+ rows.sort((x,y)=>new Date(y.last.created_at)-new Date(x.last.created_at));
+ box.innerHTML=rows.map(x=>{
+  const name=x.person.display_name||x.person.username||'Membre MaliCut';
+  const preview=x.last.message_type==='audio'?'🎙️ Message vocal':(x.last.body||'Message');
+  const time=new Date(x.last.created_at).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  return '<button class="message-user message-inbox-item" onclick="openMaliCutInboxConversation(\''+x.peer+'\')"><span class="message-avatar">'+esc(initials(name))+'</span><span class="message-inbox-copy"><b>'+esc(name)+'</b><small class="muted">'+esc(preview.slice(0,72))+' · '+esc(time)+'</small></span>'+(x.unread?'<span class="message-unread-count">'+x.unread+'</span>':'')+'</button>';
+ }).join('');
+}
+window.openMaliCutInboxConversation=async function(id){
+ let person=directory.find(p=>p.id===id);
+ if(!person){
+  const r=await window.sb.from('profiles').select('id,username,display_name,avatar_url').eq('id',id).maybeSingle();
+  if(r.error||!r.data){$m('messageThreadHead').textContent='Ce correspondant est indisponible.';return;}
+  person=r.data;directory.push(person);
+ }
+ await window.selectMaliKitConversation(id);
+};
 function renderDirectory(){
  const box=$m('messageUsers');if(!box)return;
  const q=($m('messageUserSearch')?.value||'').trim().toLowerCase();
@@ -53,7 +91,7 @@ async function loadThread(){
  list.scrollTop=list.scrollHeight;
  const unread=rows.filter(m=>m.recipient_id===me&&!m.read_at).map(m=>m.id);
  if(unread.length)await window.sb.from('direct_messages').update({read_at:new Date().toISOString()}).in('id',unread);
- await updateUnreadDot();
+ await updateUnreadDot();await loadInbox();
 }
 async function updateUnreadDot(){
  if(!window.sb||!window.user)return;
@@ -63,13 +101,13 @@ async function updateUnreadDot(){
 async function loadMaliKitMessages(){
  if(!window.sb){$m('messageUsers').innerHTML='<div class="notice">Connexion à la base indisponible.</div>';return;}
  setAuthUI();if(!window.user)return;
- await loadDirectory();await updateUnreadDot();
+ await loadDirectory();await loadInbox();await updateUnreadDot();
  if(channel)window.sb.removeChannel(channel);
  channel=window.sb.channel('malikit-direct-messages-'+window.user.id)
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'direct_messages'},payload=>{
     const m=payload.new||{};
     if(m.sender_id===window.user.id||m.recipient_id===window.user.id){
-      updateUnreadDot();
+      loadInbox();updateUnreadDot();
       if(selectedUser&&(m.sender_id===selectedUser.id||m.recipient_id===selectedUser.id))loadThread();
       if(m.recipient_id===window.user.id&&!selectedUser) $m('messageUnreadDot')?.classList.remove('hidden');
     }
@@ -83,7 +121,7 @@ window.sendTextMessage=async function(){
  const r=await window.sb.from('direct_messages').insert({sender_id:window.user.id,recipient_id:selectedUser.id,message_type:'text',body});
  $m('sendMessageButton').disabled=false;
  if(r.error){$m('recordingStatus').textContent='Envoi impossible : '+r.error.message;return;}
- $m('messageText').value='';await loadThread();
+ $m('messageText').value='';await loadThread();await loadInbox();
 };
 async function uploadVoice(blob,mime){
  if(!selectedUser||!window.user)return;
