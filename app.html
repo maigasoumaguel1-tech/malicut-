@@ -303,9 +303,12 @@ html,body{width:100%!important;height:100%!important;min-height:100%!important;m
 body{position:relative!important;inset:auto!important}
 .app{width:min(100%,720px)!important;height:100dvh!important;min-height:0!important;max-height:100dvh!important;margin:0 auto!important;padding:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;position:relative!important;top:0!important;transform:none!important}
 .app>.top{position:relative!important;inset:auto!important;top:0!important;flex:0 0 auto!important;margin:0!important;padding:8px 12px!important}
-.app>main{display:block!important;position:relative!important;flex:1 1 auto!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;inset:auto!important;top:0!important;overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-y:auto!important;touch-action:pan-y!important;transform:none!important}
+.app>main{display:block!important;position:relative!important;flex:1 1 0%!important;width:100%!important;height:0!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;inset:auto!important;top:0!important;overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-y:contain!important;touch-action:pan-y!important;transform:none!important}
 .app>main>.page{display:none!important;position:relative!important;inset:auto!important;top:0!important;width:100%!important;min-height:0!important;margin:0!important;padding:12px 14px calc(var(--nav) + 20px)!important;transform:none!important;scroll-margin:0!important}
 .app>main>.page.active{display:block!important;position:relative!important;visibility:visible!important;opacity:1!important;margin:0!important;padding:12px 14px calc(var(--nav) + 20px)!important;top:0!important;transform:none!important}
+#malicutPullIndicator{position:absolute;z-index:5;top:0;left:0;right:0;height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;background:transparent;color:var(--mut);font-size:12px;font-weight:700;transition:height .12s ease}
+#malicutPullIndicator.visible{height:42px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--line)}
+#malicutPullIndicator.refreshing{height:42px}
 .app>.bottom{position:fixed!important;left:50%!important;bottom:0!important;z-index:30!important;touch-action:pan-x!important}
 </style></head><body><div class="app"><header class="top"><div style="display:flex;justify-content:space-between;align-items:center"><div class="brand"><span class="brand-flag malicut-brand"><span class="brand-mali">Mali</span><b class="brand-cut">Cut</b> <i class="brand-studio">Studio</i></span><div class="sub">STUDIO CRÉATIF · <span style="border:1px solid #b9a985;padding:2px 5px;background:#eee8da">BOGOLAN</span></div></div><div class="top-actions"><button class="top-action" onclick="openPage('calls')" aria-label="Appels" title="Appels">📞</button><button class="top-action message-action" id="messagesTopButton" onclick="openPage('messages')" aria-label="Messagerie" title="Messagerie">💬<span id="messageUnreadDot" class="message-dot hidden"></span></button><button class="top-action" onclick="openPage('aiAssistant')" aria-label="Assistants IA" title="Assistants IA">✦ IA</button><button class="top-action" onclick="openPage('profile')" aria-label="Profil" title="Profil">👤</button></div></div><div class="search">⌕<input id="search" placeholder="Rechercher modèles, vidéos…" oninput="searchAll(this.value)"></div></header>
 <main>
@@ -402,6 +405,58 @@ function openPage(id){
  if(id==='profile')loadProfile();
  if(id==='messages'&&window.loadMaliKitMessages)window.loadMaliKitMessages();
 }
+function refreshActivePage(){
+ const active=document.querySelector('.page.active');
+ if(!active)return Promise.resolve();
+ if(active.id==='community')return feed();
+ if(active.id==='profile')return loadProfile();
+ if(active.id==='home'){
+  $('homeModels').innerHTML=cards(models.slice(0,4));
+  renderModels();
+  projects.textContent=localStorage.getItem('malicut_projects')||0;
+  exports.textContent=localStorage.getItem('malicut_exports')||0;
+  if(sb)return feedHomeRefresh();
+ }
+ return Promise.resolve();
+}
+async function feedHomeRefresh(){
+ // Re-fetch public posts so Home's refresh gesture also checks the live community feed.
+ const result=await sb.from('videos').select('id').eq('visibility','public').order('created_at',{ascending:false}).limit(1);
+ if(result.error)console.warn('MaliCut home refresh:',result.error.message);
+}
+function installPullToRefresh(){
+ const main=document.querySelector('.app>main');if(!main||main.dataset.pullRefreshInstalled)return;
+ main.dataset.pullRefreshInstalled='1';
+ const indicator=document.createElement('div');indicator.id='malicutPullIndicator';indicator.textContent='↓ Tirer pour actualiser';main.prepend(indicator);
+ let startY=0,tracking=false,armed=false;
+ main.addEventListener('touchstart',e=>{
+  if(main.scrollTop>2||e.touches.length!==1)return;
+  startY=e.touches[0].clientY;tracking=true;armed=false;
+ },{passive:true});
+ main.addEventListener('touchmove',e=>{
+  if(!tracking||e.touches.length!==1)return;
+  const distance=e.touches[0].clientY-startY;
+  if(distance<=0)return;
+  const active=document.querySelector('.page.active');
+  if(!active||main.scrollTop>2){tracking=false;indicator.classList.remove('visible');return;}
+  const height=Math.min(42,distance*.42);
+  indicator.style.height=height+'px';indicator.classList.add('visible');
+  armed=distance>=82;
+  indicator.textContent=armed?'↑ Relâche pour actualiser':'↓ Tirer pour actualiser';
+ },{passive:true});
+ const finish=async()=>{
+  if(!tracking)return;tracking=false;
+  indicator.style.height='';
+  indicator.classList.remove('visible');
+  if(!armed)return;
+  indicator.classList.add('refreshing');indicator.textContent='Actualisation…';
+  try{await refreshActivePage();}
+  catch(error){console.error('MaliCut pull-to-refresh:',error);}
+  finally{indicator.classList.remove('refreshing');indicator.style.height='';indicator.textContent='↓ Tirer pour actualiser';}
+ };
+ main.addEventListener('touchend',finish,{passive:true});
+ main.addEventListener('touchcancel',()=>{tracking=false;armed=false;indicator.style.height='';indicator.classList.remove('visible');},{passive:true});
+}
 function cards(list){return list.map((m,i)=>{const tier={free:['Gratuit','tier-free'],standard:['Standard','tier-standard'],pro:['PRO','tier-pro'],ai:['IA · Bientôt','tier-ai']}[m[3]]||['Gratuit','tier-free'];return `<article class="card"><div class="thumb">${m[2]}</div><div class="cardbody"><div class="model-title"><b>${m[0]}</b><span class="model-tier ${tier[1]}">${tier[0]}</span></div><div class="muted">${m[1]} · MaliCut</div><button class="btn full" style="margin-top:8px" ${m[3]==='ai'?'disabled title="Fonctionnalité IA en préparation"':`onclick="openPage('create')"`}>${m[3]==='ai'?'Bientôt disponible':'Utiliser'}</button></div></article>`}).join('')}
 function renderModels(cat='all'){let x=cat==='all'?models:models.filter(m=>m[1]===cat);$('modelsGrid').innerHTML=cards(x)}
 $('homeModels').innerHTML=cards(models.slice(0,4));renderModels();
@@ -424,7 +479,7 @@ async function init(){
   $('feed').innerHTML='<div class="notice">Connexion à la base indisponible : '+String(e.message||e).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</div>';
  }
 }
-init();projects.textContent=localStorage.getItem('malicut_projects')||0;exports.textContent=localStorage.getItem('malicut_exports')||0;
+init();installPullToRefresh();projects.textContent=localStorage.getItem('malicut_projects')||0;exports.textContent=localStorage.getItem('malicut_exports')||0;
 let communityVideoIndex=0;
 function communityViewerData(){return window.MALICUT_COMMUNITY_VIDEOS||[];}
 function ensureCommunityViewer(){
