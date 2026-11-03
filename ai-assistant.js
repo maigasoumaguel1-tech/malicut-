@@ -13,6 +13,9 @@
   if(!window.sb){status('Connexion au compte indisponible.');return}
   const session=await sb.auth.getSession();const token=session.data?.session?.access_token;
   if(!token){status('Connecte-toi à ton compte MaliCut pour utiliser les assistants.');return}
+  const consent=await sb.from('account_preferences').select('allow_ai_processing').eq('user_id',session.data.session.user.id).maybeSingle();
+  if(consent.error){status('Impossible de vérifier ton autorisation de traitement IA. Aucun message n’a été envoyé.');return}
+  if(!consent.data?.allow_ai_processing){status('Le traitement IA externe est désactivé. Active ton accord dans Paramètres > Confidentialité pour envoyer tes messages à ChatGPT ou Gemini.');window.MaliCutSettings?.open('privacy');window.openPage?.('settings');return}
   history.push({role:'user',content:message});input.value='';draw();busy=true;status('Réponse en cours…');
   try{
    const res=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({provider,history:history.slice(-10)})});
