@@ -6,7 +6,7 @@ BASE = os.path.dirname(__file__)
 HTML = open(os.path.join(BASE, "app.html"), "r", encoding="utf-8").read()
 CALLS_JS = open(os.path.join(BASE, "calls.js"), "r", encoding="utf-8").read()
 AI_REQUESTS = {}
-STATIC_JS = {name: open(os.path.join(BASE, name), "r", encoding="utf-8").read() for name in ("messages.js", "studio-enhancements.js", "settings-center.js", "ai-assistant.js")}
+STATIC_JS = {name: open(os.path.join(BASE, name), "r", encoding="utf-8").read() for name in ("messages.js", "studio-enhancements.js", "settings-center.js", "ai-assistant.js", "notifications.js")}
 
 class Handler(BaseHTTPRequestHandler):
     server_version = "MaliCut"
@@ -121,7 +121,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_text(HTML)
         elif path == "/calls.js":
             self.send_text(CALLS_JS, "application/javascript; charset=utf-8")
-        elif path in ("/messages.js", "/studio-enhancements.js", "/settings-center.js", "/ai-assistant.js"):
+        elif path in ("/messages.js", "/studio-enhancements.js", "/settings-center.js", "/ai-assistant.js", "/notifications.js"):
             self.send_text(STATIC_JS[path[1:]], "application/javascript; charset=utf-8")
         elif path == "/config.js":
             url = os.environ.get("SUPABASE_URL", "").strip()
