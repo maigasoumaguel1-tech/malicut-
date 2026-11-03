@@ -341,7 +341,9 @@ body{position:relative!important;inset:auto!important}
 <input id="callPassword" type="password" autocomplete="current-password" placeholder="Mot de passe" style="margin-top:8px">
 <input id="callUsername" type="text" autocomplete="username" placeholder="Nom d’utilisateur" style="margin-top:8px">
 <div class="call-actions" style="margin-top:10px"><button class="btn green" onclick="signInMaliCut()">Se connecter</button><button class="btn gold" onclick="signUpMaliCut()">Créer un compte</button></div><div class="call-actions" style="margin-top:8px"><button class="btn full" onclick="signInProvider('google')">Continuer avec Google / Gmail</button><button class="btn full" onclick="signInProvider('apple')">Continuer avec Apple / iCloud</button></div><div class="muted">Google et Apple doivent être activés dans Supabase.</div>
-<div id="callAuthMsg" class="muted" style="margin-top:8px"></div><div class="panel"><b>Profil</b><input id="name" placeholder="Nom affiché" style="margin-top:8px"><input id="handle" placeholder="@identifiant" style="margin-top:8px"><button class="btn gold full" onclick="saveProfile()" style="margin-top:8px">Enregistrer</button><div id="pmsg" class="muted"></div></div></section>
+<div id="callAuthMsg" class="muted" style="margin-top:8px"></div></div>
+<div class="panel"><b>Mes informations de profil</b><p class="muted">Modifie ton nom affiché et ton identifiant.</p><input id="name" placeholder="Nom affiché" style="margin-top:8px"><input id="handle" placeholder="@identifiant" style="margin-top:8px"><button class="btn gold full" onclick="saveProfile()" style="margin-top:8px">Enregistrer</button><div id="pmsg" class="muted"></div></div>
+<div class="panel"><b>Mes publications</b><div id="myProfilePosts" class="muted" style="margin-top:8px">Connecte-toi pour afficher tes publications.</div></div></section>
 <section id="creatorCenter" class="page">
  <div class="head"><div><h2>Centre des créateurs</h2><span class="muted">Espace réservé aux créateurs agréés MaliCut</span></div><button class="btn" onclick="openPage('profile')">Retour</button></div>
  <div class="hero"><h2>Ton espace créateur</h2><p class="muted">Retrouve ici tes ressources, les défis de création, les performances et les informations de l’agence.</p></div>
@@ -582,6 +584,18 @@ async function loadProfile(){
  $('creatorCenterEntry')?.classList.toggle('hidden',!creatorAllowed);
  $('creatorWalletEntry')?.classList.toggle('hidden',!creatorAllowed);
  if(msg)msg.textContent='Profil chargé.';
+ const postsEl=$('myProfilePosts');
+ if(postsEl){
+  postsEl.textContent='Chargement de tes publications…';
+  const posts=await sb.from('videos').select('id,title,description,created_at,visibility').eq('user_id',user.id).order('created_at',{ascending:false}).limit(30);
+  if(posts.error){
+   postsEl.textContent='Impossible de charger tes publications : '+posts.error.message;
+  }else if(!posts.data?.length){
+   postsEl.textContent='Tu n’as pas encore de publication.';
+  }else{
+   postsEl.innerHTML=posts.data.map(v=>'<div class="post" style="padding:10px;margin-top:8px"><b>'+String(v.title||'Vidéo MaliCut').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</b><div class="muted">'+(v.created_at?new Date(v.created_at).toLocaleDateString('fr-FR'):'')+' · '+(v.visibility==='public'?'Publique':'Privée')+'</div><div class="muted">'+String(v.description||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</div></div>').join('');
+  }
+ }
 }
 async function saveProfile(){
  const msg=$('pmsg');
