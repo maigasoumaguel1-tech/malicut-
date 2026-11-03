@@ -11,7 +11,7 @@ This checklist separates a safe interface preview from a live financial service.
 - [x] No fabricated balance or transaction history is displayed.
 - [x] Withdrawal submission is disabled.
 - [x] Approve, reject, and mark-paid actions are disabled.
-- [x] Creator entry remains disabled until agency eligibility can be verified.
+- [x] Creator entry is visible from the profile; real financial data and actions remain unavailable until agency eligibility is verified.
 - [x] Finance dashboard entry is not exposed in the ordinary profile screen.
 - [x] No service-role secret or payout encryption key is embedded in client code.
 
