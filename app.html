@@ -305,10 +305,12 @@ async function init(){
  try{
   if(!window.supabase||!window.MALICUT_CONFIG||!window.MALICUT_CONFIG.url||!window.MALICUT_CONFIG.key)throw new Error('Configuration Supabase absente. Vérifie les variables du serveur.');
   sb=window.supabase.createClient(window.MALICUT_CONFIG.url,window.MALICUT_CONFIG.key);
+  window.sb=sb;
   const sessionResult=await sb.auth.getSession();
   if(sessionResult.error)throw sessionResult.error;
   user=sessionResult.data.session?.user||null;
-  sb.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;if($('community').classList.contains('active'))feed();if($('profile').classList.contains('active'))loadProfile();});
+  window.user=user;
+  sb.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;window.user=user;window.dispatchEvent(new CustomEvent('malicut-auth-change',{detail:{user}}));if($('community').classList.contains('active'))feed();if($('profile').classList.contains('active'))loadProfile();});
  }catch(e){
   console.error('MaliCut Supabase initialization:',e);
   $('feed').innerHTML='<div class="notice">Connexion à la base indisponible : '+String(e.message||e).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</div>';
