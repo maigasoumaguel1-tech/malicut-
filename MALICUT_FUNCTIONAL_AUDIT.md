@@ -49,7 +49,7 @@ These are real product gaps, not cosmetic tasks. Do not describe the entire appl
 
 1. **Video views:** authenticated views are now deduplicated per account/video. Anonymous view counting is intentionally not enabled; test the counter in a signed-in mobile session.
 2. **Global search:** the search field now searches public video titles and the static model catalog. It does not yet search video descriptions or creator profiles.
-3. **Preferences:** privacy and messaging/comment toggles are still device-local preferences and do not yet enforce server-side visibility or recipient rules. Marketing preference is stored locally; no push-notification delivery service is configured. Autoplay is now applied to the community viewer; data saver does not yet implement adaptive/low-resolution media delivery.
+3. **Preferences:** privacy, comments, messaging, and external-AI consent are now server-stored and enforced by RLS. Marketing preference remains local; no push-notification delivery service is configured. Autoplay is applied to the community viewer; data saver does not yet implement adaptive/low-resolution media delivery.
 4. **Templates:** several catalog entries are static demo cards; AI entries are explicitly marked as coming soon. A real template registry and loading pipeline are still needed.
 5. **Moderation:** users can submit reports, but there is no moderation dashboard or review workflow yet.
 6. **Notifications:** in-app notifications are wired for the listed activity types; this does not provide Android push notifications or background delivery.
@@ -57,7 +57,8 @@ These are real product gaps, not cosmetic tasks. Do not describe the entire appl
 8. **OAuth:** Google and Apple sign-in remain dependent on provider setup in Supabase and their redirect configuration; they were not represented as verified.
 9. **Leaked-password protection:** Supabase's Auth security advisor still reports this setting disabled. Enable it in Supabase Auth password/security settings.
 10. **Migration history drift:** the live database has five migration versions whose SQL files are absent from the repository: `20260918214720_allow_authenticated_video_storage`, `20261004223427_fix_profiles_data_api_permissions`, `20261102153814_add_private_direct_messages_and_audio`, `20261102153923_restrict_direct_message_read_receipt_updates`, and `20261102192347_video_reposts`. Reconstruct and commit those exact historical migrations before relying on a clean local migration replay.
-11. **Runtime validation:** JavaScript syntax checks passed, and database policies/triggers/publication were inspected. A real mobile-browser end-to-end test of signup, login, password recovery, profile edit, publish/delete, messages, calls, and notifications is still required. No claim of full device-level verification is made.
+11. **Runtime validation:** JavaScript syntax checks passed for the modified inline scripts and frontend modules. Database policies, private video bucket settings, object-path conversion, preference RLS, and security advisors were inspected. A real mobile-browser end-to-end test of signup, login, password recovery, profile privacy, video signed-URL playback, profile edit, publish/delete, messages, calls, and notifications is still required. No claim of full device-level verification is made.
+12. **Platform-level hardening:** Supabase's leaked-password protection remains disabled and must be enabled in Auth settings. SSL enforcement, database network restrictions, organization MFA, backup/PITR policy, and project-owner MFA must be checked in the Supabase Dashboard; they are not toggled by SQL and were not verified through available controls.
 
 ## Data safety
 
