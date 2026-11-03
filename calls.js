@@ -4,7 +4,7 @@
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const iceConfig = () => ({ iceServers: window.MALICUT_CONFIG && Array.isArray(window.MALICUT_CONFIG.iceServers) && window.MALICUT_CONFIG.iceServers.length ? window.MALICUT_CONFIG.iceServers : [{urls:'stun:stun.l.google.com:19302'}] });
   function notice(msg, error) { const n=$('callNotice'); if(n){n.textContent=msg;n.style.color=error?'#ff9b91':'';} }
-  function panels(active) { if($('callActive')) $('callActive').classList.toggle('hidden',!active); if($('callSetup')) $('callSetup').classList.toggle('hidden',active||!window.user); if($('callAuthPanel')) $('callAuthPanel').classList.toggle('hidden',!!window.user); if($('profileAuthStatus')) $('profileAuthStatus').classList.toggle('hidden',!window.user); if($('profileEditorPanel')) $('profileEditorPanel').classList.toggle('hidden',!window.user); if($('callAuthNotice')) $('callAuthNotice').classList.toggle('hidden',!!window.user); }
+  function panels(active) { if($('callActive')) $('callActive').classList.toggle('hidden',!active); if($('callSetup')) $('callSetup').classList.toggle('hidden',active||!window.user); if($('callAuthPanel')) $('callAuthPanel').classList.toggle('hidden',!!window.user); if($('profileAuthStatus')) $('profileAuthStatus').classList.toggle('hidden',!window.user); if($('profileEditorPanel')) $('profileEditorPanel').classList.toggle('hidden',!window.user); if($('callsSignOutButton')) $('callsSignOutButton').classList.toggle('hidden',!window.user); if($('callAuthNotice')) $('callAuthNotice').classList.toggle('hidden',!!window.user); }
   function signedIn(){if(!window.sb||!window.user){notice('Connecte-toi à ton compte MaliCut pour utiliser les appels.',true);return false;}return true;}
 
   async function loadInvites(){
@@ -256,7 +256,7 @@
 
   window.addEventListener('load',async()=>{
     for(let i=0;i<40&&!window.sb;i++)await new Promise(r=>setTimeout(r,250));
-    if(!window.sb){notice('Configure Supabase pour activer les appels.');return;}
+    if(!window.sb){panels(false);notice('Connexion au compte indisponible : vérifie la configuration Supabase.');return;}
     const s=await window.sb.auth.getSession();window.user=s.data.session?s.data.session.user:(window.user||null);panels(false);
     if(window.user){
       await loadInvites();
