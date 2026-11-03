@@ -74,6 +74,11 @@
 
   window.toggleCallMember=(id,checked)=>{if(checked)state.selected.add(id);else state.selected.delete(id);updateCount();};
   window.searchCallMembers=searchMembers;
+  window.startMaliCutGroupCall=type=>{
+    if(state.selected.size<2){notice('Sélectionne au moins deux autres membres pour démarrer un appel de groupe.',true);return;}
+    if(state.selected.size>4){notice('Un appel de groupe peut réunir au maximum cinq personnes, toi compris.',true);return;}
+    return window.startMaliCutCall(type);
+  };
 
   async function media(type){
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) throw new Error('Micro/caméra indisponible. Vérifie HTTPS et les autorisations du navigateur.');
