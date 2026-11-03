@@ -72,6 +72,27 @@ class Handler(BaseHTTPRequestHandler):
             except Exception:
                 self.send_text(json.dumps({"error": "Session expirée. Reconnecte-toi à MaliCut."}), "application/json; charset=utf-8", 401)
                 return
+
+            # Enforce AI consent on the server too; browser checks alone can be bypassed.
+            consent_url = (supabase_url.rstrip("/") + "/rest/v1/account_preferences"
+                           + "?select=allow_ai_processing&user_id=eq." + user_id)
+            consent_request = urllib.request.Request(
+                consent_url,
+                headers={"apikey": anon_key, "Authorization": auth, "Accept": "application/json"}
+            )
+            try:
+                with urllib.request.urlopen(consent_request, timeout=12) as response:
+                    preferences = json.loads(response.read().decode("utf-8"))
+                if not preferences or preferences[0].get("allow_ai_processing") is not True:
+                    self.send_text(json.dumps({"error": "Autorisation de traitement IA non activée dans les paramètres de confidentialité."}), "application/json; charset=utf-8", 403)
+                    return
+            except urllib.error.HTTPError:
+                self.send_text(json.dumps({"error": "Impossible de vérifier ton autorisation IA. Aucun message n’a été transmis."}), "application/json; charset=utf-8", 503)
+                return
+            except Exception:
+                self.send_text(json.dumps({"error": "Vérification de confidentialité indisponible. Aucun message n’a été transmis."}), "application/json; charset=utf-8", 503)
+                return
+
             now = time.time()
             recent = [t for t in AI_REQUESTS.get(user_id, []) if now - t < 60]
             if len(recent) >= 10:
