@@ -37,6 +37,8 @@ The security advisor now reports only the leaked-password protection warning. Th
 - The app's fallback reset control no longer clears all browser local storage (which could remove the Supabase session).
 - Community autoplay now respects the saved autoplay/data-saver preferences.
 - Follow and report actions are connected to the `follows` and `reports` tables.
+- Community search now checks public video titles as well as the static model catalog.
+- Video playback records one view per signed-in account/video pair through a private ledger; the counter increment is atomic and duplicate plays do not add another view.
 - An in-app notifications page, unread indicator, read/mark-all-read actions, and Realtime refresh have been added.
 - The notifications module is served by Render.
 - JavaScript syntax checks passed for the edited and dependent frontend modules and all inline scripts in `app.html`.
@@ -45,8 +47,8 @@ The security advisor now reports only the leaked-password protection warning. Th
 
 These are real product gaps, not cosmetic tasks. Do not describe the entire application as fully functional until they are addressed and tested.
 
-1. **Video views:** the feed displays `views`, but there is not yet a verified, safe increment mechanism.
-2. **Global search:** the search field currently filters the static model catalog; it does not search community videos.
+1. **Video views:** authenticated views are now deduplicated per account/video. Anonymous view counting is intentionally not enabled; test the counter in a signed-in mobile session.
+2. **Global search:** the search field now searches public video titles and the static model catalog. It does not yet search video descriptions or creator profiles.
 3. **Preferences:** privacy and messaging/comment toggles are still device-local preferences and do not yet enforce server-side visibility or recipient rules. Marketing preference is stored locally; no push-notification delivery service is configured. Autoplay is now applied to the community viewer; data saver does not yet implement adaptive/low-resolution media delivery.
 4. **Templates:** several catalog entries are static demo cards; AI entries are explicitly marked as coming soon. A real template registry and loading pipeline are still needed.
 5. **Moderation:** users can submit reports, but there is no moderation dashboard or review workflow yet.
