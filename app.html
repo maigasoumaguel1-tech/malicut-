@@ -488,7 +488,7 @@ async function counters(id){
  const v=byId(id);if(v)Object.assign(v,{likeCount:values[0],commentCount:values[1],repostCount:values[2]});
 }
 const countedViewIds=new Set();
-async function view(id){if(!sb||!user||!id||countedViewIds.has(id))return;countedViewIds.add(id);const result=await sb.rpc('register_video_view',{p_video_id:id});if(result.error){countedViewIds.delete(id);console.warn('MaliCut video view:',result.error.message);return;}if(result.data===true){const el=$('mviewcount-'+id);if(el){const value=parseInt(el.textContent,10)||0;el.textContent=(value+1)+' vues';}}}
+async function view(id){if(!sb||!user||!id)return;const key=user.id+':'+id;if(countedViewIds.has(key))return;countedViewIds.add(key);const result=await sb.rpc('register_video_view',{p_video_id:id});if(result.error){countedViewIds.delete(key);console.warn('MaliCut video view:',result.error.message);return;}if(result.data===true){const el=$('mviewcount-'+id);if(el){const value=parseInt(el.textContent,10)||0;el.textContent=(value+1)+' vues';}}}
 async function requireUser(){if(!user){alert('Connecte-toi à MaliCut pour utiliser cette fonction.');return false;}return true;}
 async function like(id){
  if(!await requireUser())return;
