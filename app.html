@@ -259,6 +259,34 @@ html,body{margin:0!important;padding:0!important;overflow-anchor:none!important;
 main{display:block;margin:0!important;padding:0!important;min-height:0;overflow-anchor:none!important}
 .page{margin:0!important;scroll-margin:0!important;overflow-anchor:none!important}
 .app{overflow-anchor:none!important}
+
+/* Espace gains et retraits — interface préparatoire, sans opérations réelles */
+.wallet-status{display:flex;align-items:flex-start;gap:10px;padding:13px;border:1px solid #dfc58f;border-radius:14px;background:#fff8e9;color:#654b1c;margin:8px 0}
+.wallet-status small{display:block;margin-top:3px;color:#766b59;font-size:11px;line-height:1.45}
+.wallet-dot{width:10px;height:10px;flex:0 0 10px;border-radius:50%;background:#bd9140;margin-top:4px}
+.wallet-warning{background:#fff3e5;border-color:#e3b16c;color:#805018}
+.wallet-balance{border-radius:18px;padding:20px;background:linear-gradient(135deg,#fff8e9,#fff);border:1px solid #d9bd7e;display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.wallet-balance span,.wallet-balance small,.wallet-stat span{font-size:11px;color:#766b59}
+.wallet-balance strong{font-size:30px;letter-spacing:-.8px;color:#8c641f}
+.wallet-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:9px}
+.wallet-stat{background:#fff;border:1px solid #e0c992;border-radius:13px;padding:10px;min-width:0}
+.wallet-stat b{display:block;margin-top:6px;font-size:16px;color:#49391e;overflow-wrap:anywhere}
+.wallet-providers{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+.wallet-providers span,.wallet-tag{border:1px solid #d9bd7e;border-radius:999px;padding:6px 9px;font-size:10px;font-weight:800;color:#73531e;background:#fff9ed}
+.wallet-admin-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.wallet-rules{padding-left:19px;line-height:1.7;font-size:12px;color:#66583f}
+#creatorWallet .panel,#payoutAdmin .panel{margin-top:9px}
+#creatorWallet label{display:block;margin:12px 0 5px;font-size:12px;font-weight:750}
+#creatorWallet button:disabled,#payoutAdmin button:disabled{opacity:.48;cursor:not-allowed}
+@media(max-width:390px){.wallet-stats{grid-template-columns:1fr}.wallet-balance strong{font-size:26px}}
+
+/* Correctif renforcé : aucune barre collante ni décalage vertical entre les pages. */
+.top{position:relative!important;top:auto!important;}
+html,body{height:auto!important;min-height:100%!important;overflow-y:auto!important;scroll-padding-top:0!important;}
+.app{min-height:100dvh!important;overflow:visible!important;}
+main{position:relative!important;top:0!important;margin-top:0!important;padding-top:0!important;transform:none!important;}
+.page{position:relative!important;top:0!important;margin-block-start:0!important;transform:none!important;scroll-margin-top:0!important;}
+.page.active{display:block!important;padding-top:8px!important;}
 </style></head><body><div class="app"><header class="top"><div style="display:flex;justify-content:space-between;align-items:center"><div class="brand"><span class="brand-flag malicut-brand"><span class="brand-mali">Mali</span><b class="brand-cut">Cut</b> <i class="brand-studio">Studio</i></span><div class="sub">STUDIO CRÉATIF · <span style="border:1px solid #b9a985;padding:2px 5px;background:#eee8da">BOGOLAN</span></div></div><div class="top-actions"><button class="top-action" onclick="openPage('calls')" aria-label="Appels" title="Appels">📞</button><button class="top-action message-action" id="messagesTopButton" onclick="openPage('messages')" aria-label="Messagerie" title="Messagerie">💬<span id="messageUnreadDot" class="message-dot hidden"></span></button><button class="top-action" onclick="openPage('aiAssistant')" aria-label="Assistants IA" title="Assistants IA">✦ IA</button><button class="top-action" onclick="openPage('profile')" aria-label="Profil" title="Profil">👤</button></div></div><div class="search">⌕<input id="search" placeholder="Rechercher modèles, vidéos…" oninput="searchAll(this.value)"></div></header>
 <main>
 <section id="home" class="page active"><div class="hero"><h1>Crée. Monte.<br>Publie.</h1><p class="muted">Un studio vidéo mobile-first pour créer, monter et partager tes contenus.</p><button class="btn gold" onclick="openPage('create')">＋ Nouveau projet</button></div><div class="quick"><button onclick="openPage('create')"><b>🎬</b>Nouveau</button><button onclick="openPage('models')"><b>✦</b>Modèles</button><button onclick="openPage('community')"><b>🔥</b>Tendances</button><button onclick="openPage('profile')"><b>👤</b>Profil</button><button onclick="openPage('calls')"><b>📞</b>Appels</button></div><div class="section"><div class="head"><h3>Ton espace</h3></div><div class="stats"><div class="stat"><strong id="projects">0</strong><span class="muted">Projets</span></div><div class="stat"><strong id="exports">0</strong><span class="muted">Exports</span></div><div class="stat"><strong>—</strong><span class="muted">Stockage</span></div></div></div><div class="section"><div class="head"><h3>Modèles populaires</h3><button class="muted" onclick="openPage('models')">Tout voir</button></div><div id="homeModels" class="grid"></div></div></section>
@@ -283,7 +311,7 @@ main{display:block;margin:0!important;padding:0!important;min-height:0;overflow-
 <div id="callNotice" class="notice" style="margin-top:10px">Préparation des appels…</div>
 </section>
 <section id="community" class="page"><div class="head"><h2>Communauté</h2><button class="btn" onclick="feed()">↻</button></div><div id="feed" class="notice">Chargement…</div></section>
-<section id="profile" class="page"><div class="hero"><h2 id="pname">Mon profil MaliCut</h2><span id="phandle" class="muted">@identifiant</span><div id="profileRoleBadge" class="role-badge role-user">● UTILISATEUR</div></div><div id="profileAuthStatus" class="panel hidden"><b>Compte MaliCut</b><p class="muted">Tu es connecté. Ton compte te permet d’utiliser les appels et la communauté.</p><button class="btn" onclick="signOutMaliCut()">Se déconnecter</button></div><div id="callAuthPanel" class="panel hidden">
+<section id="profile" class="page"><div class="hero"><h2 id="pname">Mon profil MaliCut</h2><span id="phandle" class="muted">@identifiant</span><div id="profileRoleBadge" class="role-badge role-user">● UTILISATEUR</div></div><div id="profileAuthStatus" class="panel hidden"><b>Compte MaliCut</b><p class="muted">Tu es connecté. Ton compte te permet d’utiliser les appels et la communauté.</p><div class="call-actions"><button class="btn gold full" onclick="openPage('creatorWallet')">Ouvrir Gains et retraits</button></div><p class="muted">Espace réservé aux créateurs officiellement agréés par l’agence. Les montants réels et les retraits restent désactivés tant que ton éligibilité et le service sécurisé ne sont pas activés.</p><button class="btn" onclick="signOutMaliCut()">Se déconnecter</button></div><div id="callAuthPanel" class="panel hidden">
 <b>Créer un compte ou se connecter à MaliCut</b>
 <p class="muted">Inscris-toi avec ton nom d’utilisateur, ton e-mail et ton mot de passe.</p>
 <input id="callEmail" type="email" autocomplete="email" placeholder="Adresse e-mail" style="margin-top:8px">
@@ -291,16 +319,65 @@ main{display:block;margin:0!important;padding:0!important;min-height:0;overflow-
 <input id="callUsername" type="text" autocomplete="username" placeholder="Nom d’utilisateur" style="margin-top:8px">
 <div class="call-actions" style="margin-top:10px"><button class="btn green" onclick="signInMaliCut()">Se connecter</button><button class="btn gold" onclick="signUpMaliCut()">Créer un compte</button></div><div class="call-actions" style="margin-top:8px"><button class="btn full" onclick="signInProvider('google')">Continuer avec Google / Gmail</button><button class="btn full" onclick="signInProvider('apple')">Continuer avec Apple / iCloud</button></div><div class="muted">Google et Apple doivent être activés dans Supabase.</div>
 <div id="callAuthMsg" class="muted" style="margin-top:8px"></div><div class="panel"><b>Profil</b><input id="name" placeholder="Nom affiché" style="margin-top:8px"><input id="handle" placeholder="@identifiant" style="margin-top:8px"><button class="btn gold full" onclick="saveProfile()" style="margin-top:8px">Enregistrer</button><div id="pmsg" class="muted"></div></div></section>
+<section id="creatorWallet" class="page">
+  <div class="head"><div><h2>Mes gains et retraits</h2><span class="muted">Espace réservé aux créateurs agréés MaliCut</span></div><button class="btn" onclick="openPage('profile')">Retour</button></div>
+  <div class="wallet-status"><span class="wallet-dot"></span><div><b>Module en préparation sécurisée</b><small>Les opérations financières ne sont pas encore activées.</small></div></div>
+  <div class="wallet-balance"><span>Solde disponible</span><strong>— FCFA</strong><small>Le solde réel apparaîtra après activation du registre sécurisé.</small></div>
+  <div class="wallet-stats"><div class="wallet-stat"><span>Gains cumulés</span><b>—</b></div><div class="wallet-stat"><span>Bonus</span><b>—</b></div><div class="wallet-stat"><span>Retraits en attente</span><b>—</b></div></div>
+  <div class="panel"><h3>Lier un moyen de retrait</h3><p class="muted">Choisis le service que tu utilises. Cette version présente les options, mais n’enregistre aucun numéro tant que le stockage chiffré n’est pas activé.</p>
+    <div class="wallet-providers"><span>Orange Money</span><span>Wave</span><span>Moov Money</span></div>
+    <label for="payoutProvider">Opérateur mobile</label>
+    <select id="payoutProvider"><option value="orange_money">Orange Money</option><option value="wave">Wave</option><option value="moov_money">Moov Money</option></select>
+    <label for="payoutPhone">Numéro du compte mobile money</label>
+    <input id="payoutPhone" type="tel" placeholder="Sera disponible après activation sécurisée" disabled>
+    <button class="btn gold full" onclick="alert('La liaison sécurisée des comptes Mobile Money n’est pas encore activée. Ne saisis pas ton numéro pour le moment.')">Lier mon moyen de retrait</button>
+    <small class="muted">Aucune donnée bancaire ou téléphonique n’est envoyée ni conservée dans cette version.</small>
+    <label for="walletAmount">Montant souhaité (minimum 5 000 FCFA)</label><input id="walletAmount" type="number" min="5000" step="500" placeholder="Indisponible pendant la préparation" disabled>
+    <button class="btn full" disabled>Demander un retrait</button><small class="muted">Les retraits seront disponibles après activation des contrôles de solde, de l’éligibilité et de la validation manuelle.</small>
+  </div>
+  <div class="panel"><h3>Historique</h3><div class="notice">Aucun historique financier n’est chargé. Les données de démonstration ne sont pas utilisées comme des gains réels.</div></div>
+</section>
+<section id="payoutAdmin" class="page">
+  <div class="head"><div><h2>Administration des créateurs</h2><span class="muted">Tableau de bord financier MaliCut</span></div><button class="btn" onclick="openPage('profile')">Retour</button></div>
+  <div class="wallet-status wallet-warning"><span class="wallet-dot"></span><div><b>Accès financier non activé</b><small>Ce tableau est une maquette. Les droits administrateur doivent être vérifiés côté serveur.</small></div></div>
+  <div class="wallet-stats"><div class="wallet-stat"><span>Demandes à traiter</span><b>—</b></div><div class="wallet-stat"><span>Montant à payer</span><b>—</b></div><div class="wallet-stat"><span>Créateurs actifs</span><b>—</b></div></div>
+  <div class="panel"><div class="head"><h3>Demandes de retrait</h3><span class="wallet-tag">Validation manuelle</span></div>
+    <div class="notice">La file des demandes sera chargée depuis le serveur après mise en place des rôles financiers, du journal des opérations et des contrôles anti-doublon.</div>
+    <div class="wallet-admin-actions"><button class="btn" disabled>Approuver</button><button class="btn" disabled>Refuser</button><button class="btn gold" disabled>Confirmer le paiement</button></div>
+  </div>
+  <div class="panel"><h3>Règles de gestion</h3><ul class="wallet-rules"><li>Créateurs officiellement agréés uniquement.</li><li>Seuil minimum : 5 000 FCFA.</li><li>Orange Money, Wave et Moov Money.</li><li>Un paiement est marqué comme effectué uniquement après vérification du transfert manuel et de sa référence.</li><li>Chaque action administrative doit être journalisée.</li></ul></div>
+</section>
 <section id="aiAssistant" class="page"><div class="head"><div><h2>Assistants IA</h2><span class="muted">ChatGPT et Gemini dans MaliCut Studio</span></div><span>✦</span></div><div class="panel"><div class="ai-provider"><button class="btn active" data-ai-provider="openai" onclick="MaliCutAI.choose('openai')">✦ ChatGPT</button><button class="btn" data-ai-provider="gemini" onclick="MaliCutAI.choose('gemini')">✧ Gemini</button></div><p class="muted">Choisis ton assistant, écris ta demande et reçois des conseils de création et de montage.</p><div id="aiChat" class="ai-chat"><div class="ai-msg assistant">Bonjour ! Je peux t’aider à préparer une vidéo, trouver une idée de montage ou améliorer un texte.</div></div><textarea id="aiPrompt" rows="3" maxlength="4000" placeholder="Écris ta demande ici…"></textarea><div style="display:flex;gap:8px;margin-top:8px"><button class="btn gold" style="flex:1" onclick="MaliCutAI.send()">Envoyer</button><button class="btn" onclick="MaliCutAI.clear()">Effacer</button></div><div id="aiStatus" class="ai-status" aria-live="polite">Connecte-toi pour commencer.</div></div><p class="muted">Les réponses IA peuvent être inexactes. N’envoie pas de données personnelles ou confidentielles.</p></section>
 <section id="settings" class="page"><div class="head"><h2>Réglages</h2></div><div class="panel"><b>Langue / Language</b><select id="appLanguage" onchange="setAppLanguage(this.value)" style="margin-top:8px"><option value="fr">Français</option><option value="bm">Bamanankan (Bambara)</option><option value="en">English</option></select><p class="muted">Tu peux changer de langue à tout moment.</p></div><div class="panel">⚙️ <b>Performance</b><p class="muted">Les préférences locales sont conservées dans ton navigateur.</p><button class="btn" onclick="localStorage.clear();location.reload()">Réinitialiser</button></div></section>
 </main><nav class="bottom"><button class="nav active" data-p="home" onclick="openPage('home')">⌂<span>Accueil</span></button><button class="nav" data-p="models" onclick="openPage('models')">✦<span>Modèles</span></button><button class="nav" data-p="create" onclick="openPage('create')"><span class="plus">＋</span><span>Créer</span></button><button class="nav" data-p="community" onclick="openPage('community')">◉<span>Communauté</span></button><button class="nav" data-p="profile" onclick="openPage('profile')">○<span>Profil</span></button></nav></div>
 <div id="textModal" class="modal"><div class="sheet"><button onclick="textModal.classList.remove('open')" style="float:right">✕</button><h3>Ajouter du texte</h3><textarea id="text" rows="3" placeholder="Ton texte…"></textarea><input id="font" type="range" min="14" max="72" value="28" oninput="textLayer.style.fontSize=this.value+'px'"><div class="text-position-tools"><button onclick="positionEditorText(50,18)">Haut</button><button onclick="positionEditorText(18,50)">Gauche</button><button onclick="positionEditorText(50,50)">Centre</button><button onclick="positionEditorText(82,50)">Droite</button><button onclick="positionEditorText(50,82)">Bas</button></div><p class="muted">Déplace aussi le texte directement avec ton doigt sur l’aperçu.</p><button class="btn gold full" onclick="applyText()">Appliquer</button></div></div>
 <script>
 const $=id=>document.getElementById(id);let ratio='9/16',rotation=0,mirrorOn=false,speed=1,textValue='';const models=[['Mali Stories','culture','🇲🇱','free'],['Creator Pulse','social','⚡','standard'],['Business Pro','business','💼','pro'],['Golden Intro','social','✨','standard'],['Terroir & Culture','culture','🌍','free'],['Portfolio Clean','business','▦','pro'],['AI Portrait Studio','social','✦','ai'],['AI Motion Creator','social','✧','ai']];var sb=null,user=null;
-/* Keep Android WebView/browser from restoring a stale scroll position between tabs. */
+/* Reset every possible scroll container on tab changes, including Android WebView restoration. */
 if('scrollRestoration' in history)history.scrollRestoration='manual';
-function resetPageScroll(targetId){const reset=()=>{const root=document.scrollingElement||document.documentElement;root.scrollTop=0;document.documentElement.scrollTop=0;document.body.scrollTop=0;window.scrollTo(0,0);const main=document.querySelector('main');if(main)main.scrollTop=0;document.querySelectorAll('.page,.app').forEach(el=>{el.scrollTop=0});const active=targetId?document.getElementById(targetId):document.querySelector('.page.active');if(active)active.scrollTop=0};reset();requestAnimationFrame(()=>{reset();requestAnimationFrame(reset)})}
-function openPage(id){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.p===id));resetPageScroll(id);if(id==='community')feed();if(id==='profile')loadProfile();if(id==='messages'&&window.loadMaliKitMessages)loadMaliKitMessages();resetPageScroll(id)}
+function resetPageScroll(targetId){
+ const reset=()=>{
+  const active=targetId?document.getElementById(targetId):document.querySelector('.page.active');
+  const root=document.scrollingElement||document.documentElement;
+  [root,document.documentElement,document.body,document.querySelector('main'),document.querySelector('.app')].filter(Boolean).forEach(el=>{el.scrollTop=0;el.scrollLeft=0});
+  document.querySelectorAll('.page').forEach(el=>{el.scrollTop=0;el.scrollLeft=0});
+  window.scrollTo(0,0);
+  if(active){active.scrollTop=0;active.style.scrollMarginTop='0px'}
+ };
+ reset();
+ requestAnimationFrame(()=>{reset();requestAnimationFrame(reset)});
+ setTimeout(reset,80);
+ setTimeout(reset,240);
+}
+function openPage(id){
+ document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===id));
+ document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.p===id));
+ resetPageScroll(id);
+ if(id==='community')feed();
+ if(id==='profile')loadProfile();
+ if(id==='messages'&&window.loadMaliKitMessages)loadMaliKitMessages();
+ resetPageScroll(id);
+}
 function cards(list){return list.map((m,i)=>{const tier={free:['Gratuit','tier-free'],standard:['Standard','tier-standard'],pro:['PRO','tier-pro'],ai:['IA · Bientôt','tier-ai']}[m[3]]||['Gratuit','tier-free'];return `<article class="card"><div class="thumb">${m[2]}</div><div class="cardbody"><div class="model-title"><b>${m[0]}</b><span class="model-tier ${tier[1]}">${tier[0]}</span></div><div class="muted">${m[1]} · MaliCut</div><button class="btn full" style="margin-top:8px" ${m[3]==='ai'?'disabled title="Fonctionnalité IA en préparation"':`onclick="openPage('create')"`}>${m[3]==='ai'?'Bientôt disponible':'Utiliser'}</button></div></article>`}).join('')}
 function renderModels(cat='all'){let x=cat==='all'?models:models.filter(m=>m[1]===cat);$('modelsGrid').innerHTML=cards(x)}
 $('homeModels').innerHTML=cards(models.slice(0,4));renderModels();
