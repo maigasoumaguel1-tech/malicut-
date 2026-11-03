@@ -288,8 +288,16 @@ main{position:relative!important;top:0!important;margin-top:0!important;padding-
 .page{position:relative!important;top:0!important;margin-block-start:0!important;transform:none!important;scroll-margin-top:0!important;}
 .page.active{display:block!important;padding-top:8px!important;}
 .editor-toolbar{padding-bottom:5px;scrollbar-width:thin;scroll-snap-type:x proximity}.editor-toolbar .tool{flex:0 0 auto;min-width:76px;scroll-snap-align:start}.effects-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.effects-grid .format{min-width:0;padding:10px 5px;white-space:normal}@media(max-width:390px){.effects-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-/* Mobile scroll correction: keep one vertical document scroller and reset every tab. */
-html,body{margin:0!important;padding:0!important;width:100%;min-height:100%!important;height:auto!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior-y:contain;overflow-anchor:none!important;scroll-behavior:auto!important}body{position:relative!important;top:0!important}.app{position:relative!important;top:0!important;min-height:100dvh!important;height:auto!important;overflow:visible!important;transform:none!important}main{position:relative!important;top:0!important;display:block!important;margin:0!important;padding:0!important;min-height:0!important;height:auto!important;overflow:visible!important;transform:none!important}.page{position:relative!important;top:0!important;margin:0!important;transform:none!important;scroll-margin:0!important;overflow:visible!important;overflow-anchor:none!important}.page.active{display:block!important;margin-block-start:0!important;padding-top:8px!important}
+/* Reliable Android touch scrolling: fixed app shell + one momentum-enabled main scroller. */
+html,body{margin:0!important;padding:0!important;width:100%!important;height:100%!important;min-height:100%!important;overflow:hidden!important;overscroll-behavior:none!important}
+body{position:fixed!important;inset:0!important;touch-action:pan-y!important}
+.app{position:relative!important;top:0!important;width:100%!important;height:100dvh!important;min-height:0!important;max-height:100dvh!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;transform:none!important}
+.top{position:relative!important;top:auto!important;flex:0 0 auto!important}
+main{position:relative!important;top:auto!important;display:block!important;flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;margin:0!important;padding:0!important;overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-y:contain!important;touch-action:pan-y!important;transform:none!important}
+.page{position:relative!important;top:0!important;margin:0!important;transform:none!important;scroll-margin:0!important;overflow:visible!important;overflow-anchor:none!important}
+.page.active{display:block!important;margin-block-start:0!important;padding-top:8px!important}
+.bottom{position:fixed!important;bottom:0!important;touch-action:pan-x!important}
+
 </style></head><body><div class="app"><header class="top"><div style="display:flex;justify-content:space-between;align-items:center"><div class="brand"><span class="brand-flag malicut-brand"><span class="brand-mali">Mali</span><b class="brand-cut">Cut</b> <i class="brand-studio">Studio</i></span><div class="sub">STUDIO CRÉATIF · <span style="border:1px solid #b9a985;padding:2px 5px;background:#eee8da">BOGOLAN</span></div></div><div class="top-actions"><button class="top-action" onclick="openPage('calls')" aria-label="Appels" title="Appels">📞</button><button class="top-action message-action" id="messagesTopButton" onclick="openPage('messages')" aria-label="Messagerie" title="Messagerie">💬<span id="messageUnreadDot" class="message-dot hidden"></span></button><button class="top-action" onclick="openPage('aiAssistant')" aria-label="Assistants IA" title="Assistants IA">✦ IA</button><button class="top-action" onclick="openPage('profile')" aria-label="Profil" title="Profil">👤</button></div></div><div class="search">⌕<input id="search" placeholder="Rechercher modèles, vidéos…" oninput="searchAll(this.value)"></div></header>
 <main>
 <section id="home" class="page active"><div class="hero"><h1>Crée. Monte.<br>Publie.</h1><p class="muted">Un studio vidéo mobile-first pour créer, monter et partager tes contenus.</p><button class="btn gold" onclick="openPage('create')">＋ Nouveau projet</button></div><div class="quick"><button onclick="openPage('create')"><b>🎬</b>Nouveau</button><button onclick="openPage('models')"><b>✦</b>Modèles</button><button onclick="openPage('community')"><b>🔥</b>Tendances</button><button onclick="openPage('profile')"><b>👤</b>Profil</button><button onclick="openPage('calls')"><b>📞</b>Appels</button></div><div class="section"><div class="head"><h3>Ton espace</h3></div><div class="stats"><div class="stat"><strong id="projects">0</strong><span class="muted">Projets</span></div><div class="stat"><strong id="exports">0</strong><span class="muted">Exports</span></div><div class="stat"><strong>—</strong><span class="muted">Stockage</span></div></div></div><div class="section"><div class="head"><h3>Modèles populaires</h3><button class="muted" onclick="openPage('models')">Tout voir</button></div><div id="homeModels" class="grid"></div></div></section>
@@ -362,26 +370,13 @@ html,body{margin:0!important;padding:0!important;width:100%;min-height:100%!impo
 <div id="textModal" class="modal"><div class="sheet"><button onclick="textModal.classList.remove('open')" style="float:right">✕</button><h3>Ajouter du texte</h3><textarea id="text" rows="3" placeholder="Ton texte…"></textarea><input id="font" type="range" min="14" max="72" value="28" oninput="textLayer.style.fontSize=this.value+'px'"><div class="text-position-tools"><button onclick="positionEditorText(50,18)">Haut</button><button onclick="positionEditorText(18,50)">Gauche</button><button onclick="positionEditorText(50,50)">Centre</button><button onclick="positionEditorText(82,50)">Droite</button><button onclick="positionEditorText(50,82)">Bas</button></div><p class="muted">Déplace aussi le texte directement avec ton doigt sur l’aperçu.</p><button class="btn gold full" onclick="applyText()">Appliquer</button></div></div>
 <script>
 const $=id=>document.getElementById(id);let ratio='9/16',rotation=0,mirrorOn=false,speed=1,textValue='';const models=[['Mali Stories','culture','🇲🇱','free'],['Creator Pulse','social','⚡','standard'],['Business Pro','business','💼','pro'],['Golden Intro','social','✨','standard'],['Terroir & Culture','culture','🌍','free'],['Portfolio Clean','business','▦','pro'],['AI Portrait Studio','social','✦','ai'],['AI Motion Creator','social','✧','ai']];var sb=null,user=null;
-/* Reset every possible scroll container on tab changes, including Android WebView restoration. */
+/* Android WebView: use the app's main region as the single native touch scroller. */
 if('scrollRestoration' in history)history.scrollRestoration='manual';
-function resetPageScroll(targetId){
- const reset=()=>{
-  const active=targetId?document.getElementById(targetId):document.querySelector('.page.active');
-  const root=document.scrollingElement||document.documentElement;
-  [root,document.documentElement,document.body,document.querySelector('main'),document.querySelector('.app'),active].filter(Boolean).forEach(el=>{
-   el.scrollTop=0;el.scrollLeft=0;
-   if(el!==document.body&&el!==document.documentElement)el.style.scrollMarginTop='0px';
-  });
-  document.documentElement.scrollTop=0;document.body.scrollTop=0;
-  window.scrollTo({top:0,left:0,behavior:'instant'});
- };
- reset();
- requestAnimationFrame(()=>{reset();requestAnimationFrame(reset)});
- setTimeout(reset,60);setTimeout(reset,180);setTimeout(reset,420);
+function resetPageScroll(){
+ const main=document.querySelector('.app > main');
+ if(main){main.scrollTop=0;main.scrollLeft=0;}
 }
-window.addEventListener('pageshow',()=>resetPageScroll());
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)resetPageScroll();});
-window.addEventListener('orientationchange',()=>setTimeout(()=>resetPageScroll(),120));
+window.addEventListener('pageshow',()=>requestAnimationFrame(resetPageScroll));
 function openPage(id){
  if(id==='creatorCenter'&&!['creator','moderator','admin','owner'].includes(window.MALICUT_PROFILE_ROLE)){
   alert('Le Centre des créateurs est réservé aux créateurs agréés par MaliCut.');
@@ -391,11 +386,10 @@ function openPage(id){
  document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.p===id));
  const active=document.getElementById(id);
  if(active){active.style.display='block';active.style.marginTop='0';}
- resetPageScroll(id);
- if(id==='community')Promise.resolve(feed()).finally(()=>resetPageScroll(id));
- if(id==='profile')Promise.resolve(loadProfile()).finally(()=>resetPageScroll(id));
- if(id==='messages'&&window.loadMaliKitMessages)Promise.resolve(window.loadMaliKitMessages()).finally(()=>resetPageScroll(id));
- requestAnimationFrame(()=>{resetPageScroll(id);if(active)active.scrollTop=0;});
+ resetPageScroll();
+ if(id==='community')feed();
+ if(id==='profile')loadProfile();
+ if(id==='messages'&&window.loadMaliKitMessages)window.loadMaliKitMessages();
 }
 function cards(list){return list.map((m,i)=>{const tier={free:['Gratuit','tier-free'],standard:['Standard','tier-standard'],pro:['PRO','tier-pro'],ai:['IA · Bientôt','tier-ai']}[m[3]]||['Gratuit','tier-free'];return `<article class="card"><div class="thumb">${m[2]}</div><div class="cardbody"><div class="model-title"><b>${m[0]}</b><span class="model-tier ${tier[1]}">${tier[0]}</span></div><div class="muted">${m[1]} · MaliCut</div><button class="btn full" style="margin-top:8px" ${m[3]==='ai'?'disabled title="Fonctionnalité IA en préparation"':`onclick="openPage('create')"`}>${m[3]==='ai'?'Bientôt disponible':'Utiliser'}</button></div></article>`}).join('')}
 function renderModels(cat='all'){let x=cat==='all'?models:models.filter(m=>m[1]===cat);$('modelsGrid').innerHTML=cards(x)}
