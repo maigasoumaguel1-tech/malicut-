@@ -4,7 +4,7 @@
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const iceConfig = () => ({ iceServers: window.MALICUT_CONFIG && Array.isArray(window.MALICUT_CONFIG.iceServers) && window.MALICUT_CONFIG.iceServers.length ? window.MALICUT_CONFIG.iceServers : [{urls:'stun:stun.l.google.com:19302'}] });
   function notice(msg, error) { const n=$('callNotice'); if(n){n.textContent=msg;n.style.color=error?'#ff9b91':'';} }
-  function panels(active) { if($('callActive')) $('callActive').classList.toggle('hidden',!active); if($('callSetup')) $('callSetup').classList.toggle('hidden',active||!window.user); if($('callAuthPanel')) $('callAuthPanel').classList.toggle('hidden',!!window.user); if($('profileAuthStatus')) $('profileAuthStatus').classList.toggle('hidden',!window.user); if($('callAuthNotice')) $('callAuthNotice').classList.toggle('hidden',!!window.user); }
+  function panels(active) { if($('callActive')) $('callActive').classList.toggle('hidden',!active); if($('callSetup')) $('callSetup').classList.toggle('hidden',active||!window.user); if($('callAuthPanel')) $('callAuthPanel').classList.toggle('hidden',!!window.user); if($('profileAuthStatus')) $('profileAuthStatus').classList.toggle('hidden',!window.user); if($('profileEditorPanel')) $('profileEditorPanel').classList.toggle('hidden',!window.user); if($('callsSignOutButton')) $('callsSignOutButton').classList.toggle('hidden',!window.user); if($('callAuthNotice')) $('callAuthNotice').classList.toggle('hidden',!!window.user); }
   function signedIn(){if(!window.sb||!window.user){notice('Connecte-toi à ton compte MaliCut pour utiliser les appels.',true);return false;}return true;}
 
   async function loadInvites(){
@@ -43,6 +43,19 @@
     updateCount();
   }
   function updateCount(){const n=state.selected.size;if($('selectedCallCount'))$('selectedCallCount').textContent=n+' membre'+(n>1?'s':'')+' sélectionné'+(n>1?'s':'');}
+
+  window.completePasswordRecovery=async()=>{
+    const input=$('recoveryPassword'),status=$('recoveryStatus'),password=input?.value||'';
+    if(!window.sb){if(status)status.textContent='Connexion au service de compte indisponible.';return;}
+    if(password.length<8){if(status)status.textContent='Le nouveau mot de passe doit contenir au moins 8 caractères.';return;}
+    if(status)status.textContent='Mise à jour du mot de passe…';
+    const result=await window.sb.auth.updateUser({password});
+    if(result.error){if(status)status.textContent='Mise à jour impossible : '+result.error.message;return;}
+    if(input)input.value='';
+    $('passwordRecoveryPanel')?.classList.add('hidden');
+    if(status)status.textContent='Mot de passe mis à jour.';
+    notice('Mot de passe modifié avec succès.');
+  };
 
   window.signOutMaliCut=async()=>{
     if(!window.sb)return;
@@ -243,7 +256,7 @@
 
   window.addEventListener('load',async()=>{
     for(let i=0;i<40&&!window.sb;i++)await new Promise(r=>setTimeout(r,250));
-    if(!window.sb){notice('Configure Supabase pour activer les appels.');return;}
+    if(!window.sb){panels(false);notice('Connexion au compte indisponible : vérifie la configuration Supabase.');return;}
     const s=await window.sb.auth.getSession();window.user=s.data.session?s.data.session.user:(window.user||null);panels(false);
     if(window.user){
       await loadInvites();
@@ -251,8 +264,9 @@
         .on('postgres_changes',{event:'*',schema:'public',table:'call_participants',filter:'user_id=eq.'+window.user.id},()=>loadInvites()).subscribe();
       notice('Recherche un membre pour démarrer un appel audio ou vidéo.');
     }else notice('Connecte-toi à MaliCut pour lancer ou recevoir des appels.');
-    window.sb.auth.onAuthStateChange(async(_event,session)=>{
+    window.sb.auth.onAuthStateChange(async(event,session)=>{
       window.user=session?session.user:null;panels(!!state.roomId);
+      if(event==='PASSWORD_RECOVERY'){if(typeof window.openPage==='function')window.openPage('profile');$('passwordRecoveryPanel')?.classList.remove('hidden');}
       if(window.user){await loadInvites();if(!state.inviteSub)state.inviteSub=window.sb.channel('malicut-invites:'+window.user.id,{config:{private:true}}).on('postgres_changes',{event:'*',schema:'public',table:'call_participants',filter:'user_id=eq.'+window.user.id},()=>loadInvites()).subscribe();}
       else{if(state.inviteSub)await window.sb.removeChannel(state.inviteSub);state.inviteSub=null;await cleanup('Session fermée.');}
     });
