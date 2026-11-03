@@ -9,12 +9,22 @@ AI_REQUESTS = {}
 STATIC_JS = {name: open(os.path.join(BASE, name), "r", encoding="utf-8").read() for name in ("messages.js", "studio-enhancements.js", "settings-center.js", "ai-assistant.js")}
 
 class Handler(BaseHTTPRequestHandler):
+    server_version = "MaliCut"
+    sys_version = ""
+
     def send_text(self, body, content_type="text/html; charset=utf-8", status=200):
         data = body.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Permissions-Policy", "camera=(self), microphone=(self), geolocation=(), payment=(), usb=()")
+        self.send_header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+        self.send_header("Content-Security-Policy", "frame-ancestors 'none'; object-src 'none'; base-uri 'self'")
+        self.send_header("X-Permitted-Cross-Domain-Policies", "none")
         self.end_headers()
         self.wfile.write(data)
 
@@ -98,8 +108,8 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("Réponse vide du fournisseur IA.")
             self.send_text(json.dumps({"reply": reply[:12000]}, ensure_ascii=False), "application/json; charset=utf-8")
         except urllib.error.HTTPError as error:
-            detail = error.read().decode("utf-8", "replace")[:500]
-            print("AI provider HTTP error:", error.code, detail)
+            error.read(500)
+            print("AI provider HTTP error:", error.code)
             self.send_text(json.dumps({"error": "Le fournisseur IA a refusé la requête. Vérifie la configuration et les quotas."}), "application/json; charset=utf-8", 502)
         except Exception as error:
             print("AI request failed:", repr(error))
