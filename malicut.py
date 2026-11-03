@@ -155,6 +155,14 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/health":
             self.send_text(json.dumps({"ok": True, "app": "MaliCut V8"}),
                            "application/json; charset=utf-8")
+        elif path == "/health/config":
+            checks = {
+                "supabase_url_configured": bool(os.environ.get("SUPABASE_URL", "").strip()),
+                "supabase_publishable_key_configured": bool((os.environ.get("SUPABASE_PUBLISHABLE_KEY") or os.environ.get("SUPABASE_ANON_KEY") or "").strip()),
+                "openai_api_key_configured": bool(os.environ.get("OPENAI_API_KEY", "").strip()),
+                "gemini_api_key_configured": bool(os.environ.get("GEMINI_API_KEY", "").strip()),
+            }
+            self.send_text(json.dumps(checks), "application/json; charset=utf-8")
         else:
             self.send_text("Not found", "text/plain; charset=utf-8", 404)
 
