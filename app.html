@@ -368,16 +368,20 @@ function resetPageScroll(targetId){
  const reset=()=>{
   const active=targetId?document.getElementById(targetId):document.querySelector('.page.active');
   const root=document.scrollingElement||document.documentElement;
-  [root,document.documentElement,document.body,document.querySelector('main'),document.querySelector('.app')].filter(Boolean).forEach(el=>{el.scrollTop=0;el.scrollLeft=0});
-  document.querySelectorAll('.page').forEach(el=>{el.scrollTop=0;el.scrollLeft=0});
-  window.scrollTo(0,0);
-  if(active){active.scrollTop=0;active.style.scrollMarginTop='0px'}
+  [root,document.documentElement,document.body,document.querySelector('main'),document.querySelector('.app'),active].filter(Boolean).forEach(el=>{
+   el.scrollTop=0;el.scrollLeft=0;
+   if(el!==document.body&&el!==document.documentElement)el.style.scrollMarginTop='0px';
+  });
+  document.documentElement.scrollTop=0;document.body.scrollTop=0;
+  window.scrollTo({top:0,left:0,behavior:'instant'});
  };
  reset();
  requestAnimationFrame(()=>{reset();requestAnimationFrame(reset)});
- setTimeout(reset,80);
- setTimeout(reset,240);
+ setTimeout(reset,60);setTimeout(reset,180);setTimeout(reset,420);
 }
+window.addEventListener('pageshow',()=>resetPageScroll());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)resetPageScroll();});
+window.addEventListener('orientationchange',()=>setTimeout(()=>resetPageScroll(),120));
 function openPage(id){
  if(id==='creatorCenter'&&!['creator','moderator','admin','owner'].includes(window.MALICUT_PROFILE_ROLE)){
   alert('Le Centre des créateurs est réservé aux créateurs agréés par MaliCut.');
@@ -388,9 +392,9 @@ function openPage(id){
  const active=document.getElementById(id);
  if(active){active.style.display='block';active.style.marginTop='0';}
  resetPageScroll(id);
- if(id==='community')feed();
- if(id==='profile')loadProfile();
- if(id==='messages'&&window.loadMaliKitMessages)loadMaliKitMessages();
+ if(id==='community')Promise.resolve(feed()).finally(()=>resetPageScroll(id));
+ if(id==='profile')Promise.resolve(loadProfile()).finally(()=>resetPageScroll(id));
+ if(id==='messages'&&window.loadMaliKitMessages)Promise.resolve(window.loadMaliKitMessages()).finally(()=>resetPageScroll(id));
  requestAnimationFrame(()=>{resetPageScroll(id);if(active)active.scrollTop=0;});
 }
 function cards(list){return list.map((m,i)=>{const tier={free:['Gratuit','tier-free'],standard:['Standard','tier-standard'],pro:['PRO','tier-pro'],ai:['IA · Bientôt','tier-ai']}[m[3]]||['Gratuit','tier-free'];return `<article class="card"><div class="thumb">${m[2]}</div><div class="cardbody"><div class="model-title"><b>${m[0]}</b><span class="model-tier ${tier[1]}">${tier[0]}</span></div><div class="muted">${m[1]} · MaliCut</div><button class="btn full" style="margin-top:8px" ${m[3]==='ai'?'disabled title="Fonctionnalité IA en préparation"':`onclick="openPage('create')"`}>${m[3]==='ai'?'Bientôt disponible':'Utiliser'}</button></div></article>`}).join('')}
