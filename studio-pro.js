@@ -49,14 +49,27 @@
     #mcProStudio .mc-quality{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
     #mcProStudio .mc-quality button{border:1px solid var(--line);border-radius:9px;padding:9px 4px;background:var(--p2);font-size:11px}
     #mcProStudio .mc-quality button.active{border-color:var(--gold);color:var(--gold)}
-    /* Timeline editor: override legacy thumbnail-card sizing */
-    #mcProStudio #mcTimeline{display:flex!important;flex-flow:row nowrap!important;align-items:stretch!important;width:100%!important;max-width:100%!important;min-height:250px;overflow-x:auto!important;overflow-y:hidden!important;box-sizing:border-box;padding:14px 12px 18px!important;gap:8px!important;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:12px;background:#080f0b}
-    #mcProStudio #mcTimeline .mc-ruler{display:none!important}
-    #mcProStudio #mcTimeline .pro-item.mc-clip{display:flex!important;flex:0 0 auto!important;flex-direction:column!important;width:var(--mc-clip-width,180px)!important;min-width:var(--mc-clip-width,180px)!important;max-width:none!important;box-sizing:border-box;padding:7px!important;border-radius:9px;overflow:visible}
-    #mcProStudio #mcTimeline .mc-clip img,#mcProStudio #mcTimeline .mc-video-thumb{display:block!important;width:100%!important;height:92px!important;max-width:none!important;object-fit:cover;border-radius:6px}
-    #mcProStudio #mcTimeline .mc-clip-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
-    #mcProStudio #mcTimeline .mc-duration input{width:100%;min-width:0}
-    #mcProStudio #mcTimeline .mc-cut-marker{flex:0 0 24px;min-height:190px}
+    /* MaliCut horizontal editing timeline */
+    #mcProStudio .mc-timeline-shell{width:100%;min-width:0;border:1px solid var(--line);border-radius:13px;background:#050b07;overflow:hidden}
+    #mcProStudio .mc-timeline-top{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;background:#101d15;font-size:11px}
+    #mcProStudio .mc-timeline-top input{width:92px;padding:0;accent-color:var(--gold)}
+    #mcProStudio #mcTimeline{display:flex!important;flex-flow:row nowrap!important;align-items:stretch!important;width:100%!important;max-width:100%!important;min-height:116px;overflow-x:auto!important;overflow-y:hidden!important;box-sizing:border-box;padding:10px!important;gap:3px!important;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;overscroll-behavior-x:contain;background:#050b07;scrollbar-width:thin}
+    #mcProStudio #mcTimeline .mc-ruler{display:flex!important;position:absolute;left:10px;top:5px;z-index:2;pointer-events:none}
+    #mcProStudio #mcTimeline .mc-clip{position:relative;min-width:0;gap:3px}
+    #mcProStudio #mcTimeline .pro-item.mc-clip{display:flex!important;flex:0 0 auto!important;flex-direction:column!important;width:var(--mc-clip-width,92px)!important;min-width:var(--mc-clip-width,92px)!important;max-width:none!important;box-sizing:border-box;padding:4px!important;border:1px solid #35513f;border-radius:7px;overflow:hidden;background:#14231a}
+    #mcProStudio #mcTimeline .pro-item.mc-clip.active{border:2px solid var(--gold);outline:none}
+    #mcProStudio #mcTimeline .mc-clip img,#mcProStudio #mcTimeline .mc-video-thumb{display:block!important;width:100%!important;height:48px!important;max-width:none!important;object-fit:cover;border-radius:4px}
+    #mcProStudio #mcTimeline .pro-item small{font-size:9px;margin:1px 0}
+    #mcProStudio #mcTimeline .mc-clip-meta{font-size:8px}
+    #mcProStudio #mcTimeline .mc-clip-actions,#mcProStudio #mcTimeline .mc-duration{display:none!important}
+    #mcProStudio #mcTimeline .mc-cut-marker{flex:0 0 15px;min-height:76px;writing-mode:vertical-rl;font-size:8px;opacity:.8}
+    #mcProStudio .mc-clip-inspector{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:9px}
+    #mcProStudio .mc-clip-inspector button,#mcProStudio .mc-clip-inspector select{min-width:0;padding:8px 4px;font-size:10px;border:1px solid var(--line);border-radius:8px;background:var(--p2);color:var(--txt)}
+    #mcProStudio .mc-clip-inspector label{grid-column:1/-1;font-size:10px;color:var(--mut)}
+    #mcProStudio .mc-clip-inspector input{padding:0;margin-top:6px;accent-color:var(--gold)}
+    #mcProStudio .mc-clip-inspector .mc-inspector-name{grid-column:1/-1;font-size:11px;color:var(--gold)}
+    #mcProStudio .mc-timeline-empty{padding:18px;color:var(--mut);font-size:11px}
+    @media(min-width:700px){#mcProStudio .mc-clip-inspector{grid-template-columns:repeat(6,minmax(0,1fr))}}
     @media(min-width:700px){#mcProStudio .pro-actions{grid-template-columns:repeat(4,minmax(0,1fr))}}
   `;
   document.head.appendChild(style);
@@ -80,7 +93,13 @@
     </div>
     <div class="panel">
       <div class="pro-head"><b>Timeline du projet</b><span class="muted" id="mcCount">0 média</span></div>
-      <div class="pro-timeline" id="mcTimeline"><div class="notice" style="width:100%">Importe une photo ou une vidéo pour commencer.</div></div>
+      <div class="mc-timeline-shell">
+        <div class="mc-timeline-top"><span>◷ TEMPS · PISTE PRINCIPALE</span><label>Zoom <input id="mcTimelineZoom" type="range" min="70" max="180" value="100"></label></div>
+        <div class="pro-timeline" id="mcTimeline"><div class="mc-timeline-empty">＋ Importe tes photos et vidéos pour commencer.</div></div>
+      </div>
+      <div class="mc-clip-inspector" id="mcClipInspector">
+        <div class="mc-inspector-name" id="mcInspectorName">Sélectionne un clip dans la timeline</div>
+      </div>
       <div class="range">
         <label class="muted">Durée des photos (secondes)<input id="mcPhotoDuration" type="number" min="1" max="30" step="1" value="3"></label>
         <label class="muted">Transition entre médias<select id="mcTransition"><option value="fade">Fondu enchaîné</option><option value="cut">Coupe directe</option></select></label>
@@ -251,40 +270,64 @@
     renderLanes();
     setStatus(accepted.length + ' média ajouté(s) au projet.');
   }
+  let timelineZoom=1;
   function renderTimeline() {
     $('mcCount').textContent = state.items.length + ' média' + (state.items.length > 1 ? 's' : '');
     const target = $('mcTimeline');
-    if (!state.items.length) { target.innerHTML = '<div class="notice" style="width:100%">Importe une photo ou une vidéo pour commencer.</div>'; renderLanes(); return; }
-    target.innerHTML = '<div class="mc-ruler">00:00 ─────────────────────────────────────────────── ' + formatTime(state.items.reduce((n,x)=>n+(Number(x.duration)||3),0)) + '</div>' +
-      state.items.map((item, i) => {
-        const seconds=Math.max(.5,Number(item.duration)||3);
-        const width=Math.max(170,Math.min(520,seconds*52));
-        return '<div class="pro-item mc-clip '+(i===state.active?'active':'')+'" data-index="'+i+'" style="--mc-clip-width:'+width+'px;width:'+width+'px;min-width:'+width+'px;max-width:none" draggable="true">' +
-          (item.type==='image'?'<img src="'+item.url+'" alt="">':'<div class="mc-video-thumb">▶ VIDÉO</div>')+
-          '<small>'+(i+1)+'. '+String(item.name).replace(/[<>&"]/g,'')+'</small><div class="mc-clip-meta">'+seconds.toFixed(1)+' s · '+(item.type==='image'?'PHOTO':'VIDÉO')+'</div>'+
-          '<div class="mc-clip-actions"><button data-action="select" data-index="'+i+'">Sélectionner</button><button data-action="duplicate" data-index="'+i+'">Dupliquer</button><button data-action="split" data-index="'+i+'">Scinder</button><button data-action="remove" data-index="'+i+'">Supprimer</button></div>'+
-          '<label class="mc-duration">Durée <input data-duration="'+i+'" type="range" min="1" max="30" step=".5" value="'+seconds+'"><b>'+seconds.toFixed(1)+'s</b></label>'+
-          '<label class="mc-duration">Effet <select data-effect="'+i+'"><option value="none">Aucun</option><option value="fade">Fondu</option><option value="zoom">Zoom</option><option value="flash">Flash</option><option value="vignette">Cinéma</option></select></label>'+
-          '</div>';
-      }).join('<div class="mc-cut-marker">│ TRANSITION │</div>');
-    target.querySelectorAll('[data-action]').forEach(btn=>btn.addEventListener('click',()=>{
-      const i=Number(btn.dataset.index), action=btn.dataset.action;
-      if(action==='remove'){URL.revokeObjectURL(state.items[i].url);state.items.splice(i,1);state.active=Math.max(0,Math.min(i,state.items.length-1));}
-      if(action==='select'){state.active=i;previewActive();}
-      if(action==='duplicate'){const copy={...state.items[i]};state.items.splice(i+1,0,copy);state.active=i+1;previewActive();}
-      if(action==='split'){
-        const item=state.items[i],half=Math.max(.5,(Number(item.duration)||3)/2);
-        const copy={...item,duration:half};item.duration=half;state.items.splice(i+1,0,copy);state.active=i+1;previewActive();
-      }
-      renderTimeline();renderLanes();
-    }));
-    target.querySelectorAll('[data-duration]').forEach(input=>input.addEventListener('input',()=>{
-      const i=Number(input.dataset.duration);state.items[i].duration=Number(input.value);
-      input.parentElement.querySelector('b').textContent=Number(input.value).toFixed(1)+'s';
-      const clip=input.closest('.mc-clip');const width=Math.max(170,Math.min(520,Number(input.value)*52));clip.style.setProperty('--mc-clip-width',width+'px');clip.style.width=width+'px';clip.style.minWidth=width+'px';clip.style.maxWidth='none';
+    if (!state.items.length) {
+      target.innerHTML = '<div class="mc-timeline-empty">＋ Importe tes photos et vidéos pour commencer.</div>';
+      $('mcClipInspector').innerHTML='<div class="mc-inspector-name">Aucun clip sélectionné</div>';
+      renderLanes(); return;
+    }
+    const total=state.items.reduce((n,x)=>n+(Number(x.duration)||3),0);
+    target.innerHTML = state.items.map((item, i) => {
+      const seconds=Math.max(.5,Number(item.duration)||3);
+      const width=Math.max(76,Math.min(260,seconds*28))*timelineZoom;
+      return '<div class="pro-item mc-clip '+(i===state.active?'active':'')+'" data-index="'+i+'" style="--mc-clip-width:'+width+'px" draggable="true">' +
+        (item.type==='image'?'<img src="'+item.url+'" alt="">':'<div class="mc-video-thumb">▶</div>')+
+        '<small>'+(i+1)+'. '+String(item.name).replace(/[<>&"]/g,'')+'</small><div class="mc-clip-meta">'+seconds.toFixed(1)+' s</div></div>';
+    }).join('<div class="mc-cut-marker">＋</div>');
+    target.querySelectorAll('.mc-clip').forEach(clip=>{
+      clip.addEventListener('click',()=>{
+        state.active=Number(clip.dataset.index);previewActive();renderTimeline();
+      });
+      clip.addEventListener('dragstart',e=>{
+        e.dataTransfer.setData('text/plain',clip.dataset.index);
+        e.dataTransfer.effectAllowed='move';
+      });
+      clip.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';});
+      clip.addEventListener('drop',e=>{
+        e.preventDefault();const from=Number(e.dataTransfer.getData('text/plain')),to=Number(clip.dataset.index);
+        if(!Number.isInteger(from)||from===to||!state.items[from])return;
+        const moved=state.items.splice(from,1)[0];state.items.splice(to,0,moved);
+        state.active=to;renderTimeline();previewActive();renderLanes();
+      });
+    });
+    const selected=state.items[state.active];
+    const inspector=$('mcClipInspector');
+    inspector.innerHTML='<div class="mc-inspector-name">CLIP '+(state.active+1)+' · '+String(selected.name).replace(/[<>&"]/g,'')+'</div>'+
+      '<button data-inspect="split">✂ Scinder</button><button data-inspect="duplicate">＋ Dupliquer</button><button data-inspect="delete">Supprimer</button><button data-inspect="effectReset">Effet zéro</button>'+
+      '<label>Durée du clip · <b id="mcInspectorDuration">'+(Number(selected.duration)||3).toFixed(1)+' s</b><input id="mcInspectorDurationRange" type="range" min="1" max="30" step=".5" value="'+(Number(selected.duration)||3)+'"></label>'+
+      '<label>Effet du clip <select id="mcInspectorEffect"><option value="none">Aucun effet</option><option value="fade">Fondu</option><option value="zoom">Zoom</option><option value="flash">Flash</option><option value="vignette">Cinéma</option></select></label>';
+    const effect=$('mcInspectorEffect');effect.value=selected.effect||'none';
+    effect.onchange=()=>{selected.effect=effect.value;setStatus('Effet enregistré sur le clip '+(state.active+1)+'.');};
+    $('mcInspectorDurationRange').oninput=e=>{
+      selected.duration=Number(e.target.value);
+      $('mcInspectorDuration').textContent=selected.duration.toFixed(1)+' s';
+      const clip=target.querySelector('.mc-clip.active');
+      if(clip){const width=Math.max(76,Math.min(260,selected.duration*28))*timelineZoom;clip.style.width=width+'px';clip.style.minWidth=width+'px';clip.style.setProperty('--mc-clip-width',width+'px');}
       renderLanes();
-    }));
-    target.querySelectorAll('[data-effect]').forEach(select=>select.addEventListener('change',()=>{state.items[Number(select.dataset.effect)].effect=select.value;setStatus('Effet appliqué au clip '+(Number(select.dataset.effect)+1)+'.');}));
+    };
+    inspector.querySelectorAll('[data-inspect]').forEach(btn=>btn.onclick=()=>{
+      const action=btn.dataset.inspect;
+      if(action==='delete'){URL.revokeObjectURL(selected.url);state.items.splice(state.active,1);state.active=Math.max(0,Math.min(state.active,state.items.length-1));}
+      if(action==='duplicate'){state.items.splice(state.active+1,0,{...selected});state.active++;}
+      if(action==='split'){const half=Math.max(.5,(Number(selected.duration)||3)/2);selected.duration=half;state.items.splice(state.active+1,0,{...selected,duration:half});state.active++;}
+      if(action==='effectReset'){selected.effect='none';}
+      renderTimeline();previewActive();renderLanes();
+    });
+    const zoom=$('mcTimelineZoom');
+    if(zoom){zoom.value=String(Math.round(timelineZoom*100));zoom.oninput=()=>{timelineZoom=Number(zoom.value)/100;renderTimeline();};}
   }
   function formatTime(seconds){const n=Math.max(0,Math.floor(seconds||0));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
   function previewActive() {
