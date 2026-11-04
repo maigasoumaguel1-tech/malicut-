@@ -5,7 +5,7 @@
   const section = $('create');
   if (!section || !$('screen') || !$('video') || !$('file')) return;
 
-  const state = { items: [], active: 0, camera: null, photoSeconds: 3, transition: 'fade', busy: false, voiceBlob: null, voiceUrl: null, recorder: null, look: 'none', overlayItems: [], activeTrack: 'video', quality: '720', lastExportUrl: null, fitMode: 'cover' };
+  const state = { items: [], active: 0, camera: null, photoSeconds: 3, transition: 'fade', busy: false, voiceBlob: null, voiceUrl: null, recorder: null, look: 'none', overlayItems: [], activeTrack: 'video', quality: '720', lastExportUrl: null, fitMode: 'cover', projectRatio: '9/16' };
   const originalFile = $('file');
   originalFile.accept = 'video/*,image/*';
   originalFile.multiple = true;
@@ -189,16 +189,27 @@
   }
   function applyStageFormat(value) {
     const normalized=String(value||'9/16').replace(':','/');
+    state.projectRatio=normalized;
+    const parts=normalized.split('/').map(Number);
+    const ratio=parts[0]>0&&parts[1]>0?parts[0]/parts[1]:9/16;
+    const holder=$('screen').parentElement;
+    const maxWidth=Math.max(160,holder.clientWidth);
+    const maxHeight=Math.max(180,Math.min(window.innerHeight*.56,560));
+    const width=Math.min(maxWidth,maxHeight*ratio);
+    const height=width/ratio;
+    holder.style.display='flex';holder.style.justifyContent='center';
     $('screen').style.aspectRatio=normalized;
-    $('screen').style.width='100%';
-    $('screen').style.maxHeight='56vh';
+    $('screen').style.width=Math.round(width)+'px';
+    $('screen').style.height=Math.round(height)+'px';
+    $('screen').style.maxHeight='none';
     applyFitMode();
   }
   formatPanel?.querySelectorAll('.formats .format').forEach(b=>b.addEventListener('click',()=>{
     const label=b.textContent.trim();
     if (/^(9:16|16:9|1:1|4:5|4:3|3:4|2:3)$/.test(label)) applyStageFormat(label);
   }));
-  applyFitMode();
+  applyStageFormat(formatPanel?.querySelector('.formats .format.active')?.textContent?.trim() || '9:16');
+  window.addEventListener('resize',()=>applyStageFormat(state.projectRatio));
 
   function setStatus(message) { const el = $('status'); if (el) el.textContent = message; }
   function stopCamera() {
