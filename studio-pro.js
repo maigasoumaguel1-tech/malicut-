@@ -302,7 +302,8 @@
         const i=Number(clip.dataset.index),edge=e.target.closest('[data-trim]')?.dataset.trim||null;
         if(e.pointerType==='mouse'&&e.button!==0)return;
         gesture={id:e.pointerId,index:i,edge,x:e.clientX,originalDuration:Number(state.items[i].duration)||3,originalStart:Number(state.items[i].trimStart)||0,moved:false};
-        if(edge){e.preventDefault();e.stopPropagation();clip.setPointerCapture(e.pointerId);}
+        clip.setPointerCapture(e.pointerId);
+        if(edge){e.preventDefault();e.stopPropagation();}
       });
       clip.addEventListener('pointermove',e=>{
         if(!gesture||gesture.id!==e.pointerId)return;
@@ -328,6 +329,7 @@
         if(!gesture||gesture.id!==e.pointerId)return;
         const g=gesture;gesture=null;clip.classList.remove('mc-dragging');clip.style.transform='';
         if(g.moved&&!g.edge){
+          clip.dataset.suppressClick='1';
           const under=document.elementFromPoint(e.clientX,e.clientY)?.closest('#mcTimeline .mc-clip');
           if(under){
             const to=Number(under.dataset.index),from=g.index;
@@ -372,7 +374,7 @@
       const action=btn.dataset.inspect;
       if(action==='delete'){URL.revokeObjectURL(selected.url);state.items.splice(state.active,1);state.active=Math.max(0,Math.min(state.active,state.items.length-1));}
       if(action==='duplicate'){state.items.splice(state.active+1,0,{...selected});state.active++;}
-      if(action==='split'){const half=Math.max(.5,(Number(selected.duration)||3)/2);selected.duration=half;state.items.splice(state.active+1,0,{...selected,duration:half});state.active++;}
+      if(action==='split'){const half=Math.max(.5,(Number(selected.duration)||3)/2);const second={...selected,duration:half};if(selected.type==='video')second.trimStart=(Number(selected.trimStart)||0)+half;selected.duration=half;state.items.splice(state.active+1,0,second);state.active++;}
       if(action==='effectReset'){selected.effect='none';}
       renderTimeline();previewActive();renderLanes();
     });
@@ -661,8 +663,7 @@
           if (source.readyState < 2) await waitEvent(source, 'loadeddata');
           const inPoint=Math.max(0,Math.min((source.duration||1)-.2,Number(item.trimStart)||0));
           duration = Math.min(Math.max(.2,(source.duration||1)-inPoint),Math.max(.2,Number(item.duration)||source.duration||1));
-          source.currentTime = inPoint;
-          if(inPoint>0.01) await new Promise(resolve=>source.addEventListener('seeked',resolve,{once:true}));
+          if(inPoint>0.01){const seeked=new Promise(resolve=>source.addEventListener('seeked',resolve,{once:true}));source.currentTime=inPoint;await seeked;}else source.currentTime=0;
         }
         const frames = Math.max(1, Math.ceil(duration * fps));
         if (item.type === 'video') await source.play();
