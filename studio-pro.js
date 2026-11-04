@@ -361,7 +361,7 @@
     return { file, url, type:isImage?'image':'video', name:file.name||(isImage?'Photo capturée':'Vidéo'), duration:isImage?state.photoSeconds:3, durationAuto:!isImage, trimStart:0, transitionBefore:null };
   }
   function addFiles(files) {
-    const accepted=Array.from(files||[]).filter(f=>f&&(f.type.startsWith('image/')||f.type.startsWith('video/')));
+    const accepted=Array.from(files||[]).filter(f=>{const t=String(f?.type||'').toLowerCase(),n=String(f?.name||'').toLowerCase();return t.startsWith('image/')||t.startsWith('video/')||/\\.(jpe?g|png|webp|gif|bmp|avif|heic|heif|tif?f|mp4|m4v|mov|webm|mkv|3gp|mpeg|mpg|avi)$/i.test(n);});
     if(!accepted.length){setStatus('Choisis des photos ou des vidéos compatibles.');return;}
     pauseSequence();pushHistory();
     const first=state.items.length;
