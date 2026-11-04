@@ -123,7 +123,7 @@
  const creative=$('mcCreativeTools');
  if(creative){creative.dataset.gsGroup='voice';}
  const groups={
-  video:['video','photo'],photo:['photo'],audio:['audio'],voice:['voice'],text:['voice'],effects:['effects'],export:['export']
+  video:['video'],photo:['photo'],audio:['audio'],voice:['voice'],text:['voice'],effects:['effects'],export:['export']
  };
  const titles={video:'Montage vidéo & multipiste',photo:'Studio photo',audio:'Studio audio',voice:'Studio voix off',text:'Textes & titres',effects:'Effets & transitions',export:'Exportation & partage'};
  function showStudio(key){
