@@ -91,10 +91,10 @@
     clearPrefs(){if(confirm('Effacer les préférences locales MaliCut ?')){localStorage.removeItem('malicut_settings');render()}},
     support(){const body='ASSISTANCE MALICUT STUDIO\n\nProblème rencontré :\n\nAppareil : '+navigator.userAgent+'\nCompte : '+(window.user?.email||'non connecté');if(navigator.clipboard?.writeText){navigator.clipboard.writeText(body).then(()=>alert('Le modèle de signalement a été copié. Colle-le dans ton canal de contact MaliCut habituel.')).catch(()=>prompt('Copie ce signalement :',body))}else{prompt('Copie ce signalement :',body)}}
   };
-  document.querySelector('.top-actions')?.insertAdjacentHTML('beforeend','<button class="top-action" onclick="openPage(\'settings\')" aria-label="Paramètres" title="Paramètres">⚙️</button>');
-  const profile=document.getElementById('profile');
-  const hero=profile?.querySelector('.hero');
-  if(hero&&!document.getElementById('profileSettingsButton'))hero.insertAdjacentHTML('beforeend','<button id="profileSettingsButton" class="btn gold full" style="margin-top:12px" onclick="openPage(\'settings\')">⚙️ Ouvrir les paramètres</button>');
+  // Keep the single Settings shortcut already defined in app.html.
+
+  // Settings are opened from the single top navigation shortcut.
+
   render();
   window.addEventListener('load',async()=>{
     for(let i=0;i<40&&!window.sb;i++)await new Promise(resolve=>setTimeout(resolve,250));
