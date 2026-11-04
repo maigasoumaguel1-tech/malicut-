@@ -5,7 +5,7 @@
   const section = $('create');
   if (!section || !$('screen') || !$('video') || !$('file')) return;
 
-  const state = { items: [], active: 0, camera: null, photoSeconds: 3, transition: 'fade', busy: false, voiceBlob: null, voiceUrl: null, recorder: null, look: 'none', overlayItems: [], activeTrack: 'video', quality: '720', lastExportUrl: null };
+  const state = { items: [], active: 0, camera: null, photoSeconds: 3, transition: 'fade', busy: false, voiceBlob: null, voiceUrl: null, recorder: null, look: 'none', overlayItems: [], activeTrack: 'video', quality: '720', lastExportUrl: null, fitMode: 'cover' };
   const originalFile = $('file');
   originalFile.accept = 'video/*,image/*';
   originalFile.multiple = true;
@@ -165,8 +165,40 @@
   const imagePreview = document.createElement('img');
   imagePreview.id = 'mcImagePreview';
   imagePreview.alt = 'Aperçu de la photo sélectionnée';
-  imagePreview.style.cssText = 'display:none;width:100%;height:100%;object-fit:contain;position:absolute;inset:0;background:#000;border-radius:13px';
+  imagePreview.style.cssText = 'display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0;background:#000;border-radius:13px';
   $('screen').appendChild(imagePreview);
+  const formatPanel = [...section.querySelectorAll('.panel')].find(p => /^Format$/i.test(p.querySelector('b')?.textContent?.trim() || ''));
+  const formatGrid = formatPanel?.querySelector('.formats');
+  if (formatGrid) {
+    [['4/3','4:3'],['3/4','3:4'],['2/3','2:3']].forEach(([ratio,label]) => {
+      if ([...formatGrid.querySelectorAll('.format')].some(b => b.textContent.trim() === label)) return;
+      const button = document.createElement('button'); button.type='button'; button.className='format'; button.textContent=label;
+      button.addEventListener('click', () => { if (typeof window.ratioSet === 'function') window.ratioSet(ratio,button); applyStageFormat(ratio); });
+      formatGrid.appendChild(button);
+    });
+    const fitTools = document.createElement('div'); fitTools.className='range'; fitTools.style.marginTop='10px';
+    fitTools.innerHTML='<button type="button" class="btn gold" data-fit="cover">Remplir le cadre</button><button type="button" class="btn" data-fit="contain">Afficher l’image entière</button>';
+    formatPanel.appendChild(fitTools);
+    fitTools.addEventListener('click', e => { const b=e.target.closest('[data-fit]'); if(!b)return; state.fitMode=b.dataset.fit; fitTools.querySelectorAll('[data-fit]').forEach(x=>{x.classList.toggle('gold',x===b);x.classList.toggle('gold',x===b);}); applyFitMode(); });
+  }
+  function applyFitMode() {
+    const value=state.fitMode==='cover'?'cover':'contain';
+    imagePreview.style.objectFit=value; $('video').style.objectFit=value;
+    const buttons=formatPanel?.querySelectorAll('[data-fit]')||[];
+    buttons.forEach(b=>{b.classList.toggle('gold',b.dataset.fit===state.fitMode);});
+  }
+  function applyStageFormat(value) {
+    const normalized=String(value||'9/16').replace(':','/');
+    $('screen').style.aspectRatio=normalized;
+    $('screen').style.width='100%';
+    $('screen').style.maxHeight='56vh';
+    applyFitMode();
+  }
+  formatPanel?.querySelectorAll('.formats .format').forEach(b=>b.addEventListener('click',()=>{
+    const label=b.textContent.trim();
+    if (/^(9:16|16:9|1:1|4:5|4:3|3:4|2:3)$/.test(label)) applyStageFormat(label);
+  }));
+  applyFitMode();
 
   function setStatus(message) { const el = $('status'); if (el) el.textContent = message; }
   function stopCamera() {
@@ -265,7 +297,8 @@
     const sw = source.videoWidth || source.naturalWidth || source.width;
     const sh = source.videoHeight || source.naturalHeight || source.height;
     if (!sw || !sh) return;
-    const scale = Math.min(w / sw, h / sh), dw = sw * scale, dh = sh * scale;
+    const scale = state.fitMode === 'cover' ? Math.max(w / sw, h / sh) : Math.min(w / sw, h / sh);
+    const dw = sw * scale, dh = sh * scale;
     ctx.globalAlpha = alpha; ctx.drawImage(source, (w - dw) / 2, (h - dh) / 2, dw, dh); ctx.globalAlpha = 1;
   }
   let musicUrl = null;
@@ -388,9 +421,12 @@
     if (!state.items.length) { setStatus('Ajoute au moins une photo ou une vidéo.'); return; }
     if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) { setStatus('Export vidéo non pris en charge par ce navigateur.'); return; }
     state.busy = true; stopCamera();
-    const ratioText = document.querySelector('#create .formats .format.active')?.textContent?.trim() || '9:16';
+    const ratioPanel = [...section.querySelectorAll('.panel')].find(p => /^Format$/i.test(p.querySelector('b')?.textContent?.trim() || ''));
+    const ratioText = ratioPanel?.querySelector('.formats .format.active')?.textContent?.trim() || '9:16';
     const longEdge = Number(state.quality)||720;
-    const dims = ratioText === '16:9' ? [Math.round(longEdge*16/9),longEdge] : ratioText === '1:1' ? [longEdge,longEdge] : ratioText === '4:5' ? [Math.round(longEdge*4/5),longEdge] : [Math.round(longEdge*9/16),longEdge];
+    const ratios = {'9:16':[9,16],'16:9':[16,9],'1:1':[1,1],'4:5':[4,5],'4:3':[4,3],'3:4':[3,4],'2:3':[2,3]};
+    const pair = ratios[ratioText] || ratios['9:16'];
+    const dims = pair[0] >= pair[1] ? [longEdge,Math.round(longEdge*pair[1]/pair[0])] : [Math.round(longEdge*pair[0]/pair[1]),longEdge];
     const canvas = document.createElement('canvas'); canvas.width = dims[0]; canvas.height = dims[1];
     const ctx = canvas.getContext('2d');
     const stream = canvas.captureStream(30);
