@@ -79,6 +79,13 @@
     #mcProStudio #mcTimeline .mc-trim-handle:after{content:"";position:absolute;left:5px;top:42%;height:16%;border-left:2px solid #172219}
 
     @keyframes mcSequenceFade{from{opacity:0}to{opacity:1}}
+    @keyframes mcSequenceZoom{from{opacity:.25;transform:scale(1.13)}to{opacity:1;transform:scale(1)}}
+    @keyframes mcSequenceSlide{from{opacity:.2;transform:translateX(35px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes mcSequenceWipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+    @keyframes mcSequenceFlash{0%{opacity:.15;filter:brightness(3)}100%{opacity:1;filter:brightness(1)}}
+    @keyframes mcSequenceBlur{from{opacity:.3;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
+    @keyframes mcSequenceSpin{from{opacity:.2;transform:rotate(8deg) scale(.82)}to{opacity:1;transform:rotate(0) scale(1)}}
+    @keyframes mcSequenceGlitch{0%{transform:translateX(-5px);filter:hue-rotate(70deg)}40%{transform:translateX(5px);filter:hue-rotate(-70deg)}100%{transform:none;filter:none}}
     #mcProStudio .mc-playback-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 10px;background:#0b160f;border-top:1px solid var(--line)}
     #mcProStudio .mc-playback-controls button{border:1px solid #52685a;border-radius:9px;background:#18271d;color:#fff;padding:8px 12px;font-weight:800;font-size:12px}
     #mcProStudio .mc-playback-controls #mcPlayToggle{background:#f4f4f0;color:#172018;border-color:#fff;min-width:104px}
@@ -457,7 +464,8 @@
     }
     player.startedAt=performance.now();
     const transition=item.transitionBefore?.type||'none',stage=$('screen');
-    if(transition==='fade'){stage.style.animation='none';void stage.offsetWidth;stage.style.animation='mcSequenceFade '+Math.round((Number(item.transitionBefore?.duration)||.6)*1000)+'ms ease both';}
+    const previewAnimation={fade:'mcSequenceFade',zoom:'mcSequenceZoom',slide:'mcSequenceSlide',wipe:'mcSequenceWipe',flash:'mcSequenceFlash',blur:'mcSequenceBlur',spin:'mcSequenceSpin',glitch:'mcSequenceGlitch'}[transition];
+    if(previewAnimation){stage.style.animation='none';void stage.offsetWidth;stage.style.animation=previewAnimation+' '+Math.round((Number(item.transitionBefore?.duration)||.6)*1000)+'ms ease both';}
     const clip=$('mcTimeline').querySelector('.mc-clip[data-index="'+index+'"]');
     if(clip&&index>0)$('mcTimeline').scrollTo({left:Math.max(0,clip.offsetLeft-18),behavior:'smooth'});
     updatePlaybackButtons();updateTimelinePlayhead();return true;
