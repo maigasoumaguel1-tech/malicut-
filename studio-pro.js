@@ -476,7 +476,7 @@
       if(item?.type==='video')player.offset=Math.max(0,($('video').currentTime||0)-(Number(item.trimStart)||0));
       else if(item)player.offset=Math.min(clipDuration(item),player.baseOffset+(performance.now()-player.startedAt)/1000);
     }
-    player.playing=false;if(player.raf)cancelAnimationFrame(player.raf);player.raf=0;
+    player.playing=false;player.token++;if(player.raf)cancelAnimationFrame(player.raf);player.raf=0;
     $('video').pause();updatePlaybackButtons();updateTimelinePlayhead();
   }
   function stopSequence(){
@@ -552,7 +552,11 @@
     }, 'image/jpeg', .92);
   };
   $('mcPhotoDuration').onchange = e => { state.photoSeconds = Math.max(1, Math.min(30, Number(e.target.value) || 3)); };
-  $('mcTransition').onchange = e => { state.transition = e.target.value; };
+  $('mcTransition').onchange=e=>{
+    state.transition=e.target.value;
+    state.items.forEach((item,index)=>{if(index>0)item.transitionBefore=e.target.value==='cut'?null:{type:e.target.value,duration:.6};});
+    renderTimeline();setStatus('Transition appliquée entre les clips du montage.');
+  };
 
   async function waitEvent(el, event) {
     await new Promise((resolve, reject) => {
@@ -638,7 +642,11 @@
   };
   $('mcStopVoice').onclick = () => { if(state.recorder && state.recorder.state!=='inactive') state.recorder.stop(); };
   $('mcPreviewVoice').onclick = () => { voiceAudio.currentTime=0; voiceAudio.play(); };
-  $('mcTransitionPro').onchange = e => { state.transition=e.target.value; };
+  $('mcTransitionPro').onchange=e=>{
+    state.transition=e.target.value;
+    state.items.forEach((item,index)=>{if(index>0)item.transitionBefore=e.target.value==='none'||e.target.value==='cut'?null:{type:e.target.value,duration:Math.max(.2,Math.min(2,Number($('mcTransitionDuration').value)||.6))};});
+    renderTimeline();setStatus('Transition '+e.target.options[e.target.selectedIndex].text+' appliquée aux jonctions du montage.');
+  };
   $('mcCreativeTools').addEventListener('click',e=>{
     const suggest=e.target.closest('[data-suggest]');
     if(suggest){ const input=$('text'); if(input){input.value=suggest.dataset.suggest; $('textModal').classList.add('open');} }
