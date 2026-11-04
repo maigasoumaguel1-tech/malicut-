@@ -391,18 +391,19 @@
           const durationLabel=$('mcInspectorDuration');if(durationLabel&&state.active===gesture.index)durationLabel.textContent=item.duration.toFixed(1)+' s';
           renderLanes();return;
         }
-        if(Math.abs(dx)>10){gesture.moved=true;clip.classList.add('mc-dragging');clip.style.transform='translateX('+dx+'px)';}
+        if(Math.abs(dx)>10){gesture.moved=true;clip.classList.add('mc-dragging');clip.style.transform='translateX('+dx+'px)';const lane=$('mcTimeline'),rect=lane.getBoundingClientRect();if(e.clientX>rect.right-34)lane.scrollLeft+=14;else if(e.clientX<rect.left+34)lane.scrollLeft-=14;}
       });
       const finishGesture=e=>{
         if(!gesture||gesture.id!==e.pointerId)return;
         const g=gesture;gesture=null;clip.classList.remove('mc-dragging');clip.style.transform='';
         if(g.moved&&!g.edge){
           pushHistory();clip.dataset.suppressClick='1';
+          const timeline=$('mcTimeline'),tiles=[...timeline.querySelectorAll('.mc-clip')];
           const under=document.elementFromPoint(e.clientX,e.clientY)?.closest('#mcTimeline .mc-clip');
-          if(under){
-            const to=Number(under.dataset.index),from=g.index;
-            if(Number.isInteger(to)&&to!==from){const moved=state.items.splice(from,1)[0];state.items.splice(to,0,moved);state.active=to;state.player.index=to;state.player.offset=0;renderTimeline();previewActive();renderLanes();}
-          }
+          let to=under?Number(under.dataset.index):tiles.findIndex(tile=>e.clientX<tile.getBoundingClientRect().left+tile.getBoundingClientRect().width/2);
+          if(to<0)to=state.items.length-1;
+          const from=g.index;
+          if(Number.isInteger(to)&&to!==from){const moved=state.items.splice(from,1)[0];state.items.splice(to,0,moved);state.active=to;state.player.index=to;state.player.offset=0;renderTimeline();previewActive();renderLanes();}
         } else if(g.edge){renderTimeline();}
       };
       clip.addEventListener('pointerup',finishGesture);
@@ -428,9 +429,12 @@
     inspector.innerHTML='<div class="mc-inspector-name">CLIP '+(state.active+1)+' · '+String(selected.name).replace(/[<>&"]/g,'')+'</div>'+
       '<button data-inspect="split">✂ Scinder</button><button data-inspect="duplicate">＋ Dupliquer</button><button data-inspect="delete">Supprimer</button><button data-inspect="effectReset">Effet zéro</button>'+
       '<label>Durée du clip · <b id="mcInspectorDuration">'+(Number(selected.duration)||3).toFixed(1)+' s</b><input id="mcInspectorDurationRange" type="range" min="1" max="30" step=".5" value="'+(Number(selected.duration)||3)+'"></label>'+
-      '<label>Effet du clip <select id="mcInspectorEffect"><option value="none">Aucun effet</option><option value="fade">Fondu</option><option value="zoom">Zoom</option><option value="flash">Flash</option><option value="vignette">Cinéma</option></select></label>';
+      '<label>Effet du clip <select id="mcInspectorEffect"><option value="none">Aucun effet</option><option value="fade">Fondu</option><option value="zoom">Zoom</option><option value="flash">Flash</option><option value="vignette">Cinéma</option></select></label>'+
+      '<label>Animation du clip <select id="mcInspectorAnimation"><option value="none">Aucune</option><option value="fade">Fondu doux · Standard</option><option value="zoom">Zoom lent · Standard</option><option value="rise">Montée · Standard</option><option value="slide">Glissement · Standard</option><option value="bounce">Rebond · Standard</option><option value="pulse">Pulse · Standard</option><option value="blur">Flou · Standard</option><option value="rotate">Rotation · Standard</option><option value="parallax">Parallaxe · PRO</option><option value="kenburns">Ken Burns · PRO</option><option value="3d">Perspective 3D · PRO</option><option value="elastic">Élastique · PRO</option><option value="glitch">Glitch · PRO</option><option value="neon">Néon · PRO</option><option value="whip">Whip · PRO</option><option value="mosaic">Mosaïque · PRO</option></select></label>';
     const effect=$('mcInspectorEffect');effect.value=selected.effect||'none';
-    effect.onchange=()=>{selected.effect=effect.value;setStatus('Effet enregistré sur le clip '+(state.active+1)+'.');};
+    effect.onchange=()=>{pushHistory();selected.effect=effect.value;setStatus('Effet enregistré sur le clip '+(state.active+1)+'.');};
+    const animation=$('mcInspectorAnimation');animation.value=selected.animation||'none';
+    animation.onchange=()=>{const pro=['parallax','kenburns','3d','elastic','glitch','neon','whip','mosaic'];if(pro.includes(animation.value)&&window.MALICUT_IS_PRO!==true){animation.value=selected.animation||'none';setStatus('Cette animation est réservée à MaliCut Pro.');return;}pushHistory();selected.animation=animation.value;setStatus('Animation enregistrée sur le clip '+(state.active+1)+'.');};
     let durationHistorySaved=false;
     $('mcInspectorDurationRange').oninput=e=>{
       if(!durationHistorySaved){pushHistory();durationHistorySaved=true;}
@@ -488,8 +492,9 @@
     }
     player.startedAt=performance.now();
     const transition=item.transitionBefore?.type||'none',stage=$('screen');
-    const previewAnimation={fade:'mcSequenceFade',zoom:'mcSequenceZoom',slide:'mcSequenceSlide',wipe:'mcSequenceWipe',flash:'mcSequenceFlash',blur:'mcSequenceBlur',spin:'mcSequenceSpin',glitch:'mcSequenceGlitch'}[transition];
-    if(previewAnimation){stage.style.animation='none';void stage.offsetWidth;stage.style.animation=previewAnimation+' '+Math.round((Number(item.transitionBefore?.duration)||.6)*1000)+'ms ease both';}
+    const animationNames={fade:'mcSequenceFade',zoom:'mcSequenceZoom',slide:'mcSequenceSlide',wipe:'mcSequenceWipe',flash:'mcSequenceFlash',blur:'mcSequenceBlur',spin:'mcSequenceSpin',glitch:'mcSequenceGlitch',rise:'mcSequenceSlide',bounce:'mcTextBounce',pulse:'mcTextNeon',rotate:'mcSequenceSpin',parallax:'mcSequenceSlide',kenburns:'mcSequenceZoom','3d':'mcSequenceSpin',elastic:'mcTextBounce',neon:'mcTextNeon',whip:'mcSequenceSlide',mosaic:'mcTextGlitch'};
+    const previewAnimation=animationNames[item.animation]||animationNames[transition];
+    if(previewAnimation){stage.style.animation='none';void stage.offsetWidth;stage.style.animation=previewAnimation+' '+Math.round((Number(item.transitionBefore?.duration)||.8)*1000)+'ms ease both';}
     const clip=$('mcTimeline').querySelector('.mc-clip[data-index="'+index+'"]');
     if(clip&&index>0)$('mcTimeline').scrollTo({left:Math.max(0,clip.offsetLeft-18),behavior:'smooth'});
     updatePlaybackButtons();updateTimelinePlayhead();return true;
