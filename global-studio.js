@@ -147,7 +147,7 @@
   const btn=e.target.closest('[data-studio]');if(btn)showStudio(btn.dataset.studio);
  });
  $('gsHomeBtn').addEventListener('click',()=>showStudio('home'));
- $('gsClose').addEventListener('click',()=>{overlay.classList.remove('open');});
+ $('gsClose').addEventListener('click',()=>{if(typeof window.openPage==='function')window.openPage('home');overlay.classList.remove('open');});
  const observer=new MutationObserver(()=>{
   const active=create.classList.contains('active');
   overlay.classList.toggle('open',active);
