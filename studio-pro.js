@@ -97,7 +97,30 @@
     #mcProStudio .mc-transition-select[hidden]{display:none}
     #mcProStudio .mc-history-controls{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
     #mcProStudio .mc-history-controls button{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--p2);color:var(--txt)}
-    #mcProStudio .mc-test-overlay{position:absolute;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%);max-width:90%;padding:8px 12px;color:white;font-size:clamp(18px,5vw,38px);font-weight:900;text-align:center;text-shadow:0 2px 8px #000;background:#0003;border-radius:8px;pointer-events:none}
+    #mcProStudio .mc-test-overlay{position:absolute;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%);max-width:90%;padding:8px 12px;color:white;font-size:clamp(18px,5vw,38px);font-weight:900;text-align:center;text-shadow:0 2px 8px #000;background:#0003;border-radius:8px;pointer-events:none;white-space:pre-wrap;overflow-wrap:anywhere}
+    #mcProStudio .mc-timeline-shell{border:1px solid #344b5d;border-radius:18px;background:linear-gradient(145deg,#07111d,#0b1824 55%,#101d2b);box-shadow:0 12px 34px #0005}
+    #mcProStudio .mc-timeline-top{background:linear-gradient(90deg,#14283b,#172b3b);color:#dbeafe;padding:11px 13px;font-weight:800;letter-spacing:.04em}
+    #mcProStudio #mcTimeline{min-height:158px;padding:30px 12px 14px!important;gap:6px!important;background-color:#07111d;background-image:repeating-linear-gradient(90deg,transparent 0,transparent 41px,#ffffff0b 42px);scroll-behavior:auto;overscroll-behavior-x:contain}
+    #mcProStudio #mcTimeline .pro-item.mc-clip{border:1px solid #41617a;border-radius:11px;background:linear-gradient(160deg,#1c3448,#102333);box-shadow:0 4px 12px #0004;transition:border-color .12s,box-shadow .12s,opacity .12s}
+    #mcProStudio #mcTimeline .pro-item.mc-clip.active{border:2px solid #70d6ff;box-shadow:0 0 0 2px #70d6ff33,0 8px 20px #0007}
+    #mcProStudio #mcTimeline .mc-clip img,#mcProStudio #mcTimeline .mc-video-thumb{height:76px!important;border-radius:7px}
+    #mcProStudio #mcTimeline .pro-item small{font-size:10px;color:#f3f8ff}
+    #mcProStudio #mcTimeline .mc-clip-meta{font-size:9px;color:#a9c3d8}
+    #mcProStudio #mcTimeline .mc-trim-handle{width:16px;background:linear-gradient(#9ce8ff,#48a9d5);border-color:#d9f5ff}
+    #mcProStudio .mc-playback-controls{background:#101f2d;border-top:1px solid #30475a;padding:11px 13px}
+    #mcProStudio .mc-playback-controls button{border-color:#45647d;background:#1a3246;min-height:42px}
+    #mcProStudio .mc-playback-controls #mcPlayToggle{background:linear-gradient(135deg,#e5f7ff,#91d7f5);color:#102638;border:0}
+    #mcProStudio .mc-transition-button{width:30px;height:30px;border:2px solid #b7edff;background:linear-gradient(145deg,#fff,#dff6ff);color:#0c2433;box-shadow:0 0 0 4px #5dc9f533,0 4px 12px #0008}
+    #mcProStudio .mc-transition-select{top:36px;width:150px;background:#102638;border-color:#78c9ec;font-size:12px}
+    #mcProStudio .mc-history-controls button{min-height:38px;border-color:#45647d;background:#13283a;color:#eaf7ff}
+    #mcProStudio .mc-clip-inspector{background:#0d1b28;border:1px solid #30485b;border-radius:13px;padding:10px}
+    #mcProStudio #mcTimelineRuler{position:absolute;z-index:3;left:0;top:3px;height:22px;pointer-events:none}
+    #mcProStudio .mc-ruler-tick{position:absolute;top:0;height:18px;border-left:1px solid #7e9cb2;color:#9db9cc;font:9px ui-monospace,monospace;padding-left:3px}
+    #mcProStudio .mc-text-studio{display:grid;gap:10px}
+    #mcProStudio .mc-text-studio .mc-text-tools{display:grid;grid-template-columns:1fr;gap:8px}
+    #mcProStudio .mc-text-studio input,#mcProStudio .mc-text-studio select{min-height:42px}
+    #mcProStudio .mc-text-style-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    #mcProStudio .mc-text-style-grid label{display:grid;gap:5px;font-size:11px;color:var(--mut)}
     @keyframes mcTextPop{from{opacity:0;transform:translate(-50%,-50%) scale(.3)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
     @keyframes mcTextRise{from{opacity:0;transform:translate(-50%,30%)}to{opacity:1;transform:translate(-50%,-50%)}}
     @keyframes mcTextBounce{0%{transform:translate(-50%,-50%) scale(.4)}60%{transform:translate(-50%,-50%) scale(1.15)}100%{transform:translate(-50%,-50%) scale(1)}}
@@ -219,8 +242,26 @@
   creative.insertAdjacentHTML('beforeend','<div class="pro-head" style="margin-top:12px"><b>Texte animé dans la vidéo</b><span class="pro-badge">Standard + PRO</span></div><div class="mc-text-tools"><input id="mcOverlayText" type="text" maxlength="90" placeholder="Écris ton texte ici"><select id="mcOverlayMotion"><option value="fade">Fondu · Standard</option><option value="pop">Pop · Standard</option><option value="rise">Montée · Standard</option><option value="bounce">Rebond · Standard</option><option value="type">Machine à écrire · Standard</option><option value="neon">Néon · Standard</option><option value="glitch">Glitch · Standard</option><option value="zoom">Zoom · Standard</option><option value="parallax">Parallaxe · PRO</option><option value="kenburns">Ken Burns · PRO</option><option value="3d">Perspective 3D · PRO</option><option value="elastic">Élastique · PRO</option><option value="whip">Whip · PRO</option><option value="mosaic">Mosaïque · PRO</option><option value="spark">Étincelles · PRO</option><option value="wave">Vague · PRO</option></select><button type="button" class="btn gold" id="mcAddOverlayText">＋ Ajouter le texte</button><button type="button" class="btn" id="mcRemoveOverlayText">Retirer le texte</button></div><p class="pro-note">Le texte ajouté sera visible dans l’aperçu et intégré à l’export vidéo.</p>');
   panel.after(creative);
   let overlayText='',overlayMotion='fade';
+  let overlaySettings={position:'center',size:6.5,color:'#ffffff',background:'none'};
   let textLayer=$('screen').querySelector('.mc-test-overlay');
-  function renderOverlayText(){if(!overlayText){textLayer?.remove();textLayer=null;return;}if(!textLayer){textLayer=document.createElement('div');textLayer.className='mc-test-overlay';$('screen').appendChild(textLayer);}textLayer.textContent=overlayText;textLayer.style.animation=({fade:'mcSequenceFade',pop:'mcTextPop',rise:'mcTextRise',bounce:'mcTextBounce',type:'mcTextType',neon:'mcTextNeon',glitch:'mcTextGlitch',zoom:'mcSequenceZoom',parallax:'mcSequenceSlide',kenburns:'mcSequenceZoom','3d':'mcSequenceSpin',elastic:'mcTextBounce',whip:'mcSequenceSlide',mosaic:'mcTextGlitch',spark:'mcTextNeon',wave:'mcTextRise'})[overlayMotion]+' .8s ease both';}
+  function renderOverlayText(){
+    if(!overlayText){textLayer?.remove();textLayer=null;return;}
+    if(!textLayer){textLayer=document.createElement('div');textLayer.className='mc-test-overlay';$('screen').appendChild(textLayer);}
+    textLayer.textContent=overlayText;
+    textLayer.style.left='50%';textLayer.style.top=overlaySettings.position==='top'?'16%':overlaySettings.position==='bottom'?'84%':'50%';
+    textLayer.style.transform='translate(-50%,-50%)';textLayer.style.fontSize='clamp(18px,'+overlaySettings.size+'vw,64px)';
+    textLayer.style.color=overlaySettings.color;textLayer.style.background=overlaySettings.background==='dark'?'#07111ddd':overlaySettings.background==='soft'?'#07111d88':'transparent';
+    const style=$('mcTextStyle')?.value||'bold';textLayer.style.fontFamily=style==='cinema'?'Georgia,serif':'system-ui,sans-serif';
+    textLayer.style.fontWeight=style==='subtitle'?'600':'900';textLayer.style.fontStyle=style==='cinema'?'italic':'normal';
+    textLayer.style.textShadow=style==='neon'?'0 0 8px '+overlaySettings.color+',0 0 22px '+overlaySettings.color:'0 2px 10px #000';
+    textLayer.style.webkitTextStroke=style==='outline'?'1px #111':'0';
+    textLayer.style.animation=({fade:'mcSequenceFade',pop:'mcTextPop',rise:'mcTextRise',bounce:'mcTextBounce',type:'mcTextType',neon:'mcTextNeon',glitch:'mcTextGlitch',zoom:'mcSequenceZoom',parallax:'mcSequenceSlide',kenburns:'mcSequenceZoom','3d':'mcSequenceSpin',elastic:'mcTextBounce',whip:'mcSequenceSlide',mosaic:'mcTextGlitch',spark:'mcTextNeon',wave:'mcTextRise'})[overlayMotion]+' .8s ease both';
+  }
+  ['mcOverlayPosition','mcOverlaySize','mcOverlayColor','mcOverlayBackground','mcTextStyle'].forEach(id=>$(id)?.addEventListener('input',()=>{
+    overlaySettings.position=$('mcOverlayPosition').value;overlaySettings.size=Number($('mcOverlaySize').value)||6.5;overlaySettings.color=$('mcOverlayColor').value;overlaySettings.background=$('mcOverlayBackground').value;renderOverlayText();
+  }));
+  $('mcOverlayPosition').onchange=()=>{overlaySettings.position=$('mcOverlayPosition').value;renderOverlayText();};
+  $('mcOverlayBackground').onchange=()=>{overlaySettings.background=$('mcOverlayBackground').value;renderOverlayText();};
   $('mcAddOverlayText').onclick=()=>{const value=$('mcOverlayText').value.trim();if(!value){setStatus('Écris un texte avant de l’ajouter.');return;}const motion=$('mcOverlayMotion').value;const pro=['parallax','kenburns','3d','elastic','whip','mosaic','spark','wave'];if(pro.includes(motion)&&window.MALICUT_IS_PRO!==true){setStatus('Cette animation est réservée à MaliCut Pro.');return;}overlayText=value;overlayMotion=motion;renderOverlayText();setStatus('Texte animé ajouté à la vidéo.');};
   $('mcRemoveOverlayText').onclick=()=>{overlayText='';renderOverlayText();setStatus('Texte retiré de l’aperçu.');};
 
@@ -237,6 +278,7 @@
     </div>
     <p class="pro-note" id="mcQualityNote">720p · Export HD standard. 1080p disponible également.</p>
     <div class="pro-head" style="margin-top:12px"><b>Partager après export</b></div>
+    <label class="pro-note" style="display:flex;gap:9px;align-items:flex-start;margin:8px 0"><input id="mcAutoPublish" type="checkbox" style="width:auto;min-width:18px;margin-top:2px"> <span><b>Publier automatiquement mes prochains exports dans la communauté MaliCut</b><br>Activé uniquement avec ton accord. Tu peux désactiver ce réglage à tout moment.</span></label>
     <div class="pro-actions" id="mcShareActions" style="opacity:.55">
       <button class="btn" data-share="tiktok" disabled>TikTok</button><button class="btn" data-share="snapchat" disabled>Snapchat</button>
       <button class="btn" data-share="whatsapp" disabled>WhatsApp</button><button class="btn" data-share="instagram" disabled>Instagram</button>
@@ -245,6 +287,18 @@
     <p class="pro-note" id="mcShareNote">Les options de partage seront activées après un export réussi. La disponibilité dépend des applications installées et des capacités Android.</p>
   `;
   creative.after(qualityPanel);
+  const textStudio=document.createElement('div');
+  textStudio.className='panel mc-text-studio';
+  textStudio.id='mcTextStudio';
+  textStudio.innerHTML='<div class="pro-head"><b>Texte & titres professionnels</b><span class="pro-badge">Studio texte</span></div><p class="pro-note">Crée un titre, règle son style, sa position et son animation, puis vérifie le résultat dans l’aperçu et dans l’export.</p><div class="mc-text-style-grid"><label>Position<select id="mcOverlayPosition"><option value="center">Centre</option><option value="top">Haut</option><option value="bottom">Bas</option></select></label><label>Taille du texte<input id="mcOverlaySize" type="range" min="3" max="11" step=".5" value="6.5"></label><label>Couleur du texte<input id="mcOverlayColor" type="color" value="#ffffff"></label><label>Fond du texte<select id="mcOverlayBackground"><option value="none">Sans fond</option><option value="dark">Fond sombre</option><option value="soft">Fond transparent</option></select></label></div>';
+  const overlayTools=creative.querySelector('.mc-text-tools');
+  const textMotionRange=[...creative.querySelectorAll('.range')].find(el=>el.querySelector('#mcTextMotion'));
+  if(overlayTools)textStudio.appendChild(overlayTools);
+  if(textMotionRange)textStudio.appendChild(textMotionRange);
+  qualityPanel.after(textStudio);
+  const autoPublish=$('mcAutoPublish');
+  autoPublish.checked=localStorage.getItem('malicut_auto_publish')==='true';
+  autoPublish.addEventListener('change',()=>localStorage.setItem('malicut_auto_publish',String(autoPublish.checked)));
   const imagePreview = document.createElement('img');
   imagePreview.id = 'mcImagePreview';
   imagePreview.alt = 'Aperçu de la photo sélectionnée';
@@ -342,7 +396,7 @@
     }
     const total=state.items.reduce((n,x)=>n+(Number(x.duration)||3),0);
     target.innerHTML = state.items.map((item,i)=>{
-      const seconds=Math.max(.5,Number(item.duration)||3),width=Math.max(76,Math.min(260,seconds*28))*timelineZoom;
+      const seconds=Math.max(.5,Number(item.duration)||3),width=Math.max(96,Math.min(360,seconds*42))*timelineZoom;
       const transition=state.items[i+1]?.transitionBefore?.type||'none';
       const clip='<div class="pro-item mc-clip '+(i===state.active?'active':'')+'" data-index="'+i+'" style="--mc-clip-width:'+width+'px" draggable="true">'+
         '<i class="mc-trim-handle start" data-trim="start" aria-label="Début du clip"></i><i class="mc-trim-handle end" data-trim="end" aria-label="Fin du clip"></i>'+
@@ -351,6 +405,10 @@
       const marker=i<state.items.length-1?'<div class="mc-transition-slot" data-boundary="'+(i+1)+'"><button type="button" class="mc-transition-button" aria-label="Transition entre les clips '+(i+1)+' et '+(i+2)+'">'+(transition==='none'?'✧':'✓')+'</button><select class="mc-transition-select" data-transition-index="'+(i+1)+'" hidden><option value="none">Sans transition</option><option value="fade">Fondu</option><option value="zoom">Zoom</option><option value="slide">Glissement</option><option value="wipe">Balayage</option><option value="flash">Flash blanc</option><option value="blur">Flou</option><option value="spin">Rotation</option><option value="glitch">Glitch</option><option value="push">Push latéral</option><option value="circle">Ouverture circulaire</option><option value="vertical">Rideau vertical</option><option value="diagonal">Balayage diagonal</option><option value="dissolve">Dissolution</option><option value="rotate3d">Rotation 3D</option><option value="stretch">Étirement</option></select></div>':'';
       return clip+marker;
     }).join('');
+    const ruler=document.createElement('div');ruler.id='mcTimelineRuler';ruler.style.width=Math.max(target.clientWidth,total*42*timelineZoom+state.items.length*34+24)+'px';
+    const tickStep=total>45?5:total>18?2:1;
+    for(let sec=0;sec<=total;sec+=tickStep){const tick=document.createElement('span');tick.className='mc-ruler-tick';tick.style.left=(sec*42*timelineZoom)+'px';tick.textContent=formatTime(sec);ruler.appendChild(tick);}
+    target.appendChild(ruler);
     const playhead=document.createElement('div');playhead.className='mc-timeline-playhead';playhead.id='mcTimelinePlayhead';target.appendChild(playhead);
     target.querySelectorAll('.mc-transition-slot').forEach(slot=>{
       const button=slot.querySelector('.mc-transition-button'),select=slot.querySelector('.mc-transition-select');
@@ -378,20 +436,20 @@
         const dx=e.clientX-gesture.x;
         if(gesture.edge){
           e.preventDefault();
-          const delta=dx/(28*timelineZoom);
+          const delta=dx/(42*timelineZoom);
           const item=state.items[gesture.index];
           if(gesture.edge==='end'){if(!gesture.saved){pushHistory();gesture.saved=true;}item.duration=Math.max(.5,Math.min(30,gesture.originalDuration+delta));item.durationAuto=false;}
           else if(item.type==='video'){
             const shift=Math.max(-gesture.originalStart,Math.min(gesture.originalDuration-.5,delta));
             if(!gesture.saved){pushHistory();gesture.saved=true;}item.trimStart=gesture.originalStart+shift;item.duration=Math.max(.5,gesture.originalDuration-shift);item.durationAuto=false;
           }
-          const width=Math.max(76,Math.min(260,item.duration*28))*timelineZoom;
+          const width=Math.max(96,Math.min(360,item.duration*42))*timelineZoom;
           clip.style.width=width+'px';clip.style.minWidth=width+'px';clip.style.setProperty('--mc-clip-width',width+'px');
           const meta=clip.querySelector('.mc-clip-meta');if(meta)meta.textContent=item.duration.toFixed(1)+' s';
           const durationLabel=$('mcInspectorDuration');if(durationLabel&&state.active===gesture.index)durationLabel.textContent=item.duration.toFixed(1)+' s';
           renderLanes();return;
         }
-        if(Math.abs(dx)>10){gesture.moved=true;clip.classList.add('mc-dragging');clip.style.transform='translateX('+dx+'px)';const lane=$('mcTimeline'),rect=lane.getBoundingClientRect();if(e.clientX>rect.right-34)lane.scrollLeft+=14;else if(e.clientX<rect.left+34)lane.scrollLeft-=14;}
+        if(Math.abs(dx)>6){gesture.moved=true;clip.classList.add('mc-dragging');clip.style.transform='translateX('+dx+'px)';const lane=$('mcTimeline'),rect=lane.getBoundingClientRect();if(e.clientX>rect.right-42)lane.scrollLeft+=20;else if(e.clientX<rect.left+42)lane.scrollLeft-=20;}
       });
       const finishGesture=e=>{
         if(!gesture||gesture.id!==e.pointerId)return;
@@ -441,7 +499,7 @@
       selected.duration=Number(e.target.value);selected.durationAuto=false;
       $('mcInspectorDuration').textContent=selected.duration.toFixed(1)+' s';
       const clip=target.querySelector('.mc-clip.active');
-      if(clip){const width=Math.max(76,Math.min(260,selected.duration*28))*timelineZoom;clip.style.width=width+'px';clip.style.minWidth=width+'px';clip.style.setProperty('--mc-clip-width',width+'px');}
+      if(clip){const width=Math.max(96,Math.min(360,selected.duration*42))*timelineZoom;clip.style.width=width+'px';clip.style.minWidth=width+'px';clip.style.setProperty('--mc-clip-width',width+'px');}
       renderLanes();
     };
     inspector.querySelectorAll('[data-inspect]').forEach(btn=>btn.onclick=()=>{
@@ -465,6 +523,7 @@
     const clip=target?.querySelector('.mc-clip[data-index="'+player.index+'"]');if(!marker||!clip)return;
     const local=player.playing&&item.type==='video'?Math.max(0,($('video').currentTime||0)-(Number(item.trimStart)||0)):player.offset;
     marker.style.left=(clip.offsetLeft+Math.min(1,Math.max(0,local/clipDuration(item)))*clip.offsetWidth)+'px';
+    if(player.playing){const markerX=clip.offsetLeft+Math.min(1,Math.max(0,local/clipDuration(item)))*clip.offsetWidth;const viewLeft=target.scrollLeft,viewRight=viewLeft+target.clientWidth;if(markerX>viewRight-54)target.scrollLeft=Math.min(target.scrollWidth-target.clientWidth,markerX-target.clientWidth+72);else if(markerX<viewLeft+18)target.scrollLeft=Math.max(0,markerX-18);}
     let before=0;for(let i=0;i<player.index;i++)before+=clipDuration(state.items[i]);
     $('mcTimecode').textContent=formatTime(before+local)+' / '+formatTime(sequenceDuration());
   }
@@ -854,7 +913,7 @@
           if(item.type==='video'&&source.ended)break;
           const alpha=transition==='fade'&&frame<transitionFrames&&index>0?frame/transitionFrames:1;
           drawFrame(source,alpha,frame,frames,transition,transitionFrames,item.animation||'none');
-          if(overlayText){ctx.save();const p=frame/Math.max(1,frames-1);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold '+Math.round(canvas.width*.065)+'px sans-serif';ctx.lineWidth=Math.max(2,canvas.width*.004);ctx.strokeStyle='rgba(0,0,0,.8)';ctx.fillStyle='#fff';let shown=overlayText;if(overlayMotion==='type')shown=overlayText.slice(0,Math.max(1,Math.ceil(overlayText.length*p)));if(overlayMotion==='pop'||overlayMotion==='bounce'||overlayMotion==='zoom'||overlayMotion==='elastic')ctx.translate(canvas.width/2,canvas.height/2),ctx.scale(.35+.65*Math.min(1,p*2),.35+.65*Math.min(1,p*2)),ctx.translate(-canvas.width/2,-canvas.height/2);if(overlayMotion==='rise')ctx.translate(0,canvas.height*(.18*(1-p)));if(overlayMotion==='neon'||overlayMotion==='spark')ctx.shadowColor='#27e5a3',ctx.shadowBlur=8+Math.sin(p*30)*8;if(overlayMotion==='glitch'&&Math.floor(p*24)%3===0)ctx.translate(Math.sin(frame*19)*4,0);const words=shown.split(' ');let line='',lines=[];for(const word of words){const test=line?line+' '+word:word;if(ctx.measureText(test).width>canvas.width*.86&&line){lines.push(line);line=word;}else line=test;}if(line)lines.push(line);const lineH=canvas.width*.078,startY=canvas.height/2-(lines.length-1)*lineH/2;lines.forEach((txt,j)=>{ctx.strokeText(txt,canvas.width/2,startY+j*lineH);ctx.fillText(txt,canvas.width/2,startY+j*lineH);});ctx.restore();}
+          if(overlayText){ctx.save();const p=frame/Math.max(1,frames-1);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=(($('mcTextStyle')?.value==='cinema'?'italic 700 ':'bold ')+Math.round(canvas.width*(overlaySettings.size/100))+'px '+($('mcTextStyle')?.value==='cinema'?'Georgia':'sans-serif'));ctx.lineWidth=Math.max(2,canvas.width*.004);ctx.strokeStyle='rgba(0,0,0,.8)';ctx.fillStyle=overlaySettings.color;let shown=overlayText;if(overlayMotion==='type')shown=overlayText.slice(0,Math.max(1,Math.ceil(overlayText.length*p)));if(overlayMotion==='pop'||overlayMotion==='bounce'||overlayMotion==='zoom'||overlayMotion==='elastic')ctx.translate(canvas.width/2,canvas.height/2),ctx.scale(.35+.65*Math.min(1,p*2),.35+.65*Math.min(1,p*2)),ctx.translate(-canvas.width/2,-canvas.height/2);if(overlayMotion==='rise')ctx.translate(0,canvas.height*(.18*(1-p)));if(overlayMotion==='neon'||overlayMotion==='spark')ctx.shadowColor='#27e5a3',ctx.shadowBlur=8+Math.sin(p*30)*8;if(overlayMotion==='glitch'&&Math.floor(p*24)%3===0)ctx.translate(Math.sin(frame*19)*4,0);const words=shown.split(' ');let line='',lines=[];for(const word of words){const test=line?line+' '+word:word;if(ctx.measureText(test).width>canvas.width*.86&&line){lines.push(line);line=word;}else line=test;}if(line)lines.push(line);const lineH=canvas.width*.078,baseY=overlaySettings.position==='top'?canvas.height*.18:overlaySettings.position==='bottom'?canvas.height*.82:canvas.height/2,startY=baseY-(lines.length-1)*lineH/2;if(overlaySettings.background!=='none'){ctx.fillStyle=overlaySettings.background==='dark'?'rgba(7,17,29,.86)':'rgba(7,17,29,.42)';const maxWidth=Math.min(canvas.width*.9,Math.max(...lines.map(t=>ctx.measureText(t).width))+32);ctx.fillRect((canvas.width-maxWidth)/2,startY-lineH*.55,maxWidth,lines.length*lineH+lineH*.1);}lines.forEach((txt,j)=>{ctx.strokeText(txt,canvas.width/2,startY+j*lineH);ctx.fillText(txt,canvas.width/2,startY+j*lineH);});ctx.restore();}
           $('bar').style.width = Math.round(((index + frame/frames) / state.items.length) * 100) + '%';
           setStatus('Export · média ' + (index + 1) + '/' + state.items.length);
           await new Promise(resolve => setTimeout(resolve, 1000/fps));
@@ -880,7 +939,9 @@
       setTimeout(() => URL.revokeObjectURL(url), 60000);
       localStorage.setItem('malicut_exports', +(localStorage.getItem('malicut_exports') || 0) + 1);
       if ($('exports')) $('exports').textContent = localStorage.getItem('malicut_exports');
-      $('bar').style.width = '100%'; setStatus('Export terminé · '+state.quality+'p · vidéo WebM enregistrée.');
+      $('bar').style.width = '100%'; setStatus('Export terminé · '+state.quality+'p · vidéo prête à partager.');
+      window.MaliCutGlobalStudio?.show('export');
+      if(autoPublish.checked&&typeof window.publish==='function'){setStatus('Export terminé · publication dans la communauté MaliCut…');await window.publish();}
     } catch (e) {
       try { if (recorder.state !== 'inactive') recorder.stop(); } catch (_) {}
       await stopped.catch(() => {});
