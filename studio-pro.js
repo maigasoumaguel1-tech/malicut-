@@ -772,7 +772,17 @@
       if(animation==='blur')ctx.filter='blur('+Math.round(8*(1-progress))+'px)';
       if(animation==='glitch'||animation==='mosaic')ctx.filter='contrast('+(1.25-.25*progress)+') saturate(1.4)';
       fit(ctx,source,canvas.width,canvas.height,transition==='flash'&&progress<.08?0.35:alpha);
-      ctx.filter='none';ctx.restore();
+      if(progress<transitionFrames/total){
+        const q=Math.max(0,Math.min(1,progress*total/Math.max(1,transitionFrames)));
+        if(transition==='circle'){ctx.globalCompositeOperation='destination-in';ctx.beginPath();ctx.arc(canvas.width/2,canvas.height/2,Math.max(canvas.width,canvas.height)*q,0,Math.PI*2);ctx.fill();}
+        if(transition==='vertical'){ctx.fillStyle='#050505';ctx.fillRect(0,0,canvas.width,canvas.height*(1-q));}
+        if(transition==='diagonal'){ctx.fillStyle='#050505';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(canvas.width*(1-q),0);ctx.lineTo(0,canvas.height*(1-q));ctx.closePath();ctx.fill();}
+        if(transition==='dissolve'){ctx.globalAlpha=1-q;ctx.fillStyle='#050505';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.globalAlpha=1;}
+        if(transition==='push'){ctx.globalAlpha=1-q;ctx.fillStyle='#050505';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.globalAlpha=1;}
+        if(transition==='rotate3d'){ctx.globalAlpha=Math.max(.15,q);ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.globalAlpha=1;}
+        if(transition==='stretch'){ctx.globalAlpha=Math.max(.2,q);ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.globalAlpha=1;}
+      }
+      ctx.filter='none';ctx.globalCompositeOperation='source-over';ctx.restore();
       overlaySources.forEach((overlay,overlayIndex)=>{ctx.save();ctx.globalAlpha=.92;const scale=Math.min(canvas.width/overlay.naturalWidth,canvas.height/overlay.naturalHeight);const w=overlay.naturalWidth*scale,h=overlay.naturalHeight*scale;ctx.drawImage(overlay,(canvas.width-w)/2,(canvas.height-h)/2,w,h);ctx.restore();});
       if(transition==='wipe'&&progress<transitionFrames/total){ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width*(1-progress*total/transitionFrames),canvas.height);}
       if(transition==='flash'&&progress<.08){ctx.fillStyle='rgba(255,255,255,'+(1-progress/.08)+')';ctx.fillRect(0,0,canvas.width,canvas.height);}
