@@ -308,7 +308,7 @@
   function addFiles(files) {
     const accepted=Array.from(files||[]).filter(f=>f&&(f.type.startsWith('image/')||f.type.startsWith('video/')));
     if(!accepted.length){setStatus('Choisis des photos ou des vidéos compatibles.');return;}
-    pauseSequence();
+    pauseSequence();pushHistory();
     const first=state.items.length;
     accepted.forEach(file=>{
       const item=makeItem(file,URL.createObjectURL(file));state.items.push(item);
@@ -558,7 +558,7 @@
     picker.onchange = () => addFiles(picker.files); picker.click();
   };
   $('mcClear').onclick=()=>{
-    stopSequence();state.items=[];state.active=0;state.player.index=0;state.player.offset=0;
+    if(state.items.length)pushHistory();stopSequence();state.items=[];state.active=0;state.player.index=0;state.player.offset=0;
     renderTimeline();previewActive();setStatus('Nouveau projet prêt.');
   };
   $('mcCamera').onclick = async () => {
