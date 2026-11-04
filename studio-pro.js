@@ -298,7 +298,7 @@
         probe.onerror=()=>{item.durationAuto=false;};
       }
     });
-    state.active=first;renderTimeline();previewActive();renderLanes();
+    state.active=first;state.player.index=first;state.player.offset=0;renderTimeline();previewActive();renderLanes();
     setStatus(accepted.length+' média ajouté(s) à la piste principale · '+state.items.length+' clip(s) au total.');
   }
   let timelineZoom=1;
@@ -371,7 +371,7 @@
           const under=document.elementFromPoint(e.clientX,e.clientY)?.closest('#mcTimeline .mc-clip');
           if(under){
             const to=Number(under.dataset.index),from=g.index;
-            if(Number.isInteger(to)&&to!==from){const moved=state.items.splice(from,1)[0];state.items.splice(to,0,moved);state.active=to;renderTimeline();previewActive();renderLanes();}
+            if(Number.isInteger(to)&&to!==from){const moved=state.items.splice(from,1)[0];state.items.splice(to,0,moved);state.active=to;state.player.index=to;state.player.offset=0;renderTimeline();previewActive();renderLanes();}
           }
         } else if(g.edge){renderTimeline();}
       };
@@ -390,7 +390,7 @@
         e.preventDefault();const from=Number(e.dataTransfer.getData('text/plain')),to=Number(clip.dataset.index);
         if(!Number.isInteger(from)||from===to||!state.items[from])return;
         const moved=state.items.splice(from,1)[0];state.items.splice(to,0,moved);
-        state.active=to;renderTimeline();previewActive();renderLanes();
+        state.active=to;state.player.index=to;state.player.offset=0;renderTimeline();previewActive();renderLanes();
       });
     });
     const selected=state.items[state.active];
@@ -410,9 +410,9 @@
     };
     inspector.querySelectorAll('[data-inspect]').forEach(btn=>btn.onclick=()=>{
       const action=btn.dataset.inspect;
-      if(action==='delete'){URL.revokeObjectURL(selected.url);state.items.splice(state.active,1);state.active=Math.max(0,Math.min(state.active,state.items.length-1));}
+      if(action==='delete'){pauseSequence();URL.revokeObjectURL(selected.url);state.items.splice(state.active,1);state.active=Math.max(0,Math.min(state.active,state.items.length-1));state.player.index=state.active;state.player.offset=0;}
       if(action==='duplicate'){state.items.splice(state.active+1,0,{...selected});state.active++;}
-      if(action==='split'){pauseSequence();const half=Math.max(.5,(Number(selected.duration)||3)/2);const second={...selected,duration:half,durationAuto:false,transitionBefore:null};if(selected.type==='video')second.trimStart=(Number(selected.trimStart)||0)+half;selected.duration=half;selected.durationAuto=false;state.items.splice(state.active+1,0,second);state.active++;}
+      if(action==='split'){pauseSequence();const half=Math.max(.5,(Number(selected.duration)||3)/2);const second={...selected,duration:half,durationAuto:false,transitionBefore:null};if(selected.type==='video')second.trimStart=(Number(selected.trimStart)||0)+half;selected.duration=half;selected.durationAuto=false;state.items.splice(state.active+1,0,second);state.active++;state.player.index=state.active;state.player.offset=0;}
       if(action==='effectReset'){selected.effect='none';}
       renderTimeline();previewActive();renderLanes();
     });
@@ -705,22 +705,20 @@
     const stopped = new Promise(resolve => recorder.onstop = resolve);
     let overlaySources = [];
     const fps = 30;
-    const transitionFrames = Math.max(1, Math.round(Math.max(.2,Math.min(2,Number($('mcTransitionDuration').value)||.6))*fps));
-    const fadeFrames = state.transition === 'fade' ? transitionFrames : 0;
-    const drawFrame = (source, alpha=1, frame=0, total=1) => {
+    const drawFrame = (source,alpha=1,frame=0,total=1,transition='cut',transitionFrames=0) => {
       const progress=Math.max(0,Math.min(1,frame/Math.max(1,total)));
       ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.save();
-      if(state.transition==='zoom' && progress<transitionFrames/total){const z=1+(.16*(1-progress*total/transitionFrames));ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(z,z);ctx.translate(-canvas.width/2,-canvas.height/2);}
-      if(state.transition==='slide' && progress<transitionFrames/total){ctx.translate(canvas.width*(1-progress*total/transitionFrames),0);}
-      if(state.transition==='spin' && progress<transitionFrames/total){ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate((1-progress*total/transitionFrames)*.12);ctx.translate(-canvas.width/2,-canvas.height/2);}
-      if(state.transition==='blur' && progress<transitionFrames/total)ctx.filter='blur('+Math.round(12*(1-progress*total/transitionFrames))+'px)';
-      fit(ctx,source,canvas.width,canvas.height, state.transition==='flash'&&progress<.08?0.35:alpha);
+      if(transition==='zoom' && progress<transitionFrames/total){const z=1+(.16*(1-progress*total/transitionFrames));ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(z,z);ctx.translate(-canvas.width/2,-canvas.height/2);}
+      if(transition==='slide' && progress<transitionFrames/total){ctx.translate(canvas.width*(1-progress*total/transitionFrames),0);}
+      if(transition==='spin' && progress<transitionFrames/total){ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate((1-progress*total/transitionFrames)*.12);ctx.translate(-canvas.width/2,-canvas.height/2);}
+      if(transition==='blur' && progress<transitionFrames/total)ctx.filter='blur('+Math.round(12*(1-progress*total/transitionFrames))+'px)';
+      fit(ctx,source,canvas.width,canvas.height, transition==='flash'&&progress<.08?0.35:alpha);
       ctx.filter='none';ctx.restore();
       overlaySources.forEach((overlay,overlayIndex)=>{ctx.save();ctx.globalAlpha=.92;const scale=Math.min(canvas.width/overlay.naturalWidth,canvas.height/overlay.naturalHeight);const w=overlay.naturalWidth*scale,h=overlay.naturalHeight*scale;ctx.drawImage(overlay,(canvas.width-w)/2,(canvas.height-h)/2,w,h);ctx.restore();});
-      if(state.transition==='wipe'&&progress<transitionFrames/total){ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width*(1-progress*total/transitionFrames),canvas.height);}
+      if(transition==='wipe'&&progress<transitionFrames/total){ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width*(1-progress*total/transitionFrames),canvas.height);}
       if(state.transition==='flash'&&progress<.08){ctx.fillStyle='rgba(255,255,255,'+(1-progress/.08)+')';ctx.fillRect(0,0,canvas.width,canvas.height);}
-      if(state.transition==='glitch'&&progress<.15){ctx.fillStyle='rgba(0,220,255,.25)';ctx.fillRect(Math.random()*canvas.width,0,canvas.width*.8,canvas.height);ctx.fillStyle='rgba(255,0,100,.2)';ctx.fillRect(0,Math.random()*canvas.height,canvas.width,canvas.height*.08);}
+      if(transition==='glitch'&&progress<.15){ctx.fillStyle='rgba(0,220,255,.25)';ctx.fillRect(Math.random()*canvas.width,0,canvas.width*.8,canvas.height);ctx.fillStyle='rgba(255,0,100,.2)';ctx.fillRect(0,Math.random()*canvas.height,canvas.width,canvas.height*.08);}
       if(state.look==='shake'){ctx.save();ctx.globalAlpha=.25;ctx.fillStyle='#fff';ctx.fillRect(Math.sin(frame*1.7)*8,Math.cos(frame*2.1)*8,canvas.width,canvas.height);ctx.restore();}
       if(state.look==='pulse'){const p=1+Math.sin(frame*.45)*.012;ctx.save();ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(p,p);ctx.translate(-canvas.width/2,-canvas.height/2);ctx.restore();}
       if(state.look==='soft'){ctx.fillStyle='rgba(255,230,245,.06)';ctx.fillRect(0,0,canvas.width,canvas.height);}
@@ -780,12 +778,14 @@
           duration = Math.min(Math.max(.2,(source.duration||1)-inPoint),Math.max(.2,Number(item.duration)||source.duration||1));
           if(inPoint>0.01){const seeked=new Promise(resolve=>source.addEventListener('seeked',resolve,{once:true}));source.currentTime=inPoint;await seeked;}else source.currentTime=0;
         }
-        const frames = Math.max(1, Math.ceil(duration * fps));
-        if (item.type === 'video') await source.play();
-        for (let frame = 0; frame < frames; frame++) {
-          if (item.type === 'video' && source.ended) break;
-          const alpha = fadeFrames && frame < fadeFrames && index > 0 ? frame / fadeFrames : 1;
-          drawFrame(source, alpha, frame, frames);
+        const frames=Math.max(1,Math.ceil(duration*fps));
+        const transition=item.transitionBefore?.type||'cut';
+        const transitionFrames=index>0?Math.max(1,Math.round(Math.max(.2,Math.min(2,Number(item.transitionBefore?.duration)||Number($('mcTransitionDuration').value)||.6))*fps)):0;
+        if(item.type==='video')await source.play();
+        for(let frame=0;frame<frames;frame++){
+          if(item.type==='video'&&source.ended)break;
+          const alpha=transition==='fade'&&frame<transitionFrames&&index>0?frame/transitionFrames:1;
+          drawFrame(source,alpha,frame,frames,transition,transitionFrames);
           $('bar').style.width = Math.round(((index + frame/frames) / state.items.length) * 100) + '%';
           setStatus('Export · média ' + (index + 1) + '/' + state.items.length);
           await new Promise(resolve => setTimeout(resolve, 1000/fps));
@@ -827,5 +827,5 @@
   if (exportButton) exportButton.textContent = '⬇ Exporter le montage complet';
   window.addEventListener('beforeunload', stopCamera);
   renderTimeline();
-  window.MaliCutStudioPro = { addFiles, getProject: () => state.items.map(x => ({ name:x.name, type:x.type })), export:exportSequence };
+  window.MaliCutStudioPro={addFiles,play:startSequence,pause:pauseSequence,stop:stopSequence,getProject:()=>state.items.map(x=>({name:x.name,type:x.type,duration:x.duration,transitionBefore:x.transitionBefore})),export:exportSequence};
 })();
