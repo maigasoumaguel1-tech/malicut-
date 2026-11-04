@@ -179,7 +179,7 @@
     const fitTools = document.createElement('div'); fitTools.className='range'; fitTools.style.marginTop='10px';
     fitTools.innerHTML='<button type="button" class="btn gold" data-fit="cover">Remplir le cadre</button><button type="button" class="btn" data-fit="contain">Afficher l’image entière</button>';
     formatPanel.appendChild(fitTools);
-    fitTools.addEventListener('click', e => { const b=e.target.closest('[data-fit]'); if(!b)return; state.fitMode=b.dataset.fit; fitTools.querySelectorAll('[data-fit]').forEach(x=>{x.classList.toggle('gold',x===b);x.classList.toggle('gold',x===b);}); applyFitMode(); });
+    fitTools.addEventListener('click', e => { const b=e.target.closest('[data-fit]'); if(!b)return; state.fitMode=b.dataset.fit; fitTools.querySelectorAll('[data-fit]').forEach(x=>x.classList.toggle('gold',x===b)); applyFitMode(); });
   }
   function applyFitMode() {
     const value=state.fitMode==='cover'?'cover':'contain';
@@ -426,7 +426,7 @@
     const longEdge = Number(state.quality)||720;
     const ratios = {'9:16':[9,16],'16:9':[16,9],'1:1':[1,1],'4:5':[4,5],'4:3':[4,3],'3:4':[3,4],'2:3':[2,3]};
     const pair = ratios[ratioText] || ratios['9:16'];
-    const dims = pair[0] >= pair[1] ? [longEdge,Math.round(longEdge*pair[1]/pair[0])] : [Math.round(longEdge*pair[0]/pair[1]),longEdge];
+    const dims = [Math.round(longEdge*pair[0]/pair[1]),longEdge];
     const canvas = document.createElement('canvas'); canvas.width = dims[0]; canvas.height = dims[1];
     const ctx = canvas.getContext('2d');
     const stream = canvas.captureStream(30);
