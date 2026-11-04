@@ -337,7 +337,7 @@
       button.addEventListener('click',()=>{select.hidden=!select.hidden;});
       select.addEventListener('change',()=>{
         if(select.value==='none')next.transitionBefore=null;
-        else next.transitionBefore={type:select.value,duration:.6};
+        else next.transitionBefore={type:select.value,duration:Math.max(.2,Math.min(2,Number($('mcTransitionDuration').value)||.6))};
         button.textContent=select.value==='none'?'✧':'✓';select.hidden=true;
         setStatus(select.value==='none'?'Transition retirée.':'Transition ajoutée entre les clips '+boundary+' et '+(boundary+1)+'.');
       });
