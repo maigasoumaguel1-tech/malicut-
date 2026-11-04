@@ -358,10 +358,10 @@
           e.preventDefault();
           const delta=dx/(28*timelineZoom);
           const item=state.items[gesture.index];
-          if(gesture.edge==='end'){item.duration=Math.max(.5,Math.min(30,gesture.originalDuration+delta));item.durationAuto=false;}
+          if(gesture.edge==='end'){if(!gesture.saved){pushHistory();gesture.saved=true;}item.duration=Math.max(.5,Math.min(30,gesture.originalDuration+delta));item.durationAuto=false;}
           else if(item.type==='video'){
             const shift=Math.max(-gesture.originalStart,Math.min(gesture.originalDuration-.5,delta));
-            item.trimStart=gesture.originalStart+shift;item.duration=Math.max(.5,gesture.originalDuration-shift);item.durationAuto=false;
+            if(!gesture.saved){pushHistory();gesture.saved=true;}item.trimStart=gesture.originalStart+shift;item.duration=Math.max(.5,gesture.originalDuration-shift);item.durationAuto=false;
           }
           const width=Math.max(76,Math.min(260,item.duration*28))*timelineZoom;
           clip.style.width=width+'px';clip.style.minWidth=width+'px';clip.style.setProperty('--mc-clip-width',width+'px');
