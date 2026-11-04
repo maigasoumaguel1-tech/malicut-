@@ -6,7 +6,7 @@ BASE = os.path.dirname(__file__)
 HTML = open(os.path.join(BASE, "app.html"), "r", encoding="utf-8").read()
 CALLS_JS = open(os.path.join(BASE, "calls.js"), "r", encoding="utf-8").read()
 AI_REQUESTS = {}
-STATIC_JS = {name: open(os.path.join(BASE, name), "r", encoding="utf-8").read() for name in ("messages.js", "studio-enhancements.js", "settings-center.js", "ai-assistant.js")}
+STATIC_JS = {name: open(os.path.join(BASE, name), "r", encoding="utf-8").read() for name in ("messages.js", "studio-enhancements.js", "settings-center.js", "ai-assistant.js", "studio-pro.js")}
 
 class Handler(BaseHTTPRequestHandler):
     server_version = "MaliCut"
