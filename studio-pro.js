@@ -97,6 +97,13 @@
     #mcProStudio .mc-transition-select[hidden]{display:none}
     #mcProStudio .mc-history-controls{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
     #mcProStudio .mc-history-controls button{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--p2);color:var(--txt)}
+    #mcProStudio .mc-test-overlay{position:absolute;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%);max-width:90%;padding:8px 12px;color:white;font-size:clamp(18px,5vw,38px);font-weight:900;text-align:center;text-shadow:0 2px 8px #000;background:#0003;border-radius:8px;pointer-events:none}
+    @keyframes mcTextPop{from{opacity:0;transform:translate(-50%,-50%) scale(.3)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+    @keyframes mcTextRise{from{opacity:0;transform:translate(-50%,30%)}to{opacity:1;transform:translate(-50%,-50%)}}
+    @keyframes mcTextBounce{0%{transform:translate(-50%,-50%) scale(.4)}60%{transform:translate(-50%,-50%) scale(1.15)}100%{transform:translate(-50%,-50%) scale(1)}}
+    @keyframes mcTextNeon{0%,100%{text-shadow:0 0 6px #fff,0 0 18px #24e5a1}50%{text-shadow:0 0 2px #fff,0 0 30px #24e5a1}}
+    @keyframes mcTextGlitch{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(-48%,-50%)}50%{transform:translate(-52%,-50%)}}
+    @keyframes mcTextType{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
     #mcProStudio .mc-timeline-playhead{position:absolute;z-index:9;top:4px;bottom:4px;left:10px;width:2px;background:#fff;box-shadow:0 0 0 1px #e7bd4e,0 0 8px #fff;pointer-events:none}
     #mcProStudio .mc-timeline-playhead:before{content:"";position:absolute;top:0;left:-4px;width:10px;height:10px;border-radius:50%;background:#fff;border:1px solid #d8b75b}
     @media(min-width:700px){#mcProStudio .mc-clip-inspector{grid-template-columns:repeat(6,minmax(0,1fr))}}
@@ -209,7 +216,13 @@
     </div>
     <p class="pro-note">Les effets sont des préréglages visuels originaux. Les effets corporels avancés de type AR/face tracking nécessitent un moteur dédié et ne sont pas simulés ici.</p>
   `;
+  creative.insertAdjacentHTML('beforeend','<div class="pro-head" style="margin-top:12px"><b>Texte animé dans la vidéo</b><span class="pro-badge">Standard + PRO</span></div><div class="mc-text-tools"><input id="mcOverlayText" type="text" maxlength="90" placeholder="Écris ton texte ici"><select id="mcOverlayMotion"><option value="fade">Fondu · Standard</option><option value="pop">Pop · Standard</option><option value="rise">Montée · Standard</option><option value="bounce">Rebond · Standard</option><option value="type">Machine à écrire · Standard</option><option value="neon">Néon · Standard</option><option value="glitch">Glitch · Standard</option><option value="zoom">Zoom · Standard</option><option value="parallax">Parallaxe · PRO</option><option value="kenburns">Ken Burns · PRO</option><option value="3d">Perspective 3D · PRO</option><option value="elastic">Élastique · PRO</option><option value="whip">Whip · PRO</option><option value="mosaic">Mosaïque · PRO</option><option value="spark">Étincelles · PRO</option><option value="wave">Vague · PRO</option></select><button type="button" class="btn gold" id="mcAddOverlayText">＋ Ajouter le texte</button><button type="button" class="btn" id="mcRemoveOverlayText">Retirer le texte</button></div><p class="pro-note">Le texte ajouté sera visible dans l’aperçu et intégré à l’export vidéo.</p>');
   panel.after(creative);
+  let overlayText='',overlayMotion='fade';
+  let textLayer=$('screen').querySelector('.mc-test-overlay');
+  function renderOverlayText(){if(!overlayText){textLayer?.remove();textLayer=null;return;}if(!textLayer){textLayer=document.createElement('div');textLayer.className='mc-test-overlay';$('screen').appendChild(textLayer);}textLayer.textContent=overlayText;textLayer.style.animation=({fade:'mcSequenceFade',pop:'mcTextPop',rise:'mcTextRise',bounce:'mcTextBounce',type:'mcTextType',neon:'mcTextNeon',glitch:'mcTextGlitch',zoom:'mcSequenceZoom',parallax:'mcSequenceSlide',kenburns:'mcSequenceZoom','3d':'mcSequenceSpin',elastic:'mcTextBounce',whip:'mcSequenceSlide',mosaic:'mcTextGlitch',spark:'mcTextNeon',wave:'mcTextRise'})[overlayMotion]+' .8s ease both';}
+  $('mcAddOverlayText').onclick=()=>{const value=$('mcOverlayText').value.trim();if(!value){setStatus('Écris un texte avant de l’ajouter.');return;}const motion=$('mcOverlayMotion').value;const pro=['parallax','kenburns','3d','elastic','whip','mosaic','spark','wave'];if(pro.includes(motion)&&window.MALICUT_IS_PRO!==true){setStatus('Cette animation est réservée à MaliCut Pro.');return;}overlayText=value;overlayMotion=motion;renderOverlayText();setStatus('Texte animé ajouté à la vidéo.');};
+  $('mcRemoveOverlayText').onclick=()=>{overlayText='';renderOverlayText();setStatus('Texte retiré de l’aperçu.');};
 
   const qualityPanel=document.createElement('div');
   qualityPanel.className='panel';
@@ -335,7 +348,7 @@
         '<i class="mc-trim-handle start" data-trim="start" aria-label="Début du clip"></i><i class="mc-trim-handle end" data-trim="end" aria-label="Fin du clip"></i>'+
         (item.type==='image'?'<img src="'+item.url+'" alt="">':'<div class="mc-video-thumb">▶ VIDÉO</div>')+
         '<small>'+(i+1)+'. '+String(item.name).replace(/[<>&"]/g,'')+'</small><div class="mc-clip-meta">'+seconds.toFixed(1)+' s · '+(item.type==='image'?'PHOTO':'VIDÉO')+'</div></div>';
-      const marker=i<state.items.length-1?'<div class="mc-transition-slot" data-boundary="'+(i+1)+'"><button type="button" class="mc-transition-button" aria-label="Transition entre les clips '+(i+1)+' et '+(i+2)+'">'+(transition==='none'?'✧':'✓')+'</button><select class="mc-transition-select" data-transition-index="'+(i+1)+'" hidden><option value="none">Sans transition</option><option value="fade">Fondu</option><option value="zoom">Zoom</option><option value="slide">Glissement</option><option value="wipe">Balayage</option><option value="flash">Flash blanc</option><option value="blur">Flou</option><option value="spin">Rotation</option><option value="glitch">Glitch</option></select></div>':'';
+      const marker=i<state.items.length-1?'<div class="mc-transition-slot" data-boundary="'+(i+1)+'"><button type="button" class="mc-transition-button" aria-label="Transition entre les clips '+(i+1)+' et '+(i+2)+'">'+(transition==='none'?'✧':'✓')+'</button><select class="mc-transition-select" data-transition-index="'+(i+1)+'" hidden><option value="none">Sans transition</option><option value="fade">Fondu</option><option value="zoom">Zoom</option><option value="slide">Glissement</option><option value="wipe">Balayage</option><option value="flash">Flash blanc</option><option value="blur">Flou</option><option value="spin">Rotation</option><option value="glitch">Glitch</option><option value="push">Push latéral</option><option value="circle">Ouverture circulaire</option><option value="vertical">Rideau vertical</option><option value="diagonal">Balayage diagonal</option><option value="dissolve">Dissolution</option><option value="rotate3d">Rotation 3D</option><option value="stretch">Étirement</option></select></div>':'';
       return clip+marker;
     }).join('');
     const playhead=document.createElement('div');playhead.className='mc-timeline-playhead';playhead.id='mcTimelinePlayhead';target.appendChild(playhead);
@@ -819,6 +832,7 @@
           if(item.type==='video'&&source.ended)break;
           const alpha=transition==='fade'&&frame<transitionFrames&&index>0?frame/transitionFrames:1;
           drawFrame(source,alpha,frame,frames,transition,transitionFrames);
+          if(overlayText){ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold '+Math.round(canvas.width*.065)+'px sans-serif';ctx.lineWidth=Math.max(2,canvas.width*.004);ctx.strokeStyle='rgba(0,0,0,.8)';ctx.fillStyle='#fff';const words=overlayText.split(' ');let line='',lines=[];for(const word of words){const test=line?line+' '+word:word;if(ctx.measureText(test).width>canvas.width*.86&&line){lines.push(line);line=word;}else line=test;}if(line)lines.push(line);const lineH=canvas.width*.078,startY=canvas.height/2-(lines.length-1)*lineH/2;lines.forEach((txt,j)=>{ctx.strokeText(txt,canvas.width/2,startY+j*lineH);ctx.fillText(txt,canvas.width/2,startY+j*lineH);});ctx.restore();}
           $('bar').style.width = Math.round(((index + frame/frames) / state.items.length) * 100) + '%';
           setStatus('Export · média ' + (index + 1) + '/' + state.items.length);
           await new Promise(resolve => setTimeout(resolve, 1000/fps));
