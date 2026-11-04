@@ -142,7 +142,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_text(HTML)
         elif path == "/calls.js":
             self.send_text(CALLS_JS, "application/javascript; charset=utf-8")
-        elif path in ("/messages.js", "/studio-enhancements.js", "/settings-center.js", "/ai-assistant.js"):
+        elif path in ("/messages.js", "/studio-enhancements.js", "/settings-center.js", "/ai-assistant.js", "/studio-pro.js"):
             self.send_text(STATIC_JS[path[1:]], "application/javascript; charset=utf-8")
         elif path == "/config.js":
             url = os.environ.get("SUPABASE_URL", "").strip()
