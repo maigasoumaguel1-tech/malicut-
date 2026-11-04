@@ -311,15 +311,29 @@
       renderLanes(); return;
     }
     const total=state.items.reduce((n,x)=>n+(Number(x.duration)||3),0);
-    target.innerHTML = state.items.map((item, i) => {
-      const seconds=Math.max(.5,Number(item.duration)||3);
-      const width=Math.max(76,Math.min(260,seconds*28))*timelineZoom;
-      return '<div class="pro-item mc-clip '+(i===state.active?'active':'')+'" data-index="'+i+'" style="--mc-clip-width:'+width+'px" draggable="true">' +
-        '<i class="mc-trim-handle start" data-trim="start" aria-label="Début du clip"></i>'+
-        '<i class="mc-trim-handle end" data-trim="end" aria-label="Fin du clip"></i>'+
-        (item.type==='image'?'<img src="'+item.url+'" alt="">':'<div class="mc-video-thumb">▶</div>')+
-        '<small>'+(i+1)+'. '+String(item.name).replace(/[<>&"]/g,'')+'</small><div class="mc-clip-meta">'+seconds.toFixed(1)+' s · ✥ déplacer · ◀▶ ajuster</div></div>';
-    }).join('<div class="mc-cut-marker">＋</div>');
+    target.innerHTML = state.items.map((item,i)=>{
+      const seconds=Math.max(.5,Number(item.duration)||3),width=Math.max(76,Math.min(260,seconds*28))*timelineZoom;
+      const transition=item.transitionBefore?.type||'none';
+      const clip='<div class="pro-item mc-clip '+(i===state.active?'active':'')+'" data-index="'+i+'" style="--mc-clip-width:'+width+'px" draggable="true">'+
+        '<i class="mc-trim-handle start" data-trim="start" aria-label="Début du clip"></i><i class="mc-trim-handle end" data-trim="end" aria-label="Fin du clip"></i>'+
+        (item.type==='image'?'<img src="'+item.url+'" alt="">':'<div class="mc-video-thumb">▶ VIDÉO</div>')+
+        '<small>'+(i+1)+'. '+String(item.name).replace(/[<>&"]/g,'')+'</small><div class="mc-clip-meta">'+seconds.toFixed(1)+' s · '+(item.type==='image'?'PHOTO':'VIDÉO')+'</div></div>';
+      const marker=i<state.items.length-1?'<div class="mc-transition-slot" data-boundary="'+(i+1)+'"><button type="button" class="mc-transition-button" aria-label="Transition entre les clips '+(i+1)+' et '+(i+2)+'">'+(transition==='none'?'✧':'✓')+'</button><select class="mc-transition-select" data-transition-index="'+(i+1)+'" hidden><option value="none">Sans transition</option><option value="fade">Fondu</option><option value="zoom">Zoom</option><option value="slide">Glissement</option><option value="wipe">Balayage</option><option value="flash">Flash blanc</option><option value="blur">Flou</option><option value="spin">Rotation</option><option value="glitch">Glitch</option></select></div>':'';
+      return clip+marker;
+    }).join('');
+    const playhead=document.createElement('div');playhead.className='mc-timeline-playhead';playhead.id='mcTimelinePlayhead';target.appendChild(playhead);
+    target.querySelectorAll('.mc-transition-slot').forEach(slot=>{
+      const button=slot.querySelector('.mc-transition-button'),select=slot.querySelector('.mc-transition-select');
+      const boundary=Number(slot.dataset.boundary),next=state.items[boundary];
+      if(next?.transitionBefore?.type)select.value=next.transitionBefore.type;
+      button.addEventListener('click',()=>{select.hidden=!select.hidden;});
+      select.addEventListener('change',()=>{
+        if(select.value==='none')next.transitionBefore=null;
+        else next.transitionBefore={type:select.value,duration:.6};
+        button.textContent=select.value==='none'?'✧':'✓';select.hidden=true;
+        setStatus(select.value==='none'?'Transition retirée.':'Transition ajoutée entre les clips '+boundary+' et '+(boundary+1)+'.');
+      });
+    });
     target.querySelectorAll('.mc-clip').forEach(clip=>{
       let gesture=null;
       clip.addEventListener('pointerdown',e=>{
@@ -365,7 +379,7 @@
       clip.addEventListener('pointercancel',finishGesture);
       clip.addEventListener('click',e=>{
         if(clip.dataset.suppressClick==='1'){clip.dataset.suppressClick='0';e.preventDefault();return;}
-        state.active=Number(clip.dataset.index);previewActive();renderTimeline();
+        pauseSequence();state.active=Number(clip.dataset.index);previewActive();renderTimeline();updateTimelinePlayhead();
       });
       clip.addEventListener('dragstart',e=>{
         e.dataTransfer.setData('text/plain',clip.dataset.index);
@@ -398,7 +412,7 @@
       const action=btn.dataset.inspect;
       if(action==='delete'){URL.revokeObjectURL(selected.url);state.items.splice(state.active,1);state.active=Math.max(0,Math.min(state.active,state.items.length-1));}
       if(action==='duplicate'){state.items.splice(state.active+1,0,{...selected});state.active++;}
-      if(action==='split'){const half=Math.max(.5,(Number(selected.duration)||3)/2);const second={...selected,duration:half};if(selected.type==='video')second.trimStart=(Number(selected.trimStart)||0)+half;selected.duration=half;state.items.splice(state.active+1,0,second);state.active++;}
+      if(action==='split'){pauseSequence();const half=Math.max(.5,(Number(selected.duration)||3)/2);const second={...selected,duration:half,durationAuto:false,transitionBefore:null};if(selected.type==='video')second.trimStart=(Number(selected.trimStart)||0)+half;selected.duration=half;selected.durationAuto=false;state.items.splice(state.active+1,0,second);state.active++;}
       if(action==='effectReset'){selected.effect='none';}
       renderTimeline();previewActive();renderLanes();
     });
@@ -419,15 +433,17 @@
       $('video').onloadedmetadata = () => { $('media').textContent = item.name + ' · ' + ($('video').duration || 0).toFixed(1) + ' s'; };
     }
   }
-  originalFile.onchange = () => { addFiles(originalFile.files); originalFile.value = ''; };
-  $('mcImport').onclick = () => originalFile.click();
+  originalFile.onchange=null;
+  originalFile.addEventListener('change',e=>{e.stopImmediatePropagation();const chosen=Array.from(originalFile.files||[]);if(chosen.length)addFiles(chosen);originalFile.value='';},true);
+  $('mcImport').onclick=()=>originalFile.click();
+  $('mcAddClip').onclick=()=>originalFile.click();
   $('mcAddPhoto').onclick = () => {
     const picker = document.createElement('input'); picker.type = 'file'; picker.accept = 'image/*'; picker.multiple = true;
     picker.onchange = () => addFiles(picker.files); picker.click();
   };
-  $('mcClear').onclick = () => {
-    state.items.forEach(x => URL.revokeObjectURL(x.url)); state.items = []; state.active = 0;
-    renderTimeline(); previewActive(); setStatus('Nouveau projet prêt.');
+  $('mcClear').onclick=()=>{
+    stopSequence();state.items.forEach(x=>URL.revokeObjectURL(x.url));state.items=[];state.active=0;
+    renderTimeline();previewActive();setStatus('Nouveau projet prêt.');
   };
   $('mcCamera').onclick = async () => {
     try {
