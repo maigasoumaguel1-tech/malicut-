@@ -14,6 +14,18 @@
   const style = document.createElement('style');
   style.textContent = `
     #mcProStudio{display:grid;gap:12px;margin:12px 0}
+    #mcProStudio .pro-timeline{display:flex;align-items:stretch;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;padding:12px 4px 16px;scroll-snap-type:x proximity}
+    #mcProStudio .mc-ruler{position:sticky;left:0;flex:0 0 100%;font:10px monospace;color:var(--mut);padding:3px 0}
+    #mcProStudio .mc-clip{scroll-snap-align:start;display:flex;flex-direction:column;gap:5px}
+    #mcProStudio .mc-clip img,#mcProStudio .mc-video-thumb{height:62px;object-fit:cover;border-radius:6px;background:#171713}
+    #mcProStudio .mc-video-thumb{display:grid;place-items:center;color:#fff;font-weight:800}
+    #mcProStudio .mc-clip-meta{font-size:10px;color:var(--mut)}
+    #mcProStudio .mc-clip-actions{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+    #mcProStudio .mc-clip-actions button{font-size:10px;padding:6px 3px;border:1px solid var(--line);border-radius:6px;background:var(--p2);color:var(--txt)}
+    #mcProStudio .mc-duration{font-size:10px;color:var(--mut);display:block}
+    #mcProStudio .mc-duration input{padding:0;margin:3px 0;accent-color:var(--gold)}
+    #mcProStudio .mc-duration select{font-size:11px;padding:5px;margin-top:3px}
+    #mcProStudio .mc-cut-marker{align-self:center;flex:0 0 28px;writing-mode:vertical-rl;font-size:9px;color:var(--gold);text-align:center}
     #mcProStudio .pro-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
     #mcProStudio .pro-badge{font-size:10px;border:1px solid #bd9140;border-radius:20px;padding:5px 9px;color:inherit}
     #mcProStudio .pro-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -234,24 +246,39 @@
   function renderTimeline() {
     $('mcCount').textContent = state.items.length + ' média' + (state.items.length > 1 ? 's' : '');
     const target = $('mcTimeline');
-    if (!state.items.length) { target.innerHTML = '<div class="notice" style="width:100%">Importe une photo ou une vidéo pour commencer.</div>'; return; }
-    target.innerHTML = state.items.map((item, i) => `
-      <div class="pro-item ${i === state.active ? 'active' : ''}" data-index="${i}">
-        <img src="${item.type === 'image' ? item.url : ''}" alt="" ${item.type === 'video' ? 'style="display:none"' : ''}>
-        ${item.type === 'video' ? '<div style="height:72px;display:grid;place-items:center;background:#111;border-radius:7px;font-size:26px">▶</div>' : ''}
-        <small>${String(i + 1).padStart(2, '0')} · ${item.name.replace(/[<>&"]/g, '')}</small>
-        <button data-action="select" data-index="${i}">Ouvrir</button>
-        <button data-action="remove" data-index="${i}">×</button>
-      </div>`).join('');
-    target.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
-      const i = Number(btn.dataset.index);
-      if (btn.dataset.action === 'remove') {
-        URL.revokeObjectURL(state.items[i].url);
-        state.items.splice(i, 1); state.active = Math.max(0, Math.min(state.active, state.items.length - 1));
-        renderTimeline(); previewActive();
-      } else { state.active = i; renderTimeline(); previewActive(); }
+    if (!state.items.length) { target.innerHTML = '<div class="notice" style="width:100%">Importe une photo ou une vidéo pour commencer.</div>'; renderLanes(); return; }
+    target.innerHTML = '<div class="mc-ruler">00:00 ─────────────────────────────────────────────── ' + formatTime(state.items.reduce((n,x)=>n+(Number(x.duration)||3),0)) + '</div>' +
+      state.items.map((item, i) => {
+        const seconds=Math.max(.5,Number(item.duration)||3);
+        const width=Math.max(118,Math.min(360,seconds*38));
+        return '<div class="pro-item mc-clip '+(i===state.active?'active':'')+'" data-index="'+i+'" style="width:'+width+'px;min-width:'+width+'px" draggable="true">' +
+          (item.type==='image'?'<img src="'+item.url+'" alt="">':'<div class="mc-video-thumb">▶ VIDÉO</div>')+
+          '<small>'+(i+1)+'. '+String(item.name).replace(/[<>&"]/g,'')+'</small><div class="mc-clip-meta">'+seconds.toFixed(1)+' s · '+(item.type==='image'?'PHOTO':'VIDÉO')+'</div>'+
+          '<div class="mc-clip-actions"><button data-action="select" data-index="'+i+'">Sélectionner</button><button data-action="duplicate" data-index="'+i+'">Dupliquer</button><button data-action="split" data-index="'+i+'">Scinder</button><button data-action="remove" data-index="'+i+'">Supprimer</button></div>'+
+          '<label class="mc-duration">Durée <input data-duration="'+i+'" type="range" min="1" max="30" step=".5" value="'+seconds+'"><b>'+seconds.toFixed(1)+'s</b></label>'+
+          '<label class="mc-duration">Effet <select data-effect="'+i+'"><option value="none">Aucun</option><option value="fade">Fondu</option><option value="zoom">Zoom</option><option value="flash">Flash</option><option value="vignette">Cinéma</option></select></label>'+
+          '</div>';
+      }).join('<div class="mc-cut-marker">│ TRANSITION │</div>');
+    target.querySelectorAll('[data-action]').forEach(btn=>btn.addEventListener('click',()=>{
+      const i=Number(btn.dataset.index), action=btn.dataset.action;
+      if(action==='remove'){URL.revokeObjectURL(state.items[i].url);state.items.splice(i,1);state.active=Math.max(0,Math.min(i,state.items.length-1));}
+      if(action==='select'){state.active=i;previewActive();}
+      if(action==='duplicate'){const copy={...state.items[i]};state.items.splice(i+1,0,copy);state.active=i+1;previewActive();}
+      if(action==='split'){
+        const item=state.items[i],half=Math.max(.5,(Number(item.duration)||3)/2);
+        const copy={...item,duration:half};item.duration=half;state.items.splice(i+1,0,copy);state.active=i+1;previewActive();
+      }
+      renderTimeline();renderLanes();
     }));
+    target.querySelectorAll('[data-duration]').forEach(input=>input.addEventListener('input',()=>{
+      const i=Number(input.dataset.duration);state.items[i].duration=Number(input.value);
+      input.parentElement.querySelector('b').textContent=Number(input.value).toFixed(1)+'s';
+      const clip=input.closest('.mc-clip');const width=Math.max(118,Math.min(360,Number(input.value)*38));clip.style.width=width+'px';clip.style.minWidth=width+'px';
+      renderLanes();
+    }));
+    target.querySelectorAll('[data-effect]').forEach(select=>select.addEventListener('change',()=>{state.items[Number(select.dataset.effect)].effect=select.value;setStatus('Effet appliqué au clip '+(Number(select.dataset.effect)+1)+'.');}));
   }
+  function formatTime(seconds){const n=Math.max(0,Math.floor(seconds||0));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
   function previewActive() {
     const item = state.items[state.active];
     if (!item) { imagePreview.style.display = 'none'; $('video').pause(); $('video').removeAttribute('src'); $('video').load(); return; }
@@ -526,12 +553,12 @@
         if (item.type === 'image') {
           source = new Image(); source.src = item.url;
           if (!source.complete) await waitEvent(source, 'load');
-          duration = state.photoSeconds;
+          duration = Math.max(.5, Number(item.duration)||state.photoSeconds);
         } else {
           source = document.createElement('video'); source.src = item.url; source.muted = true; source.playsInline = true; source.preload = 'auto';
           source.load();
           if (source.readyState < 2) await waitEvent(source, 'loadeddata');
-          duration = Math.max(.2, source.duration || 1);
+          duration = Math.min(source.duration||1, Math.max(.2, Number(item.duration)||source.duration||1));
           source.currentTime = 0;
         }
         const frames = Math.max(1, Math.ceil(duration * fps));
