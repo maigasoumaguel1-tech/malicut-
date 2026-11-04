@@ -217,12 +217,23 @@
     const dims = ratioText === '16:9' ? [1280,720] : ratioText === '1:1' ? [900,900] : ratioText === '4:5' ? [900,1125] : [720,1280];
     const canvas = document.createElement('canvas'); canvas.width = dims[0]; canvas.height = dims[1];
     const ctx = canvas.getContext('2d');
-    const stream = canvas.captureStream(30);\n    let audioContext = null, musicSource = null, musicGain = null, audioDestination = null;
+    const stream = canvas.captureStream(30);
+    let audioContext = null, musicSource = null, musicGain = null, audioDestination = null;
     let recorder;
     try {
       recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm' });
     } catch (_) { recorder = new MediaRecorder(stream); }
-    const chunks = [];\n    if (musicAudio && window.AudioContext) {\n      try {\n        audioContext = new AudioContext();\n        musicSource = audioContext.createMediaElementSource(musicAudio);\n        musicGain = audioContext.createGain();\n        audioDestination = audioContext.createMediaStreamDestination();\n        musicSource.connect(musicGain); musicGain.connect(audioDestination);\n        audioDestination.stream.getAudioTracks().forEach(track => stream.addTrack(track));\n      } catch (audioError) { console.warn('Audio export unavailable:', audioError); }\n    }
+    const chunks = [];
+    if (musicAudio && window.AudioContext) {
+      try {
+        audioContext = new AudioContext();
+        musicSource = audioContext.createMediaElementSource(musicAudio);
+        musicGain = audioContext.createGain();
+        audioDestination = audioContext.createMediaStreamDestination();
+        musicSource.connect(musicGain); musicGain.connect(audioDestination);
+        audioDestination.stream.getAudioTracks().forEach(track => stream.addTrack(track));
+      } catch (audioError) { console.warn('Audio export unavailable:', audioError); }
+    }
     recorder.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
     const stopped = new Promise(resolve => recorder.onstop = resolve);
     const fadeFrames = state.transition === 'fade' ? 15 : 0;
@@ -238,7 +249,15 @@
       }
     };
     try {
-      setStatus('Préparation de la vidéo…'); recorder.start(250);\n      if (musicAudio && musicGain && audioContext) {\n        musicAudio.currentTime = 0; musicAudio.loop = $('musicLoop').checked;\n        musicGain.gain.setValueAtTime(0, audioContext.currentTime);\n        const fadeIn = Math.max(0, Number($('musicFadeIn').value) || 0);\n        const volume = Math.max(0, Math.min(1, Number($('musicVolume').value) / 100));\n        musicGain.gain.linearRampToValueAtTime(volume, audioContext.currentTime + fadeIn);\n        await audioContext.resume(); musicAudio.play().catch(() => {});\n      }
+      setStatus('Préparation de la vidéo…'); recorder.start(250);
+      if (musicAudio && musicGain && audioContext) {
+        musicAudio.currentTime = 0; musicAudio.loop = $('musicLoop').checked;
+        musicGain.gain.setValueAtTime(0, audioContext.currentTime);
+        const fadeIn = Math.max(0, Number($('musicFadeIn').value) || 0);
+        const volume = Math.max(0, Math.min(1, Number($('musicVolume').value) / 100));
+        musicGain.gain.linearRampToValueAtTime(volume, audioContext.currentTime + fadeIn);
+        await audioContext.resume(); musicAudio.play().catch(() => {});
+      }
       for (let index = 0; index < state.items.length; index++) {
         const item = state.items[index];
         let source, duration;
@@ -265,7 +284,15 @@
         }
         if (item.type === 'video') source.pause();
       }
-      if (musicAudio && musicGain && audioContext) {\n        const fadeOut = Math.max(0, Number($('musicFadeOut').value) || 0);\n        musicGain.gain.cancelScheduledValues(audioContext.currentTime);\n        musicGain.gain.setValueAtTime(musicGain.gain.value, audioContext.currentTime);\n        musicGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + fadeOut);\n        if (fadeOut) await new Promise(resolve => setTimeout(resolve, fadeOut * 1000));\n        musicAudio.pause();\n      }\n      recorder.stop(); await stopped;
+      if (musicAudio && musicGain && audioContext) {
+        const fadeOut = Math.max(0, Number($('musicFadeOut').value) || 0);
+        musicGain.gain.cancelScheduledValues(audioContext.currentTime);
+        musicGain.gain.setValueAtTime(musicGain.gain.value, audioContext.currentTime);
+        musicGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + fadeOut);
+        if (fadeOut) await new Promise(resolve => setTimeout(resolve, fadeOut * 1000));
+        musicAudio.pause();
+      }
+      recorder.stop(); await stopped;
       const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
       if (!blob.size) throw new Error('Le fichier exporté est vide.');
       window.MALICUT_LAST_EXPORT = { blob, name: 'malicut-studio-pro.webm' };
@@ -280,7 +307,9 @@
       await stopped.catch(() => {});
       setStatus('Export interrompu : ' + (e.message || e));
     } finally {
-      stream.getTracks().forEach(t => t.stop());\n      if (audioContext) await audioContext.close().catch(() => {});\n      state.busy = false;
+      stream.getTracks().forEach(t => t.stop());
+      if (audioContext) await audioContext.close().catch(() => {});
+      state.busy = false;
     }
   }
   const oldExport = window.exportVideo;
