@@ -294,7 +294,7 @@
   $('mcStopVoice').onclick = () => { if(state.recorder && state.recorder.state!=='inactive') state.recorder.stop(); };
   $('mcPreviewVoice').onclick = () => { voiceAudio.currentTime=0; voiceAudio.play(); };
   $('mcTransitionPro').onchange = e => { state.transition=e.target.value; };
-  $('mcTimeline').addEventListener('click',e=>{
+  $('mcCreativeTools').addEventListener('click',e=>{
     const suggest=e.target.closest('[data-suggest]');
     if(suggest){ const input=$('text'); if(input){input.value=suggest.dataset.suggest; $('textModal').classList.add('open');} }
     const look=e.target.closest('[data-look]');
@@ -316,20 +316,19 @@
       recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm' });
     } catch (_) { recorder = new MediaRecorder(stream); }
     const chunks = [];
-    const voicePlayback = state.voiceUrl ? new Audio(state.voiceUrl) : null;\n    if (musicAudio && window.AudioContext) {
+    const voicePlayback = state.voiceUrl ? new Audio(state.voiceUrl) : null;
+    if ((musicAudio || voicePlayback) && window.AudioContext) {
       try {
         audioContext = new AudioContext();
-        musicSource = audioContext.createMediaElementSource(musicAudio);
-        musicGain = audioContext.createGain();
         audioDestination = audioContext.createMediaStreamDestination();
-        musicSource.connect(musicGain); musicGain.connect(audioDestination);
+        if(musicAudio){ musicSource = audioContext.createMediaElementSource(musicAudio); musicGain = audioContext.createGain(); musicSource.connect(musicGain); musicGain.connect(audioDestination); }
         audioDestination.stream.getAudioTracks().forEach(track => stream.addTrack(track));
       } catch (audioError) { console.warn('Audio export unavailable:', audioError); }
     }
     recorder.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
     const stopped = new Promise(resolve => recorder.onstop = resolve);
-    const transitionFrames = Math.max(1, Math.round(Math.max(.2,Math.min(2,Number($('mcTransitionDuration').value)||.6))*fps));
     const fps = 30;
+    const transitionFrames = Math.max(1, Math.round(Math.max(.2,Math.min(2,Number($('mcTransitionDuration').value)||.6))*fps));
     const drawFrame = (source, alpha=1, frame=0, total=1) => {
       const progress=Math.max(0,Math.min(1,frame/Math.max(1,total)));
       ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -367,11 +366,9 @@
       setStatus('Préparation de la vidéo…'); recorder.start(250);
       if (musicAudio && musicGain && audioContext) {
         musicAudio.currentTime = 0; musicAudio.loop = $('musicLoop').checked;
-        musicGain.gain.setValueAtTime(0, audioContext.currentTime);
-        const fadeIn = Math.max(0, Number($('musicFadeIn').value) || 0);
-        const volume = Math.max(0, Math.min(1, Number($('musicVolume').value) / 100));
-        musicGain.gain.linearRampToValueAtTime(volume, audioContext.currentTime + fadeIn);
-        await audioContext.resume(); musicAudio.play().catch(() => {});\n        if(voicePlayback){const voiceSource=audioContext.createMediaElementSource(voicePlayback);const voiceGain=audioContext.createGain();voiceGain.gain.value=Math.max(0,Math.min(1.5,Number($('mcVoiceVolume').value)/100));voiceSource.connect(voiceGain);voiceGain.connect(audioDestination);voicePlayback.currentTime=0;voicePlayback.play().catch(()=>{});}
+        if(musicGain){ musicGain.gain.setValueAtTime(0, audioContext.currentTime); const fadeIn=Math.max(0,Number($('musicFadeIn').value)||0); const volume=Math.max(0,Math.min(1,Number($('mcMusicVolume').value)/100)); musicGain.gain.linearRampToValueAtTime(volume,audioContext.currentTime+fadeIn); }
+        await audioContext.resume(); if(musicAudio)musicAudio.play().catch(()=>{});
+        if(voicePlayback){const voiceSource=audioContext.createMediaElementSource(voicePlayback);const voiceGain=audioContext.createGain();voiceGain.gain.value=Math.max(0,Math.min(1.5,Number($('mcVoiceVolume').value)/100));voiceSource.connect(voiceGain);voiceGain.connect(audioDestination);voicePlayback.currentTime=0;voicePlayback.play().catch(()=>{});}
       }
       for (let index = 0; index < state.items.length; index++) {
         const item = state.items[index];
@@ -422,7 +419,8 @@
       await stopped.catch(() => {});
       setStatus('Export interrompu : ' + (e.message || e));
     } finally {
-      if(voicePlayback)voicePlayback.pause();\n      stream.getTracks().forEach(t => t.stop());
+      if(voicePlayback)voicePlayback.pause();
+      stream.getTracks().forEach(t => t.stop());
       if (audioContext) await audioContext.close().catch(() => {});
       state.busy = false;
     }
