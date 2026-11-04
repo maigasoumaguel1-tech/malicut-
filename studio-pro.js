@@ -437,11 +437,12 @@
   async function activatePlaybackClip(index,offset,token){
     const player=state.player,item=state.items[index];if(!item||token!==player.token)return false;
     player.index=index;player.offset=Math.max(0,Math.min(clipDuration(item),offset||0));player.baseOffset=player.offset;
-    state.active=index;renderTimeline();renderLanes();previewActive();
+    state.active=index;renderTimeline();renderLanes();
     const video=$('video');
     if(item.type==='video'){
-      video.style.display='block';
-      if(video.src!==item.url){video.src=item.url;video.load();}
+      imagePreview.style.display='none';video.style.display='block';
+      if(video.src!==item.url){video.pause();video.src=item.url;video.load();}
+      $('media').textContent=item.name+' · Vidéo';
       if(video.readyState<1)await new Promise(resolve=>{
         if(video.readyState>=1){resolve();return;}
         video.addEventListener('loadedmetadata',resolve,{once:true});
