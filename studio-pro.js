@@ -166,6 +166,48 @@
     const scale = Math.min(w / sw, h / sh), dw = sw * scale, dh = sh * scale;
     ctx.globalAlpha = alpha; ctx.drawImage(source, (w - dw) / 2, (h - dh) / 2, dw, dh); ctx.globalAlpha = 1;
   }
+  let musicUrl = null;
+  let musicAudio = null;
+  $('musicFile').addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (musicUrl) URL.revokeObjectURL(musicUrl);
+    musicUrl = URL.createObjectURL(file);
+    musicAudio = new Audio(musicUrl);
+    musicAudio.loop = $('musicLoop').checked;
+    $('musicName').textContent = file.name;
+    setStatus('Piste audio ajoutée au projet.');
+  });
+  $('musicLoop').addEventListener('change', e => { if (musicAudio) musicAudio.loop = e.target.checked; });
+
+  // Drag and drop clips to reorder the local editing timeline.
+  let draggedIndex = null;
+  $('mcTimeline').addEventListener('dragstart', e => {
+    const tile = e.target.closest('.pro-item');
+    if (!tile) return;
+    draggedIndex = Number(tile.dataset.index);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  $('mcTimeline').addEventListener('dragover', e => {
+    if (e.target.closest('.pro-item')) e.preventDefault();
+  });
+  $('mcTimeline').addEventListener('drop', e => {
+    const tile = e.target.closest('.pro-item');
+    if (!tile || draggedIndex === null) return;
+    e.preventDefault();
+    const targetIndex = Number(tile.dataset.index);
+    const [moved] = state.items.splice(draggedIndex, 1);
+    state.items.splice(targetIndex, 0, moved);
+    state.active = targetIndex;
+    draggedIndex = null;
+    renderTimeline(); previewActive();
+  });
+  const originalRenderTimeline = renderTimeline;
+  renderTimeline = function() {
+    originalRenderTimeline();
+    $('mcTimeline').querySelectorAll('.pro-item').forEach(tile => { tile.draggable = true; });
+  };
+
   async function exportSequence() {
     if (state.busy) return;
     if (!state.items.length) { setStatus('Ajoute au moins une photo ou une vidéo.'); return; }
@@ -175,12 +217,12 @@
     const dims = ratioText === '16:9' ? [1280,720] : ratioText === '1:1' ? [900,900] : ratioText === '4:5' ? [900,1125] : [720,1280];
     const canvas = document.createElement('canvas'); canvas.width = dims[0]; canvas.height = dims[1];
     const ctx = canvas.getContext('2d');
-    const stream = canvas.captureStream(30);
+    const stream = canvas.captureStream(30);\n    let audioContext = null, musicSource = null, musicGain = null, audioDestination = null;
     let recorder;
     try {
       recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm' });
     } catch (_) { recorder = new MediaRecorder(stream); }
-    const chunks = [];
+    const chunks = [];\n    if (musicAudio && window.AudioContext) {\n      try {\n        audioContext = new AudioContext();\n        musicSource = audioContext.createMediaElementSource(musicAudio);\n        musicGain = audioContext.createGain();\n        audioDestination = audioContext.createMediaStreamDestination();\n        musicSource.connect(musicGain); musicGain.connect(audioDestination);\n        audioDestination.stream.getAudioTracks().forEach(track => stream.addTrack(track));\n      } catch (audioError) { console.warn('Audio export unavailable:', audioError); }\n    }
     recorder.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
     const stopped = new Promise(resolve => recorder.onstop = resolve);
     const fadeFrames = state.transition === 'fade' ? 15 : 0;
@@ -196,7 +238,7 @@
       }
     };
     try {
-      setStatus('Préparation de la vidéo…'); recorder.start(250);
+      setStatus('Préparation de la vidéo…'); recorder.start(250);\n      if (musicAudio && musicGain && audioContext) {\n        musicAudio.currentTime = 0; musicAudio.loop = $('musicLoop').checked;\n        musicGain.gain.setValueAtTime(0, audioContext.currentTime);\n        const fadeIn = Math.max(0, Number($('musicFadeIn').value) || 0);\n        const volume = Math.max(0, Math.min(1, Number($('musicVolume').value) / 100));\n        musicGain.gain.linearRampToValueAtTime(volume, audioContext.currentTime + fadeIn);\n        await audioContext.resume(); musicAudio.play().catch(() => {});\n      }
       for (let index = 0; index < state.items.length; index++) {
         const item = state.items[index];
         let source, duration;
@@ -223,7 +265,7 @@
         }
         if (item.type === 'video') source.pause();
       }
-      recorder.stop(); await stopped;
+      if (musicAudio && musicGain && audioContext) {\n        const fadeOut = Math.max(0, Number($('musicFadeOut').value) || 0);\n        musicGain.gain.cancelScheduledValues(audioContext.currentTime);\n        musicGain.gain.setValueAtTime(musicGain.gain.value, audioContext.currentTime);\n        musicGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + fadeOut);\n        if (fadeOut) await new Promise(resolve => setTimeout(resolve, fadeOut * 1000));\n        musicAudio.pause();\n      }\n      recorder.stop(); await stopped;
       const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
       if (!blob.size) throw new Error('Le fichier exporté est vide.');
       window.MALICUT_LAST_EXPORT = { blob, name: 'malicut-studio-pro.webm' };
@@ -238,7 +280,7 @@
       await stopped.catch(() => {});
       setStatus('Export interrompu : ' + (e.message || e));
     } finally {
-      stream.getTracks().forEach(t => t.stop()); state.busy = false;
+      stream.getTracks().forEach(t => t.stop());\n      if (audioContext) await audioContext.close().catch(() => {});\n      state.busy = false;
     }
   }
   const oldExport = window.exportVideo;
