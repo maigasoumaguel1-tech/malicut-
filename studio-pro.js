@@ -397,7 +397,7 @@
     let audioContext = null, musicSource = null, musicGain = null, audioDestination = null;
     let recorder;
     try {
-      recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm' });
+      recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm', videoBitsPerSecond: state.quality==='2160'?35000000:state.quality==='1440'?20000000:state.quality==='1080'?10000000:5000000 });
     } catch (_) { recorder = new MediaRecorder(stream); }
     const chunks = [];
     const voicePlayback = state.voiceUrl ? new Audio(state.voiceUrl) : null;
@@ -411,7 +411,7 @@
     }
     recorder.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
     const stopped = new Promise(resolve => recorder.onstop = resolve);
-    const overlaySources = await Promise.all(state.overlayItems.map(item=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('Une image de superposition est illisible.'));img.src=item.url;})));
+    let overlaySources = [];
     const fps = 30;
     const transitionFrames = Math.max(1, Math.round(Math.max(.2,Math.min(2,Number($('mcTransitionDuration').value)||.6))*fps));
     const fadeFrames = state.transition === 'fade' ? transitionFrames : 0;
@@ -453,6 +453,7 @@
       }
     };
     try {
+      overlaySources = await Promise.all(state.overlayItems.map(item=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('Une image de superposition est illisible.'));img.src=item.url;})));
       setStatus('Préparation de la vidéo…'); recorder.start(250);
       if (audioContext && audioDestination) {
         await audioContext.resume();
