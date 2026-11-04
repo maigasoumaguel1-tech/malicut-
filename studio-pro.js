@@ -49,6 +49,14 @@
     #mcProStudio .mc-quality{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
     #mcProStudio .mc-quality button{border:1px solid var(--line);border-radius:9px;padding:9px 4px;background:var(--p2);font-size:11px}
     #mcProStudio .mc-quality button.active{border-color:var(--gold);color:var(--gold)}
+    /* Timeline editor: override legacy thumbnail-card sizing */
+    #mcProStudio #mcTimeline{display:flex!important;flex-flow:row nowrap!important;align-items:stretch!important;width:100%!important;max-width:100%!important;min-height:250px;overflow-x:auto!important;overflow-y:hidden!important;box-sizing:border-box;padding:14px 12px 18px!important;gap:8px!important;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:12px;background:#080f0b}
+    #mcProStudio #mcTimeline .mc-ruler{display:none!important}
+    #mcProStudio #mcTimeline .pro-item.mc-clip{display:flex!important;flex:0 0 auto!important;flex-direction:column!important;width:var(--mc-clip-width,180px)!important;min-width:var(--mc-clip-width,180px)!important;max-width:none!important;box-sizing:border-box;padding:7px!important;border-radius:9px;overflow:visible}
+    #mcProStudio #mcTimeline .mc-clip img,#mcProStudio #mcTimeline .mc-video-thumb{display:block!important;width:100%!important;height:92px!important;max-width:none!important;object-fit:cover;border-radius:6px}
+    #mcProStudio #mcTimeline .mc-clip-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+    #mcProStudio #mcTimeline .mc-duration input{width:100%;min-width:0}
+    #mcProStudio #mcTimeline .mc-cut-marker{flex:0 0 24px;min-height:190px}
     @media(min-width:700px){#mcProStudio .pro-actions{grid-template-columns:repeat(4,minmax(0,1fr))}}
   `;
   document.head.appendChild(style);
@@ -250,8 +258,8 @@
     target.innerHTML = '<div class="mc-ruler">00:00 ─────────────────────────────────────────────── ' + formatTime(state.items.reduce((n,x)=>n+(Number(x.duration)||3),0)) + '</div>' +
       state.items.map((item, i) => {
         const seconds=Math.max(.5,Number(item.duration)||3);
-        const width=Math.max(118,Math.min(360,seconds*38));
-        return '<div class="pro-item mc-clip '+(i===state.active?'active':'')+'" data-index="'+i+'" style="width:'+width+'px;min-width:'+width+'px" draggable="true">' +
+        const width=Math.max(170,Math.min(520,seconds*52));
+        return '<div class="pro-item mc-clip '+(i===state.active?'active':'')+'" data-index="'+i+'" style="--mc-clip-width:'+width+'px;width:'+width+'px;min-width:'+width+'px;max-width:none" draggable="true">' +
           (item.type==='image'?'<img src="'+item.url+'" alt="">':'<div class="mc-video-thumb">▶ VIDÉO</div>')+
           '<small>'+(i+1)+'. '+String(item.name).replace(/[<>&"]/g,'')+'</small><div class="mc-clip-meta">'+seconds.toFixed(1)+' s · '+(item.type==='image'?'PHOTO':'VIDÉO')+'</div>'+
           '<div class="mc-clip-actions"><button data-action="select" data-index="'+i+'">Sélectionner</button><button data-action="duplicate" data-index="'+i+'">Dupliquer</button><button data-action="split" data-index="'+i+'">Scinder</button><button data-action="remove" data-index="'+i+'">Supprimer</button></div>'+
@@ -273,7 +281,7 @@
     target.querySelectorAll('[data-duration]').forEach(input=>input.addEventListener('input',()=>{
       const i=Number(input.dataset.duration);state.items[i].duration=Number(input.value);
       input.parentElement.querySelector('b').textContent=Number(input.value).toFixed(1)+'s';
-      const clip=input.closest('.mc-clip');const width=Math.max(118,Math.min(360,Number(input.value)*38));clip.style.width=width+'px';clip.style.minWidth=width+'px';
+      const clip=input.closest('.mc-clip');const width=Math.max(170,Math.min(520,Number(input.value)*52));clip.style.setProperty('--mc-clip-width',width+'px');clip.style.width=width+'px';clip.style.minWidth=width+'px';clip.style.maxWidth='none';
       renderLanes();
     }));
     target.querySelectorAll('[data-effect]').forEach(select=>select.addEventListener('change',()=>{state.items[Number(select.dataset.effect)].effect=select.value;setStatus('Effet appliqué au clip '+(Number(select.dataset.effect)+1)+'.');}));
