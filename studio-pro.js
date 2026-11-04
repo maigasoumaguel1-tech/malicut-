@@ -329,6 +329,7 @@
     const stopped = new Promise(resolve => recorder.onstop = resolve);
     const fps = 30;
     const transitionFrames = Math.max(1, Math.round(Math.max(.2,Math.min(2,Number($('mcTransitionDuration').value)||.6))*fps));
+    const fadeFrames = state.transition === 'fade' ? transitionFrames : 0;
     const drawFrame = (source, alpha=1, frame=0, total=1) => {
       const progress=Math.max(0,Math.min(1,frame/Math.max(1,total)));
       ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -342,8 +343,11 @@
       if(state.transition==='wipe'&&progress<transitionFrames/total){ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width*(1-progress*total/transitionFrames),canvas.height);}
       if(state.transition==='flash'&&progress<.08){ctx.fillStyle='rgba(255,255,255,'+(1-progress/.08)+')';ctx.fillRect(0,0,canvas.width,canvas.height);}
       if(state.transition==='glitch'&&progress<.15){ctx.fillStyle='rgba(0,220,255,.25)';ctx.fillRect(Math.random()*canvas.width,0,canvas.width*.8,canvas.height);ctx.fillStyle='rgba(255,0,100,.2)';ctx.fillRect(0,Math.random()*canvas.height,canvas.width,canvas.height*.08);}
+      if(state.look==='shake'){ctx.save();ctx.globalAlpha=.25;ctx.fillStyle='#fff';ctx.fillRect(Math.sin(frame*1.7)*8,Math.cos(frame*2.1)*8,canvas.width,canvas.height);ctx.restore();}
+      if(state.look==='pulse'){const p=1+Math.sin(frame*.45)*.012;ctx.save();ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(p,p);ctx.translate(-canvas.width/2,-canvas.height/2);ctx.restore();}
+      if(state.look==='soft'){ctx.fillStyle='rgba(255,230,245,.06)';ctx.fillRect(0,0,canvas.width,canvas.height);}
       if(state.look==='flash'&&progress<.05){ctx.fillStyle='rgba(255,255,255,.45)';ctx.fillRect(0,0,canvas.width,canvas.height);}
-      if(state.look==='rgb'){ctx.globalAlpha=.18;ctx.drawImage(canvas,5,0);ctx.drawImage(canvas,-5,0);ctx.globalAlpha=1;}
+      if(state.look==='rgb'){ctx.fillStyle='rgba(0,220,255,.08)';ctx.fillRect(0,0,canvas.width,canvas.height);}
       if(state.look==='vignette'){const g=ctx.createRadialGradient(canvas.width/2,canvas.height/2,canvas.width*.15,canvas.width/2,canvas.height/2,canvas.width*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);}
       const caption=$('textLayer')?.textContent||'';
       if(caption){
@@ -364,11 +368,23 @@
     };
     try {
       setStatus('Préparation de la vidéo…'); recorder.start(250);
-      if (musicAudio && musicGain && audioContext) {
-        musicAudio.currentTime = 0; musicAudio.loop = $('musicLoop').checked;
-        if(musicGain){ musicGain.gain.setValueAtTime(0, audioContext.currentTime); const fadeIn=Math.max(0,Number($('musicFadeIn').value)||0); const volume=Math.max(0,Math.min(1,Number($('mcMusicVolume').value)/100)); musicGain.gain.linearRampToValueAtTime(volume,audioContext.currentTime+fadeIn); }
-        await audioContext.resume(); if(musicAudio)musicAudio.play().catch(()=>{});
-        if(voicePlayback){const voiceSource=audioContext.createMediaElementSource(voicePlayback);const voiceGain=audioContext.createGain();voiceGain.gain.value=Math.max(0,Math.min(1.5,Number($('mcVoiceVolume').value)/100));voiceSource.connect(voiceGain);voiceGain.connect(audioDestination);voicePlayback.currentTime=0;voicePlayback.play().catch(()=>{});}
+      if (audioContext && audioDestination) {
+        await audioContext.resume();
+        if(musicAudio && musicGain){
+          musicAudio.currentTime=0; musicAudio.loop=$('musicLoop').checked;
+          musicGain.gain.setValueAtTime(0,audioContext.currentTime);
+          const fadeIn=Math.max(0,Number($('musicFadeIn').value)||0);
+          const volume=Math.max(0,Math.min(1,Number($('mcMusicVolume').value)/100));
+          musicGain.gain.linearRampToValueAtTime(volume,audioContext.currentTime+fadeIn);
+          musicAudio.play().catch(()=>{});
+        }
+        if(voicePlayback){
+          const voiceSource=audioContext.createMediaElementSource(voicePlayback);
+          const voiceGain=audioContext.createGain();
+          voiceGain.gain.value=Math.max(0,Math.min(1.5,Number($('mcVoiceVolume').value)/100));
+          voiceSource.connect(voiceGain);voiceGain.connect(audioDestination);
+          voicePlayback.currentTime=0;voicePlayback.play().catch(()=>{});
+        }
       }
       for (let index = 0; index < state.items.length; index++) {
         const item = state.items[index];
