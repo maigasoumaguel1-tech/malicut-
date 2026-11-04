@@ -115,7 +115,7 @@
    else if(id==='aiMediaPanel')group='photo';
    else if(id==='mcCreativeTools')group='voice';
    else if(id==='mcTextStudio')group='text';
-   else if(id==='mcExportQuality'||el.textContent.includes('Export')||el.querySelector('#bar'))group='export';
+   else if(id==='mcExportQuality'||el.textContent.includes('Export')||el.querySelector('#bar')||(el.querySelector('#title')&&el.querySelector('#desc')))group='export';
    else if(id==='mcProStudio')group='video';
    el.dataset.gsGroup=group;
    main.appendChild(el);
