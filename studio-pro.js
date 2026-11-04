@@ -182,7 +182,7 @@
         <option value="zoom">Zoom dynamique</option><option value="slide">Glissement latéral</option>
         <option value="wipe">Balayage</option><option value="flash">Flash blanc</option>
         <option value="blur">Flou progressif</option><option value="spin">Rotation</option>
-        <option value="glitch">Glitch numérique</option><option value="none">Aucune</option>
+        <option value="glitch">Glitch numérique</option><option value="push">Push latéral</option><option value="circle">Ouverture circulaire</option><option value="vertical">Rideau vertical</option><option value="diagonal">Balayage diagonal</option><option value="dissolve">Dissolution</option><option value="rotate3d">Rotation 3D</option><option value="stretch">Étirement</option><option value="none">Aucune</option>
       </select></label>
       <label class="muted">Durée transition (s)<input id="mcTransitionDuration" type="number" min=".2" max="2" step=".1" value=".6"></label>
     </div>
@@ -446,7 +446,7 @@
     };
     inspector.querySelectorAll('[data-inspect]').forEach(btn=>btn.onclick=()=>{
       const action=btn.dataset.inspect;
-      if(action==='delete'){pushHistory();pauseSequence();URL.revokeObjectURL(selected.url);state.items.splice(state.active,1);state.active=Math.max(0,Math.min(state.active,state.items.length-1));state.player.index=state.active;state.player.offset=0;}
+      if(action==='delete'){pushHistory();pauseSequence();state.items.splice(state.active,1);state.active=Math.max(0,Math.min(state.active,state.items.length-1));state.player.index=state.active;state.player.offset=0;}
       if(action==='duplicate'){pushHistory();state.items.splice(state.active+1,0,{...selected,transitionBefore:null});state.active++;state.player.index=state.active;state.player.offset=0;}
       if(action==='split'){pushHistory();pauseSequence();const half=Math.max(.5,(Number(selected.duration)||3)/2);const second={...selected,duration:half,durationAuto:false,transitionBefore:null};if(selected.type==='video')second.trimStart=(Number(selected.trimStart)||0)+half;selected.duration=half;selected.durationAuto=false;state.items.splice(state.active+1,0,second);state.active++;state.player.index=state.active;state.player.offset=0;}
       if(action==='effectReset'){pushHistory();selected.effect='none';}
@@ -558,7 +558,7 @@
     picker.onchange = () => addFiles(picker.files); picker.click();
   };
   $('mcClear').onclick=()=>{
-    stopSequence();state.items.forEach(x=>URL.revokeObjectURL(x.url));state.items=[];state.active=0;state.player.index=0;state.player.offset=0;
+    stopSequence();state.items=[];state.active=0;state.player.index=0;state.player.offset=0;
     renderTimeline();previewActive();setStatus('Nouveau projet prêt.');
   };
   $('mcCamera').onclick = async () => {
