@@ -603,6 +603,8 @@
     if (!item) { imagePreview.style.display = 'none'; $('video').pause(); $('video').removeAttribute('src'); $('video').load(); return; }
     if (item.type === 'image') {
       $('video').pause(); $('video').style.display='block';$('video').removeAttribute('src'); $('video').load();
+      imagePreview.onload=()=>setStatus('Image chargée dans l’aperçu et la timeline : '+item.name);
+      imagePreview.onerror=()=>setStatus('Image importée, mais format non affichable. Essaie JPG, PNG ou WEBP.');
       imagePreview.src = item.url; imagePreview.style.display = 'block';
       $('media').textContent = item.name + ' · Photo';
     } else {
@@ -616,7 +618,7 @@
   $('mcImport').onclick=()=>originalFile.click();
   $('mcAddClip').onclick=()=>originalFile.click();
   $('mcAddPhoto').onclick = () => {
-    const picker = document.createElement('input'); picker.type = 'file'; picker.accept = 'image/*'; picker.multiple = true;
+    const picker = document.createElement('input'); picker.type = 'file'; picker.accept = 'image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif'; picker.multiple = true;
     picker.onchange = () => addFiles(picker.files); picker.click();
   };
   $('mcClear').onclick=()=>{
