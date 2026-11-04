@@ -350,10 +350,10 @@
           e.preventDefault();
           const delta=dx/(28*timelineZoom);
           const item=state.items[gesture.index];
-          if(gesture.edge==='end')item.duration=Math.max(.5,Math.min(30,gesture.originalDuration+delta));
+          if(gesture.edge==='end'){item.duration=Math.max(.5,Math.min(30,gesture.originalDuration+delta));item.durationAuto=false;}
           else if(item.type==='video'){
             const shift=Math.max(-gesture.originalStart,Math.min(gesture.originalDuration-.5,delta));
-            item.trimStart=gesture.originalStart+shift;item.duration=Math.max(.5,gesture.originalDuration-shift);
+            item.trimStart=gesture.originalStart+shift;item.duration=Math.max(.5,gesture.originalDuration-shift);item.durationAuto=false;
           }
           const width=Math.max(76,Math.min(260,item.duration*28))*timelineZoom;
           clip.style.width=width+'px';clip.style.minWidth=width+'px';clip.style.setProperty('--mc-clip-width',width+'px');
@@ -402,7 +402,7 @@
     const effect=$('mcInspectorEffect');effect.value=selected.effect||'none';
     effect.onchange=()=>{selected.effect=effect.value;setStatus('Effet enregistré sur le clip '+(state.active+1)+'.');};
     $('mcInspectorDurationRange').oninput=e=>{
-      selected.duration=Number(e.target.value);
+      selected.duration=Number(e.target.value);selected.durationAuto=false;
       $('mcInspectorDuration').textContent=selected.duration.toFixed(1)+' s';
       const clip=target.querySelector('.mc-clip.active');
       if(clip){const width=Math.max(76,Math.min(260,selected.duration*28))*timelineZoom;clip.style.width=width+'px';clip.style.minWidth=width+'px';clip.style.setProperty('--mc-clip-width',width+'px');}
@@ -474,7 +474,7 @@
   async function playbackTick(){
     const player=state.player;if(!player.playing)return;
     const item=state.items[player.index];if(!item){pauseSequence();return;}
-    if(item.type==='video')player.offset=Math.max(0,($('video').currentTime||0)-(Number(item.trimStart)||0));
+    if(item.type==='video')player.offset=$('video').ended?clipDuration(item):Math.max(0,($('video').currentTime||0)-(Number(item.trimStart)||0));
     else player.offset=Math.min(clipDuration(item),player.baseOffset+(performance.now()-player.startedAt)/1000);
     if(player.offset>=clipDuration(item)-.025){
       $('video').pause();
@@ -717,7 +717,7 @@
       ctx.filter='none';ctx.restore();
       overlaySources.forEach((overlay,overlayIndex)=>{ctx.save();ctx.globalAlpha=.92;const scale=Math.min(canvas.width/overlay.naturalWidth,canvas.height/overlay.naturalHeight);const w=overlay.naturalWidth*scale,h=overlay.naturalHeight*scale;ctx.drawImage(overlay,(canvas.width-w)/2,(canvas.height-h)/2,w,h);ctx.restore();});
       if(transition==='wipe'&&progress<transitionFrames/total){ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width*(1-progress*total/transitionFrames),canvas.height);}
-      if(state.transition==='flash'&&progress<.08){ctx.fillStyle='rgba(255,255,255,'+(1-progress/.08)+')';ctx.fillRect(0,0,canvas.width,canvas.height);}
+      if(transition==='flash'&&progress<.08){ctx.fillStyle='rgba(255,255,255,'+(1-progress/.08)+')';ctx.fillRect(0,0,canvas.width,canvas.height);}
       if(transition==='glitch'&&progress<.15){ctx.fillStyle='rgba(0,220,255,.25)';ctx.fillRect(Math.random()*canvas.width,0,canvas.width*.8,canvas.height);ctx.fillStyle='rgba(255,0,100,.2)';ctx.fillRect(0,Math.random()*canvas.height,canvas.width,canvas.height*.08);}
       if(state.look==='shake'){ctx.save();ctx.globalAlpha=.25;ctx.fillStyle='#fff';ctx.fillRect(Math.sin(frame*1.7)*8,Math.cos(frame*2.1)*8,canvas.width,canvas.height);ctx.restore();}
       if(state.look==='pulse'){const p=1+Math.sin(frame*.45)*.012;ctx.save();ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(p,p);ctx.translate(-canvas.width/2,-canvas.height/2);ctx.restore();}
