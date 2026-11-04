@@ -356,9 +356,18 @@
     $('mcCameraBox').classList.add('hidden');
     $('mcCameraVideo').srcObject = null;
   }
+  function detectMediaKind(file) {
+    const mime=String(file && file.type || '').toLowerCase();
+    const name=String(file && file.name || '').toLowerCase();
+    if(mime.startsWith('image/')) return 'image';
+    if(mime.startsWith('video/')) return 'video';
+    if(/\.(jpe?g|png|webp|gif|bmp|avif|heic|heif|tiff?)$/i.test(name)) return 'image';
+    if(/\.(mp4|m4v|mov|webm|mkv|3gp|mpeg|mpg|avi)$/i.test(name)) return 'video';
+    return '';
+  }
   function makeItem(file, url) {
-    const isImage=file.type.startsWith('image/');
-    return { file, url, type:isImage?'image':'video', name:file.name||(isImage?'Photo capturée':'Vidéo'), duration:isImage?state.photoSeconds:3, durationAuto:!isImage, trimStart:0, transitionBefore:null };
+    const kind=detectMediaKind(file);
+    return { file, url, type:kind || 'video', name:file.name||(kind==='image'?'Photo importée':'Vidéo importée'), duration:kind==='image'?state.photoSeconds:3, durationAuto:kind!=='image', trimStart:0, transitionBefore:null };
   }
   function addFiles(files) {
     const accepted=Array.from(files||[]).filter(f=>{const t=String(f?.type||'').toLowerCase(),n=String(f?.name||'').toLowerCase();return t.startsWith('image/')||t.startsWith('video/')||/\.(jpe?g|png|webp|gif|bmp|avif|heic|heif|tif?f|mp4|m4v|mov|webm|mkv|3gp|mpeg|mpg|avi)$/i.test(n);});
