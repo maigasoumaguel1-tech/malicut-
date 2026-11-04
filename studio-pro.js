@@ -283,7 +283,7 @@
     <div class="pro-actions" id="mcShareActions" style="opacity:.55">
       <button class="btn" data-share="tiktok" disabled>TikTok</button><button class="btn" data-share="snapchat" disabled>Snapchat</button>
       <button class="btn" data-share="whatsapp" disabled>WhatsApp</button><button class="btn" data-share="instagram" disabled>Instagram</button>
-      <button class="btn" data-share="youtube" disabled>YouTube</button>
+      <button class="btn" data-share="youtube" disabled>YouTube</button><button class="btn gold" data-share="malicut" disabled>Communauté MaliCut</button>
     </div>
     <p class="pro-note" id="mcShareNote">Les options de partage seront activées après un export réussi. La disponibilité dépend des applications installées et des capacités Android.</p>
   `;
@@ -769,6 +769,7 @@
   $('mcShareActions').addEventListener('click',async e=>{
     const btn=e.target.closest('[data-share]');if(!btn||!window.MALICUT_LAST_EXPORT)return;
     const target=btn.dataset.share,blob=window.MALICUT_LAST_EXPORT.blob;
+    if(target==='malicut'){if(typeof window.publish==='function')await window.publish();else $('mcShareNote').textContent='La publication communautaire n’est pas disponible pour le moment.';return;}
     const file=new File([blob],window.MALICUT_LAST_EXPORT.name,{type:blob.type||'video/webm'});
     try{
       if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'Ma vidéo MaliCut',text:'Créé avec MaliCut'});return;}
