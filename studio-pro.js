@@ -313,7 +313,7 @@
     const total=state.items.reduce((n,x)=>n+(Number(x.duration)||3),0);
     target.innerHTML = state.items.map((item,i)=>{
       const seconds=Math.max(.5,Number(item.duration)||3),width=Math.max(76,Math.min(260,seconds*28))*timelineZoom;
-      const transition=item.transitionBefore?.type||'none';
+      const transition=state.items[i+1]?.transitionBefore?.type||'none';
       const clip='<div class="pro-item mc-clip '+(i===state.active?'active':'')+'" data-index="'+i+'" style="--mc-clip-width:'+width+'px" draggable="true">'+
         '<i class="mc-trim-handle start" data-trim="start" aria-label="Début du clip"></i><i class="mc-trim-handle end" data-trim="end" aria-label="Fin du clip"></i>'+
         (item.type==='image'?'<img src="'+item.url+'" alt="">':'<div class="mc-video-thumb">▶ VIDÉO</div>')+
@@ -379,7 +379,7 @@
       clip.addEventListener('pointercancel',finishGesture);
       clip.addEventListener('click',e=>{
         if(clip.dataset.suppressClick==='1'){clip.dataset.suppressClick='0';e.preventDefault();return;}
-        pauseSequence();state.active=Number(clip.dataset.index);previewActive();renderTimeline();updateTimelinePlayhead();
+        pauseSequence();state.active=Number(clip.dataset.index);state.player.index=state.active;state.player.offset=0;previewActive();renderTimeline();updateTimelinePlayhead();
       });
       clip.addEventListener('dragstart',e=>{
         e.dataTransfer.setData('text/plain',clip.dataset.index);
@@ -418,17 +418,92 @@
     });
     const zoom=$('mcTimelineZoom');
     if(zoom){zoom.value=String(Math.round(timelineZoom*100));zoom.oninput=()=>{timelineZoom=Number(zoom.value)/100;renderTimeline();};}
+    updateTimelinePlayhead();
   }
   function formatTime(seconds){const n=Math.max(0,Math.floor(seconds||0));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
+  function clipDuration(item){return Math.max(.1,Number(item?.duration)||(item?.type==='image'?state.photoSeconds:3));}
+  function sequenceDuration(){return state.items.reduce((sum,item)=>sum+clipDuration(item),0);}
+  function updateTimelinePlayhead(){
+    const marker=$('mcTimelinePlayhead'),target=$('mcTimeline'),player=state.player,item=state.items[player.index];
+    if(!item){if(marker)marker.style.left='10px';if($('mcTimecode'))$('mcTimecode').textContent='00:00 / '+formatTime(sequenceDuration());return;}
+    const clip=target?.querySelector('.mc-clip[data-index="'+player.index+'"]');if(!marker||!clip)return;
+    const local=player.playing&&item.type==='video'?Math.max(0,($('video').currentTime||0)-(Number(item.trimStart)||0)):player.offset;
+    marker.style.left=(clip.offsetLeft+Math.min(1,Math.max(0,local/clipDuration(item)))*clip.offsetWidth)+'px';
+    let before=0;for(let i=0;i<player.index;i++)before+=clipDuration(state.items[i]);
+    $('mcTimecode').textContent=formatTime(before+local)+' / '+formatTime(sequenceDuration());
+  }
+  function updatePlaybackButtons(){const b=$('mcPlayToggle');if(b)b.textContent=state.player.playing?'Ⅱ Pause':'▶ Lecture';}
+  async function activatePlaybackClip(index,offset,token){
+    const player=state.player,item=state.items[index];if(!item||token!==player.token)return false;
+    player.index=index;player.offset=Math.max(0,Math.min(clipDuration(item),offset||0));player.baseOffset=player.offset;
+    state.active=index;renderTimeline();renderLanes();previewActive();
+    const video=$('video');
+    if(item.type==='video'){
+      video.style.display='block';
+      if(video.src!==item.url){video.src=item.url;video.load();}
+      if(video.readyState<1)await new Promise(resolve=>{
+        if(video.readyState>=1){resolve();return;}
+        video.addEventListener('loadedmetadata',resolve,{once:true});
+        video.addEventListener('error',resolve,{once:true});
+      });
+      if(token!==player.token)return false;
+      const start=Math.max(0,Number(item.trimStart)||0);
+      video.currentTime=Math.min(Math.max(0,(video.duration||start+clipDuration(item))-.05),start+player.offset);
+      try{await video.play();}catch(error){setStatus('Lecture impossible : '+(error.message||error));pauseSequence();return false;}
+    }else{
+      video.pause();video.style.display='none';imagePreview.src=item.url;imagePreview.style.display='block';
+    }
+    player.startedAt=performance.now();
+    const clip=$('mcTimeline').querySelector('.mc-clip[data-index="'+index+'"]');
+    if(clip&&index>0)$('mcTimeline').scrollTo({left:Math.max(0,clip.offsetLeft-18),behavior:'smooth'});
+    updatePlaybackButtons();updateTimelinePlayhead();return true;
+  }
+  function pauseSequence(){
+    const player=state.player,item=state.items[player.index];
+    if(player.playing){
+      if(item?.type==='video')player.offset=Math.max(0,($('video').currentTime||0)-(Number(item.trimStart)||0));
+      else if(item)player.offset=Math.min(clipDuration(item),player.baseOffset+(performance.now()-player.startedAt)/1000);
+    }
+    player.playing=false;if(player.raf)cancelAnimationFrame(player.raf);player.raf=0;
+    $('video').pause();updatePlaybackButtons();updateTimelinePlayhead();
+  }
+  function stopSequence(){
+    const player=state.player;player.token++;player.playing=false;player.index=Math.max(0,state.active);player.offset=0;player.baseOffset=0;
+    if(player.raf)cancelAnimationFrame(player.raf);player.raf=0;$('video').pause();updatePlaybackButtons();updateTimelinePlayhead();
+  }
+  async function playbackTick(){
+    const player=state.player;if(!player.playing)return;
+    const item=state.items[player.index];if(!item){pauseSequence();return;}
+    if(item.type==='video')player.offset=Math.max(0,($('video').currentTime||0)-(Number(item.trimStart)||0));
+    else player.offset=Math.min(clipDuration(item),player.baseOffset+(performance.now()-player.startedAt)/1000);
+    if(player.offset>=clipDuration(item)-.025){
+      $('video').pause();
+      if(player.index>=state.items.length-1){player.offset=clipDuration(item);player.playing=false;updatePlaybackButtons();updateTimelinePlayhead();return;}
+      const token=player.token;
+      if(await activatePlaybackClip(player.index+1,0,token)&&player.playing)player.raf=requestAnimationFrame(playbackTick);
+      return;
+    }
+    updateTimelinePlayhead();player.raf=requestAnimationFrame(playbackTick);
+  }
+  async function startSequence(){
+    const player=state.player;if(!state.items.length){setStatus('Ajoute au moins une photo ou une vidéo.');return;}
+    if(player.playing){pauseSequence();return;}
+    player.playing=true;player.token++;const token=player.token;
+    const ready=await activatePlaybackClip(player.index,player.offset,token);
+    if(ready&&player.playing&&token===player.token)player.raf=requestAnimationFrame(playbackTick);
+  }
+  $('mcPlayToggle').onclick=startSequence;
+  $('mcStopPlayback').onclick=()=>{stopSequence();state.player.index=0;state.active=0;state.player.offset=0;previewActive();renderTimeline();updateTimelinePlayhead();};
+  $('video').controls=false;
   function previewActive() {
     const item = state.items[state.active];
     if (!item) { imagePreview.style.display = 'none'; $('video').pause(); $('video').removeAttribute('src'); $('video').load(); return; }
     if (item.type === 'image') {
-      $('video').pause(); $('video').removeAttribute('src'); $('video').load();
+      $('video').pause(); $('video').style.display='block';$('video').removeAttribute('src'); $('video').load();
       imagePreview.src = item.url; imagePreview.style.display = 'block';
       $('media').textContent = item.name + ' · Photo';
     } else {
-      imagePreview.style.display = 'none';
+      imagePreview.style.display = 'none';$('video').style.display='block';
       $('video').src = item.url; $('video').load();
       $('video').onloadedmetadata = () => { $('media').textContent = item.name + ' · ' + ($('video').duration || 0).toFixed(1) + ' s'; };
     }
