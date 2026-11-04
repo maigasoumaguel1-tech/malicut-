@@ -5,11 +5,13 @@
   const section = $('create');
   if (!section || !$('screen') || !$('video') || !$('file')) return;
 
-  const state = { items: [], active: 0, camera: null, photoSeconds: 3, transition: 'fade', busy: false, voiceBlob: null, voiceUrl: null, recorder: null, look: 'none', overlayItems: [], activeTrack: 'video', quality: '720', lastExportUrl: null, fitMode: 'cover', projectRatio: '9/16' };
+  const state = { items: [], active: 0, camera: null, photoSeconds: 3, transition: 'fade', busy: false, voiceBlob: null, voiceUrl: null, recorder: null, look: 'none', overlayItems: [], activeTrack: 'video', quality: '720', lastExportUrl: null, fitMode: 'cover', projectRatio: '9/16', player: { playing:false,index:0,offset:0,baseOffset:0,startedAt:0,raf:0,token:0 } };
   const originalFile = $('file');
   originalFile.accept = 'video/*,image/*';
   originalFile.multiple = true;
-  originalFile.setAttribute('aria-label', 'Importer des photos et vidéos');
+  originalFile.setAttribute('multiple','multiple');
+  originalFile.accept = 'image/*,video/*';
+  originalFile.setAttribute('aria-label', 'Importer plusieurs photos et vidéos');
 
   const style = document.createElement('style');
   style.textContent = `
@@ -76,6 +78,17 @@
     #mcProStudio #mcTimeline .mc-trim-handle.end{right:0;border-radius:0 6px 6px 0}
     #mcProStudio #mcTimeline .mc-trim-handle:after{content:"";position:absolute;left:5px;top:42%;height:16%;border-left:2px solid #172219}
 
+    #mcProStudio .mc-playback-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 10px;background:#0b160f;border-top:1px solid var(--line)}
+    #mcProStudio .mc-playback-controls button{border:1px solid #52685a;border-radius:9px;background:#18271d;color:#fff;padding:8px 12px;font-weight:800;font-size:12px}
+    #mcProStudio .mc-playback-controls #mcPlayToggle{background:#f4f4f0;color:#172018;border-color:#fff;min-width:104px}
+    #mcProStudio .mc-timecode{font:11px ui-monospace,monospace;color:#e8eee9;margin-left:auto}
+    #mcProStudio #mcTimeline{position:relative!important}
+    #mcProStudio .mc-transition-slot{position:relative;display:flex;flex:0 0 28px;align-items:center;justify-content:center;min-width:28px}
+    #mcProStudio .mc-transition-button{width:25px;height:25px;border-radius:50%;border:1px solid #fff;background:#f7f7f3;color:#172018;font-size:16px;font-weight:900;line-height:1;padding:0;box-shadow:0 1px 5px #0008}
+    #mcProStudio .mc-transition-select{position:absolute;z-index:20;top:31px;left:50%;transform:translateX(-50%);width:118px;padding:6px;border:1px solid #fff;border-radius:8px;background:#17251b;color:#fff;font-size:10px}
+    #mcProStudio .mc-transition-select[hidden]{display:none}
+    #mcProStudio .mc-timeline-playhead{position:absolute;z-index:9;top:4px;bottom:4px;left:10px;width:2px;background:#fff;box-shadow:0 0 0 1px #e7bd4e,0 0 8px #fff;pointer-events:none}
+    #mcProStudio .mc-timeline-playhead:before{content:"";position:absolute;top:0;left:-4px;width:10px;height:10px;border-radius:50%;background:#fff;border:1px solid #d8b75b}
     @media(min-width:700px){#mcProStudio .mc-clip-inspector{grid-template-columns:repeat(6,minmax(0,1fr))}}
     @media(min-width:700px){#mcProStudio .pro-actions{grid-template-columns:repeat(4,minmax(0,1fr))}}
   `;
@@ -103,6 +116,7 @@
       <div class="mc-timeline-shell">
         <div class="mc-timeline-top"><span>◷ TEMPS · PISTE PRINCIPALE</span><label>Zoom <input id="mcTimelineZoom" type="range" min="70" max="180" value="100"></label></div>
         <div class="pro-timeline" id="mcTimeline"><div class="mc-timeline-empty">＋ Importe tes photos et vidéos pour commencer.</div></div>
+        <div class="mc-playback-controls"><button type="button" id="mcPlayToggle">▶ Lecture</button><button type="button" id="mcStopPlayback">■ Arrêt</button><button type="button" id="mcAddClip">＋ Ajouter un clip</button><span class="mc-timecode" id="mcTimecode">00:00 / 00:00</span></div>
       </div>
       <div class="mc-clip-inspector" id="mcClipInspector">
         <div class="mc-inspector-name" id="mcInspectorName">Sélectionne un clip dans la timeline</div>
@@ -265,17 +279,27 @@
     $('mcCameraVideo').srcObject = null;
   }
   function makeItem(file, url) {
-    return { file, url, type: file.type.startsWith('image/') ? 'image' : 'video', name: file.name || (file.type.startsWith('image/') ? 'Photo capturée' : 'Vidéo'), duration: 3 };
+    const isImage=file.type.startsWith('image/');
+    return { file, url, type:isImage?'image':'video', name:file.name||(isImage?'Photo capturée':'Vidéo'), duration:isImage?state.photoSeconds:3, durationAuto:!isImage, trimStart:0, transitionBefore:null };
   }
   function addFiles(files) {
-    const accepted = [...files].filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
-    if (!accepted.length) { setStatus('Choisis des photos ou des vidéos compatibles.'); return; }
-    accepted.forEach(f => state.items.push(makeItem(f, URL.createObjectURL(f))));
-    state.active = Math.max(0, state.items.length - accepted.length);
-    renderTimeline();
-    previewActive();
-    renderLanes();
-    setStatus(accepted.length + ' média ajouté(s) au projet.');
+    const accepted=Array.from(files||[]).filter(f=>f&&(f.type.startsWith('image/')||f.type.startsWith('video/')));
+    if(!accepted.length){setStatus('Choisis des photos ou des vidéos compatibles.');return;}
+    pauseSequence();
+    const first=state.items.length;
+    accepted.forEach(file=>{
+      const item=makeItem(file,URL.createObjectURL(file));state.items.push(item);
+      if(item.type==='video'){
+        const probe=document.createElement('video');probe.preload='metadata';probe.src=item.url;
+        probe.onloadedmetadata=()=>{
+          if(item.durationAuto&&Number.isFinite(probe.duration)&&probe.duration>0){item.duration=Math.max(.5,probe.duration-(Number(item.trimStart)||0));item.durationAuto=false;renderTimeline();renderLanes();}
+          probe.removeAttribute('src');probe.load();
+        };
+        probe.onerror=()=>{item.durationAuto=false;};
+      }
+    });
+    state.active=first;renderTimeline();previewActive();renderLanes();
+    setStatus(accepted.length+' média ajouté(s) à la piste principale · '+state.items.length+' clip(s) au total.');
   }
   let timelineZoom=1;
   function renderTimeline() {
