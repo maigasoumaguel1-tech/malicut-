@@ -71,7 +71,8 @@
     #mcProStudio .mc-clip-inspector input{padding:0;margin-top:6px;accent-color:var(--gold)}
     #mcProStudio .mc-clip-inspector .mc-inspector-name{grid-column:1/-1;font-size:11px;color:var(--gold)}
     #mcProStudio .mc-timeline-empty{padding:18px;color:var(--mut);font-size:11px}
-    #mcProStudio #mcTimeline .mc-clip{position:relative;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab}
+    #mcProStudio #mcTimeline .mc-clip{position:relative;touch-action:pan-x pan-y;user-select:none;-webkit-user-select:none;cursor:grab}
+    #mcProStudio #mcTimeline .mc-clip.mc-longpress{border-color:#9be6ff;box-shadow:0 0 0 3px #72d8ff44}
     #mcProStudio #mcTimeline .mc-clip.mc-dragging{opacity:.78;z-index:5;box-shadow:0 8px 22px #0008}
     #mcProStudio #mcTimeline .mc-trim-handle{position:absolute;top:0;bottom:0;width:13px;z-index:4;background:#e7bd4e;border:1px solid #fff8;touch-action:none;cursor:ew-resize}
     #mcProStudio #mcTimeline .mc-trim-handle.start{left:0;border-radius:6px 0 0 6px}
@@ -427,13 +428,15 @@
       clip.addEventListener('pointerdown',e=>{
         const i=Number(clip.dataset.index),edge=e.target.closest('[data-trim]')?.dataset.trim||null;
         if(e.pointerType==='mouse'&&e.button!==0)return;
-        gesture={id:e.pointerId,index:i,edge,x:e.clientX,originalDuration:Number(state.items[i].duration)||3,originalStart:Number(state.items[i].trimStart)||0,moved:false};
-        clip.setPointerCapture(e.pointerId);
-        if(edge){e.preventDefault();e.stopPropagation();}
+        gesture={id:e.pointerId,index:i,edge,x:e.clientX,originalDuration:Number(state.items[i].duration)||3,originalStart:Number(state.items[i].trimStart)||0,moved:false,reorder:e.pointerType==='mouse'||!!edge,timer:null};
+        if(edge){clip.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation();}
+        else if(e.pointerType==='mouse'){clip.setPointerCapture(e.pointerId);}
+        else{gesture.timer=setTimeout(()=>{if(gesture&&gesture.id===e.pointerId){gesture.reorder=true;clip.setPointerCapture(e.pointerId);clip.classList.add('mc-longpress');}},260);}
       });
       clip.addEventListener('pointermove',e=>{
         if(!gesture||gesture.id!==e.pointerId)return;
         const dx=e.clientX-gesture.x;
+        if(!gesture.edge&&!gesture.reorder){if(Math.abs(dx)>7&&gesture.timer){clearTimeout(gesture.timer);gesture.timer=null;}return;}
         if(gesture.edge){
           e.preventDefault();
           const delta=dx/(42*timelineZoom);
@@ -453,7 +456,7 @@
       });
       const finishGesture=e=>{
         if(!gesture||gesture.id!==e.pointerId)return;
-        const g=gesture;gesture=null;clip.classList.remove('mc-dragging');clip.style.transform='';
+        const g=gesture;gesture=null;if(g.timer)clearTimeout(g.timer);clip.classList.remove('mc-dragging','mc-longpress');clip.style.transform='';
         if(g.moved&&!g.edge){
           pushHistory();clip.dataset.suppressClick='1';
           const timeline=$('mcTimeline'),tiles=[...timeline.querySelectorAll('.mc-clip')];
