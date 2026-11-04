@@ -5,7 +5,7 @@
   const section = $('create');
   if (!section || !$('screen') || !$('video') || !$('file')) return;
 
-  const state = { items: [], active: 0, camera: null, photoSeconds: 3, transition: 'fade', busy: false, voiceBlob: null, voiceUrl: null, recorder: null, look: 'none' };
+  const state = { items: [], active: 0, camera: null, photoSeconds: 3, transition: 'fade', busy: false, voiceBlob: null, voiceUrl: null, recorder: null, look: 'none', overlayItems: [], activeTrack: 'video', quality: '720', lastExportUrl: null };
   const originalFile = $('file');
   originalFile.accept = 'video/*,image/*';
   originalFile.multiple = true;
@@ -27,7 +27,7 @@
     #mcProStudio .pro-stage{position:relative}
     #mcProStudio video,#mcProStudio canvas{max-width:100%}
     #mcProStudio .pro-camera{width:100%;max-height:45vh;background:#080808;border-radius:12px}
-    #mcProStudio .pro-note{font-size:11px;color:var(--mut);line-height:1.45}
+    #mcProStudio .pro-note{font-size:11px;color:var(--mut);line-height:1.45}\n    #mcProStudio .mc-lanes{display:grid;gap:7px;margin-top:10px}\n    #mcProStudio .mc-lane{border:1px solid var(--line);border-radius:10px;padding:8px;background:#09130e}\n    #mcProStudio .mc-lane-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:6px}\n    #mcProStudio .mc-lane-clips{display:flex;gap:6px;min-height:34px;overflow:auto}\n    #mcProStudio .mc-lane-clip{padding:7px 9px;border-radius:7px;background:#20392a;font-size:10px;white-space:nowrap}\n    #mcProStudio .mc-lane.selected{border-color:var(--gold)}\n    #mcProStudio .mc-quality{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}\n    #mcProStudio .mc-quality button{border:1px solid var(--line);border-radius:9px;padding:9px 4px;background:var(--p2);font-size:11px}\n    #mcProStudio .mc-quality button.active{border-color:var(--gold);color:var(--gold)}
     @media(min-width:700px){#mcProStudio .pro-actions{grid-template-columns:repeat(4,minmax(0,1fr))}}
   `;
   document.head.appendChild(style);
@@ -56,7 +56,20 @@
         <label class="muted">Durée des photos (secondes)<input id="mcPhotoDuration" type="number" min="1" max="30" step="1" value="3"></label>
         <label class="muted">Transition entre médias<select id="mcTransition"><option value="fade">Fondu enchaîné</option><option value="cut">Coupe directe</option></select></label>
       </div>
-      <p class="pro-note">Sélectionne une vignette pour la prévisualiser. Les médias sont traités localement sur cet appareil.</p>
+      <div class="pro-head" style="margin-top:12px"><b>Timeline multipiste</b><span class="pro-badge">4 couches</span></div>
+      <div class="pro-actions">
+        <button class="btn" id="mcSelectVideoTrack">＋ Piste vidéo</button>
+        <button class="btn" id="mcSelectOverlayTrack">＋ Superposition</button>
+        <button class="btn" id="mcSelectAudioTrack">＋ Piste audio</button>
+        <button class="btn" id="mcSelectTextTrack">＋ Piste texte</button>
+      </div>
+      <div class="mc-lanes" id="mcLanes">
+        <div class="mc-lane selected" data-track="video"><div class="mc-lane-head"><b>V1 · Vidéo principale</b><span id="mcVideoLaneCount">0 clip</span></div><div class="mc-lane-clips" id="mcVideoLane"></div></div>
+        <div class="mc-lane" data-track="overlay"><div class="mc-lane-head"><b>V2 · Superpositions photo</b><span id="mcOverlayLaneCount">0 clip</span></div><div class="mc-lane-clips" id="mcOverlayLane"></div></div>
+        <div class="mc-lane" data-track="audio"><div class="mc-lane-head"><b>A1 · Musique / voix off</b><span id="mcAudioLaneCount">0 piste</span></div><div class="mc-lane-clips" id="mcAudioLane"></div></div>
+        <div class="mc-lane" data-track="text"><div class="mc-lane-head"><b>T1 · Titres et sous-titres</b><span>Texte animé</span></div><div class="mc-lane-clips"><span class="mc-lane-clip">Calque texte</span></div></div>
+      </div>
+      <p class="pro-note">Choisis une piste avant d'importer : les photos de V2 sont superposées au montage principal. Les pistes audio et texte restent séparées.</p>
     </div>`;
   const header = section.querySelector('.head');
   header ? header.after(panel) : section.prepend(panel);
@@ -119,6 +132,27 @@
   `;
   panel.after(creative);
 
+  const qualityPanel=document.createElement('div');
+  qualityPanel.className='panel';
+  qualityPanel.id='mcExportQuality';
+  qualityPanel.innerHTML=`
+    <div class="pro-head"><b>Qualité d'export</b><span class="pro-badge">HD · 4K Pro</span></div>
+    <div class="mc-quality">
+      <button data-quality="720" class="active">720p</button>
+      <button data-quality="1080">1080p</button>
+      <button data-quality="1440">2K <small>PRO</small></button>
+      <button data-quality="2160">4K <small>PRO</small></button>
+    </div>
+    <p class="pro-note" id="mcQualityNote">720p · Export HD standard. 1080p disponible également.</p>
+    <div class="pro-head" style="margin-top:12px"><b>Partager après export</b></div>
+    <div class="pro-actions" id="mcShareActions" style="opacity:.55">
+      <button class="btn" data-share="tiktok" disabled>TikTok</button><button class="btn" data-share="snapchat" disabled>Snapchat</button>
+      <button class="btn" data-share="whatsapp" disabled>WhatsApp</button><button class="btn" data-share="instagram" disabled>Instagram</button>
+      <button class="btn" data-share="youtube" disabled>YouTube</button>
+    </div>
+    <p class="pro-note" id="mcShareNote">Les options de partage seront activées après un export réussi. La disponibilité dépend des applications installées et des capacités Android.</p>
+  `;
+  creative.after(qualityPanel);
   const imagePreview = document.createElement('img');
   imagePreview.id = 'mcImagePreview';
   imagePreview.alt = 'Aperçu de la photo sélectionnée';
@@ -142,7 +176,7 @@
     state.active = Math.max(0, state.items.length - accepted.length);
     renderTimeline();
     previewActive();
-    setStatus(accepted.length + ' média ajouté(s) au projet.');
+    renderLanes();\n    setStatus(accepted.length + ' média ajouté(s) au projet.');
   }
   function renderTimeline() {
     $('mcCount').textContent = state.items.length + ' média' + (state.items.length > 1 ? 's' : '');
@@ -271,7 +305,7 @@
     const file = e.target.files && e.target.files[0]; if (!file) return;
     if (state.voiceUrl) URL.revokeObjectURL(state.voiceUrl);
     state.voiceUrl = URL.createObjectURL(file); state.voiceBlob = file; voiceAudio.src = state.voiceUrl;
-    $('mcVoiceStatus').textContent = 'Voix off importée : ' + file.name;
+    $('mcVoiceStatus').textContent = 'Voix off importée : ' + file.name; renderLanes();
     $('mcPreviewVoice').disabled = false;
   };
   $('mcRecordVoice').onclick = async () => {
@@ -285,7 +319,7 @@
         state.voiceUrl = URL.createObjectURL(state.voiceBlob); voiceAudio.src = state.voiceUrl;
         stream.getTracks().forEach(t=>t.stop());
         $('mcVoiceStatus').textContent = 'Voix off enregistrée et prête pour le montage.';
-        $('mcPreviewVoice').disabled = false; $('mcRecordVoice').disabled = false; $('mcStopVoice').disabled = true;
+        $('mcPreviewVoice').disabled = false; $('mcRecordVoice').disabled = false; $('mcStopVoice').disabled = true; renderLanes();
       };
       state.recorder.start(); $('mcRecordVoice').disabled = true; $('mcStopVoice').disabled = false;
       $('mcVoiceStatus').textContent = 'Enregistrement en cours…';
@@ -300,13 +334,52 @@
     const look=e.target.closest('[data-look]');
     if(look){state.look=look.dataset.look;setStatus('Effet sélectionné : '+look.textContent.trim());}
   });
+  function renderLanes(){
+    $('mcVideoLane').innerHTML=state.items.map((x,i)=>'<span class="mc-lane-clip">'+(i+1)+'. '+(x.type==='image'?'Photo':'Vidéo')+'</span>').join('')||'<span class="pro-note">Importer les médias principaux</span>';
+    $('mcOverlayLane').innerHTML=state.overlayItems.map((x,i)=>'<span class="mc-lane-clip">'+(i+1)+'. '+x.name.replace(/[<>&"]/g,'')+'</span>').join('')||'<span class="pro-note">Aucune superposition</span>';
+    $('mcAudioLane').innerHTML=(musicAudio?'<span class="mc-lane-clip">♫ Musique</span>':'')+(state.voiceUrl?'<span class="mc-lane-clip">🎙 Voix off</span>':'')||'<span class="pro-note">Ajouter musique ou voix</span>';
+    $('mcVideoLaneCount').textContent=state.items.length+' clip(s)';
+    $('mcOverlayLaneCount').textContent=state.overlayItems.length+' clip(s)';
+    $('mcAudioLaneCount').textContent=(Number(!!musicAudio)+Number(!!state.voiceUrl))+' piste(s)';
+    document.querySelectorAll('#mcLanes .mc-lane').forEach(el=>el.classList.toggle('selected',el.dataset.track===state.activeTrack));
+  }
+  ['mcSelectVideoTrack','mcSelectOverlayTrack','mcSelectAudioTrack','mcSelectTextTrack'].forEach((id,i)=>$(id).onclick=()=>{
+    state.activeTrack=['video','overlay','audio','text'][i];renderLanes();
+    if(state.activeTrack==='overlay'){const picker=document.createElement('input');picker.type='file';picker.accept='image/*';picker.multiple=true;picker.onchange=()=>{[...picker.files].forEach(file=>state.overlayItems.push({file,url:URL.createObjectURL(file),name:file.name||'Superposition'}));renderLanes();setStatus('Superposition(s) ajoutée(s) à la piste V2.');};picker.click();}
+    if(state.activeTrack==='audio')$('mcVoiceFile').click();
+    if(state.activeTrack==='text')$('textModal')?.classList.add('open');
+  });
+  document.querySelectorAll('#mcExportQuality [data-quality]').forEach(btn=>btn.onclick=()=>{
+    const q=btn.dataset.quality;
+    const isPro=window.MALICUT_IS_PRO===true;
+    if((q==='1440'||q==='2160')&&!isPro){$('mcQualityNote').textContent='La qualité '+(q==='1440'?'2K':'4K')+' est réservée à MaliCut Pro. Active ton offre Pro pour y accéder.';setStatus('Résolution '+q+'p réservée à MaliCut Pro.');return;}
+    state.quality=q;document.querySelectorAll('#mcExportQuality [data-quality]').forEach(b=>b.classList.toggle('active',b===btn));
+    $('mcQualityNote').textContent=q==='2160'?'4K UHD · MaliCut Pro':q==='1440'?'2K QHD · MaliCut Pro':q+'p · Export standard';
+  });
+  $('mcShareActions').addEventListener('click',async e=>{
+    const btn=e.target.closest('[data-share]');if(!btn||!window.MALICUT_LAST_EXPORT)return;
+    const target=btn.dataset.share,blob=window.MALICUT_LAST_EXPORT.blob;
+    const file=new File([blob],window.MALICUT_LAST_EXPORT.name,{type:blob.type||'video/webm'});
+    try{
+      if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'Ma vidéo MaliCut',text:'Créé avec MaliCut'});return;}
+    }catch(err){if(err.name==='AbortError')return;}
+    const urls={tiktok:'https://www.tiktok.com/upload',snapchat:'https://web.snapchat.com/',whatsapp:'https://wa.me/',instagram:'https://www.instagram.com/',youtube:'https://www.youtube.com/upload'};
+    $('mcShareNote').textContent='Ouvre '+target+' pour continuer. Si le partage de fichier est indisponible, joins la vidéo enregistrée depuis ton appareil.';
+    window.open(urls[target],'_blank','noopener');
+  });
+  function enableShare(blob){
+    window.MALICUT_LAST_EXPORT={blob,name:'malicut-studio-pro.webm'};
+    $('mcShareActions').style.opacity='1';
+    $('mcShareActions').querySelectorAll('button').forEach(b=>b.disabled=false);
+    $('mcShareNote').textContent='Vidéo prête. Choisis une plateforme : Android proposera les applications compatibles si elles acceptent ce format.';
+  }
   async function exportSequence() {
     if (state.busy) return;
     if (!state.items.length) { setStatus('Ajoute au moins une photo ou une vidéo.'); return; }
     if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) { setStatus('Export vidéo non pris en charge par ce navigateur.'); return; }
     state.busy = true; stopCamera();
     const ratioText = document.querySelector('#create .formats .format.active')?.textContent?.trim() || '9:16';
-    const dims = ratioText === '16:9' ? [1280,720] : ratioText === '1:1' ? [900,900] : ratioText === '4:5' ? [900,1125] : [720,1280];
+    const longEdge = Number(state.quality)||720;\n    const dims = ratioText === '16:9' ? [Math.round(longEdge*16/9),longEdge] : ratioText === '1:1' ? [longEdge,longEdge] : ratioText === '4:5' ? [Math.round(longEdge*4/5),longEdge] : [Math.round(longEdge*9/16),longEdge];
     const canvas = document.createElement('canvas'); canvas.width = dims[0]; canvas.height = dims[1];
     const ctx = canvas.getContext('2d');
     const stream = canvas.captureStream(30);
@@ -423,13 +496,13 @@
       recorder.stop(); await stopped;
       const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
       if (!blob.size) throw new Error('Le fichier exporté est vide.');
-      window.MALICUT_LAST_EXPORT = { blob, name: 'malicut-studio-pro.webm' };
+      enableShare(blob);
       const url = URL.createObjectURL(blob), a = document.createElement('a');
       a.href = url; a.download = 'malicut-studio-pro.webm'; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 60000);
       localStorage.setItem('malicut_exports', +(localStorage.getItem('malicut_exports') || 0) + 1);
       if ($('exports')) $('exports').textContent = localStorage.getItem('malicut_exports');
-      $('bar').style.width = '100%'; setStatus('Export terminé · vidéo WebM enregistrée.');
+      $('bar').style.width = '100%'; setStatus('Export terminé · '+state.quality+'p · vidéo WebM enregistrée.');
     } catch (e) {
       try { if (recorder.state !== 'inactive') recorder.stop(); } catch (_) {}
       await stopped.catch(() => {});
