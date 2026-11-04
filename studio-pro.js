@@ -78,6 +78,7 @@
     #mcProStudio #mcTimeline .mc-trim-handle.end{right:0;border-radius:0 6px 6px 0}
     #mcProStudio #mcTimeline .mc-trim-handle:after{content:"";position:absolute;left:5px;top:42%;height:16%;border-left:2px solid #172219}
 
+    @keyframes mcSequenceFade{from{opacity:0}to{opacity:1}}
     #mcProStudio .mc-playback-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 10px;background:#0b160f;border-top:1px solid var(--line)}
     #mcProStudio .mc-playback-controls button{border:1px solid #52685a;border-radius:9px;background:#18271d;color:#fff;padding:8px 12px;font-weight:800;font-size:12px}
     #mcProStudio .mc-playback-controls #mcPlayToggle{background:#f4f4f0;color:#172018;border-color:#fff;min-width:104px}
@@ -411,7 +412,7 @@
     inspector.querySelectorAll('[data-inspect]').forEach(btn=>btn.onclick=()=>{
       const action=btn.dataset.inspect;
       if(action==='delete'){pauseSequence();URL.revokeObjectURL(selected.url);state.items.splice(state.active,1);state.active=Math.max(0,Math.min(state.active,state.items.length-1));state.player.index=state.active;state.player.offset=0;}
-      if(action==='duplicate'){state.items.splice(state.active+1,0,{...selected});state.active++;}
+      if(action==='duplicate'){state.items.splice(state.active+1,0,{...selected,transitionBefore:null});state.active++;state.player.index=state.active;state.player.offset=0;}
       if(action==='split'){pauseSequence();const half=Math.max(.5,(Number(selected.duration)||3)/2);const second={...selected,duration:half,durationAuto:false,transitionBefore:null};if(selected.type==='video')second.trimStart=(Number(selected.trimStart)||0)+half;selected.duration=half;selected.durationAuto=false;state.items.splice(state.active+1,0,second);state.active++;state.player.index=state.active;state.player.offset=0;}
       if(action==='effectReset'){selected.effect='none';}
       renderTimeline();previewActive();renderLanes();
@@ -454,6 +455,8 @@
       video.pause();video.style.display='none';imagePreview.src=item.url;imagePreview.style.display='block';
     }
     player.startedAt=performance.now();
+    const transition=item.transitionBefore?.type||'none',stage=$('screen');
+    if(transition==='fade'){stage.style.animation='none';void stage.offsetWidth;stage.style.animation='mcSequenceFade '+Math.round((Number(item.transitionBefore?.duration)||.6)*1000)+'ms ease both';}
     const clip=$('mcTimeline').querySelector('.mc-clip[data-index="'+index+'"]');
     if(clip&&index>0)$('mcTimeline').scrollTo({left:Math.max(0,clip.offsetLeft-18),behavior:'smooth'});
     updatePlaybackButtons();updateTimelinePlayhead();return true;
@@ -517,7 +520,7 @@
     picker.onchange = () => addFiles(picker.files); picker.click();
   };
   $('mcClear').onclick=()=>{
-    stopSequence();state.items.forEach(x=>URL.revokeObjectURL(x.url));state.items=[];state.active=0;
+    stopSequence();state.items.forEach(x=>URL.revokeObjectURL(x.url));state.items=[];state.active=0;state.player.index=0;state.player.offset=0;
     renderTimeline();previewActive();setStatus('Nouveau projet prêt.');
   };
   $('mcCamera').onclick = async () => {
@@ -673,7 +676,8 @@
     $('mcShareNote').textContent='Vidéo prête. Choisis une plateforme : Android proposera les applications compatibles si elles acceptent ce format.';
   }
   async function exportSequence() {
-    if (state.busy) return;
+    if(state.busy)return;
+    pauseSequence();
     if (!state.items.length) { setStatus('Ajoute au moins une photo ou une vidéo.'); return; }
     if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) { setStatus('Export vidéo non pris en charge par ce navigateur.'); return; }
     state.busy = true; stopCamera();
@@ -703,11 +707,12 @@
     }
     recorder.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
     const stopped = new Promise(resolve => recorder.onstop = resolve);
-    let overlaySources = [];
+    let overlaySources=[],previousFrame=null;
     const fps = 30;
     const drawFrame = (source,alpha=1,frame=0,total=1,transition='cut',transitionFrames=0) => {
       const progress=Math.max(0,Math.min(1,frame/Math.max(1,total)));
       ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);
+      if(transition==='fade'&&previousFrame&&frame<transitionFrames)ctx.drawImage(previousFrame,0,0,canvas.width,canvas.height);
       ctx.save();
       if(transition==='zoom' && progress<transitionFrames/total){const z=1+(.16*(1-progress*total/transitionFrames));ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(z,z);ctx.translate(-canvas.width/2,-canvas.height/2);}
       if(transition==='slide' && progress<transitionFrames/total){ctx.translate(canvas.width*(1-progress*total/transitionFrames),0);}
@@ -790,7 +795,9 @@
           setStatus('Export · média ' + (index + 1) + '/' + state.items.length);
           await new Promise(resolve => setTimeout(resolve, 1000/fps));
         }
-        if (item.type === 'video') source.pause();
+        if(item.type==='video')source.pause();
+        previousFrame=document.createElement('canvas');previousFrame.width=canvas.width;previousFrame.height=canvas.height;
+        previousFrame.getContext('2d').drawImage(canvas,0,0);
       }
       if (musicAudio && musicGain && audioContext) {
         const fadeOut = Math.max(0, Number($('musicFadeOut').value) || 0);
