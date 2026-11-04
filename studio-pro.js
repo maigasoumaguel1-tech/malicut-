@@ -27,7 +27,16 @@
     #mcProStudio .pro-stage{position:relative}
     #mcProStudio video,#mcProStudio canvas{max-width:100%}
     #mcProStudio .pro-camera{width:100%;max-height:45vh;background:#080808;border-radius:12px}
-    #mcProStudio .pro-note{font-size:11px;color:var(--mut);line-height:1.45}\n    #mcProStudio .mc-lanes{display:grid;gap:7px;margin-top:10px}\n    #mcProStudio .mc-lane{border:1px solid var(--line);border-radius:10px;padding:8px;background:#09130e}\n    #mcProStudio .mc-lane-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:6px}\n    #mcProStudio .mc-lane-clips{display:flex;gap:6px;min-height:34px;overflow:auto}\n    #mcProStudio .mc-lane-clip{padding:7px 9px;border-radius:7px;background:#20392a;font-size:10px;white-space:nowrap}\n    #mcProStudio .mc-lane.selected{border-color:var(--gold)}\n    #mcProStudio .mc-quality{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}\n    #mcProStudio .mc-quality button{border:1px solid var(--line);border-radius:9px;padding:9px 4px;background:var(--p2);font-size:11px}\n    #mcProStudio .mc-quality button.active{border-color:var(--gold);color:var(--gold)}
+    #mcProStudio .pro-note{font-size:11px;color:var(--mut);line-height:1.45}
+    #mcProStudio .mc-lanes{display:grid;gap:7px;margin-top:10px}
+    #mcProStudio .mc-lane{border:1px solid var(--line);border-radius:10px;padding:8px;background:#09130e}
+    #mcProStudio .mc-lane-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:6px}
+    #mcProStudio .mc-lane-clips{display:flex;gap:6px;min-height:34px;overflow:auto}
+    #mcProStudio .mc-lane-clip{padding:7px 9px;border-radius:7px;background:#20392a;font-size:10px;white-space:nowrap}
+    #mcProStudio .mc-lane.selected{border-color:var(--gold)}
+    #mcProStudio .mc-quality{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+    #mcProStudio .mc-quality button{border:1px solid var(--line);border-radius:9px;padding:9px 4px;background:var(--p2);font-size:11px}
+    #mcProStudio .mc-quality button.active{border-color:var(--gold);color:var(--gold)}
     @media(min-width:700px){#mcProStudio .pro-actions{grid-template-columns:repeat(4,minmax(0,1fr))}}
   `;
   document.head.appendChild(style);
@@ -176,7 +185,8 @@
     state.active = Math.max(0, state.items.length - accepted.length);
     renderTimeline();
     previewActive();
-    renderLanes();\n    setStatus(accepted.length + ' média ajouté(s) au projet.');
+    renderLanes();
+    setStatus(accepted.length + ' média ajouté(s) au projet.');
   }
   function renderTimeline() {
     $('mcCount').textContent = state.items.length + ' média' + (state.items.length > 1 ? 's' : '');
@@ -379,7 +389,8 @@
     if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) { setStatus('Export vidéo non pris en charge par ce navigateur.'); return; }
     state.busy = true; stopCamera();
     const ratioText = document.querySelector('#create .formats .format.active')?.textContent?.trim() || '9:16';
-    const longEdge = Number(state.quality)||720;\n    const dims = ratioText === '16:9' ? [Math.round(longEdge*16/9),longEdge] : ratioText === '1:1' ? [longEdge,longEdge] : ratioText === '4:5' ? [Math.round(longEdge*4/5),longEdge] : [Math.round(longEdge*9/16),longEdge];
+    const longEdge = Number(state.quality)||720;
+    const dims = ratioText === '16:9' ? [Math.round(longEdge*16/9),longEdge] : ratioText === '1:1' ? [longEdge,longEdge] : ratioText === '4:5' ? [Math.round(longEdge*4/5),longEdge] : [Math.round(longEdge*9/16),longEdge];
     const canvas = document.createElement('canvas'); canvas.width = dims[0]; canvas.height = dims[1];
     const ctx = canvas.getContext('2d');
     const stream = canvas.captureStream(30);
@@ -400,6 +411,7 @@
     }
     recorder.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
     const stopped = new Promise(resolve => recorder.onstop = resolve);
+    const overlaySources = await Promise.all(state.overlayItems.map(item=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('Une image de superposition est illisible.'));img.src=item.url;})));
     const fps = 30;
     const transitionFrames = Math.max(1, Math.round(Math.max(.2,Math.min(2,Number($('mcTransitionDuration').value)||.6))*fps));
     const fadeFrames = state.transition === 'fade' ? transitionFrames : 0;
@@ -413,6 +425,7 @@
       if(state.transition==='blur' && progress<transitionFrames/total)ctx.filter='blur('+Math.round(12*(1-progress*total/transitionFrames))+'px)';
       fit(ctx,source,canvas.width,canvas.height, state.transition==='flash'&&progress<.08?0.35:alpha);
       ctx.filter='none';ctx.restore();
+      overlaySources.forEach((overlay,overlayIndex)=>{ctx.save();ctx.globalAlpha=.92;const scale=Math.min(canvas.width/overlay.naturalWidth,canvas.height/overlay.naturalHeight);const w=overlay.naturalWidth*scale,h=overlay.naturalHeight*scale;ctx.drawImage(overlay,(canvas.width-w)/2,(canvas.height-h)/2,w,h);ctx.restore();});
       if(state.transition==='wipe'&&progress<transitionFrames/total){ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width*(1-progress*total/transitionFrames),canvas.height);}
       if(state.transition==='flash'&&progress<.08){ctx.fillStyle='rgba(255,255,255,'+(1-progress/.08)+')';ctx.fillRect(0,0,canvas.width,canvas.height);}
       if(state.transition==='glitch'&&progress<.15){ctx.fillStyle='rgba(0,220,255,.25)';ctx.fillRect(Math.random()*canvas.width,0,canvas.width*.8,canvas.height);ctx.fillStyle='rgba(255,0,100,.2)';ctx.fillRect(0,Math.random()*canvas.height,canvas.width,canvas.height*.08);}
