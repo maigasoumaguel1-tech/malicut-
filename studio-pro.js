@@ -69,6 +69,13 @@
     #mcProStudio .mc-clip-inspector input{padding:0;margin-top:6px;accent-color:var(--gold)}
     #mcProStudio .mc-clip-inspector .mc-inspector-name{grid-column:1/-1;font-size:11px;color:var(--gold)}
     #mcProStudio .mc-timeline-empty{padding:18px;color:var(--mut);font-size:11px}
+    #mcProStudio #mcTimeline .mc-clip{position:relative;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab}
+    #mcProStudio #mcTimeline .mc-clip.mc-dragging{opacity:.78;z-index:5;box-shadow:0 8px 22px #0008}
+    #mcProStudio #mcTimeline .mc-trim-handle{position:absolute;top:0;bottom:0;width:13px;z-index:4;background:#e7bd4e;border:1px solid #fff8;touch-action:none;cursor:ew-resize}
+    #mcProStudio #mcTimeline .mc-trim-handle.start{left:0;border-radius:6px 0 0 6px}
+    #mcProStudio #mcTimeline .mc-trim-handle.end{right:0;border-radius:0 6px 6px 0}
+    #mcProStudio #mcTimeline .mc-trim-handle:after{content:"";position:absolute;left:5px;top:42%;height:16%;border-left:2px solid #172219}
+
     @media(min-width:700px){#mcProStudio .mc-clip-inspector{grid-template-columns:repeat(6,minmax(0,1fr))}}
     @media(min-width:700px){#mcProStudio .pro-actions{grid-template-columns:repeat(4,minmax(0,1fr))}}
   `;
@@ -284,11 +291,54 @@
       const seconds=Math.max(.5,Number(item.duration)||3);
       const width=Math.max(76,Math.min(260,seconds*28))*timelineZoom;
       return '<div class="pro-item mc-clip '+(i===state.active?'active':'')+'" data-index="'+i+'" style="--mc-clip-width:'+width+'px" draggable="true">' +
+        '<i class="mc-trim-handle start" data-trim="start" aria-label="Début du clip"></i>'+
+        '<i class="mc-trim-handle end" data-trim="end" aria-label="Fin du clip"></i>'+
         (item.type==='image'?'<img src="'+item.url+'" alt="">':'<div class="mc-video-thumb">▶</div>')+
-        '<small>'+(i+1)+'. '+String(item.name).replace(/[<>&"]/g,'')+'</small><div class="mc-clip-meta">'+seconds.toFixed(1)+' s</div></div>';
+        '<small>'+(i+1)+'. '+String(item.name).replace(/[<>&"]/g,'')+'</small><div class="mc-clip-meta">'+seconds.toFixed(1)+' s · ✥ déplacer · ◀▶ ajuster</div></div>';
     }).join('<div class="mc-cut-marker">＋</div>');
     target.querySelectorAll('.mc-clip').forEach(clip=>{
-      clip.addEventListener('click',()=>{
+      let gesture=null;
+      clip.addEventListener('pointerdown',e=>{
+        const i=Number(clip.dataset.index),edge=e.target.closest('[data-trim]')?.dataset.trim||null;
+        if(e.pointerType==='mouse'&&e.button!==0)return;
+        gesture={id:e.pointerId,index:i,edge,x:e.clientX,originalDuration:Number(state.items[i].duration)||3,originalStart:Number(state.items[i].trimStart)||0,moved:false};
+        if(edge){e.preventDefault();e.stopPropagation();clip.setPointerCapture(e.pointerId);}
+      });
+      clip.addEventListener('pointermove',e=>{
+        if(!gesture||gesture.id!==e.pointerId)return;
+        const dx=e.clientX-gesture.x;
+        if(gesture.edge){
+          e.preventDefault();
+          const delta=dx/(28*timelineZoom);
+          const item=state.items[gesture.index];
+          if(gesture.edge==='end')item.duration=Math.max(.5,Math.min(30,gesture.originalDuration+delta));
+          else if(item.type==='video'){
+            const shift=Math.max(-gesture.originalStart,Math.min(gesture.originalDuration-.5,delta));
+            item.trimStart=gesture.originalStart+shift;item.duration=Math.max(.5,gesture.originalDuration-shift);
+          }
+          const width=Math.max(76,Math.min(260,item.duration*28))*timelineZoom;
+          clip.style.width=width+'px';clip.style.minWidth=width+'px';clip.style.setProperty('--mc-clip-width',width+'px');
+          const meta=clip.querySelector('.mc-clip-meta');if(meta)meta.textContent=item.duration.toFixed(1)+' s';
+          const durationLabel=$('mcInspectorDuration');if(durationLabel&&state.active===gesture.index)durationLabel.textContent=item.duration.toFixed(1)+' s';
+          renderLanes();return;
+        }
+        if(Math.abs(dx)>10){gesture.moved=true;clip.classList.add('mc-dragging');clip.style.transform='translateX('+dx+'px)';}
+      });
+      const finishGesture=e=>{
+        if(!gesture||gesture.id!==e.pointerId)return;
+        const g=gesture;gesture=null;clip.classList.remove('mc-dragging');clip.style.transform='';
+        if(g.moved&&!g.edge){
+          const under=document.elementFromPoint(e.clientX,e.clientY)?.closest('#mcTimeline .mc-clip');
+          if(under){
+            const to=Number(under.dataset.index),from=g.index;
+            if(Number.isInteger(to)&&to!==from){const moved=state.items.splice(from,1)[0];state.items.splice(to,0,moved);state.active=to;renderTimeline();previewActive();renderLanes();}
+          }
+        } else if(g.edge){renderTimeline();}
+      };
+      clip.addEventListener('pointerup',finishGesture);
+      clip.addEventListener('pointercancel',finishGesture);
+      clip.addEventListener('click',e=>{
+        if(clip.dataset.suppressClick==='1'){clip.dataset.suppressClick='0';e.preventDefault();return;}
         state.active=Number(clip.dataset.index);previewActive();renderTimeline();
       });
       clip.addEventListener('dragstart',e=>{
@@ -609,8 +659,10 @@
           source = document.createElement('video'); source.src = item.url; source.muted = true; source.playsInline = true; source.preload = 'auto';
           source.load();
           if (source.readyState < 2) await waitEvent(source, 'loadeddata');
-          duration = Math.min(source.duration||1, Math.max(.2, Number(item.duration)||source.duration||1));
-          source.currentTime = 0;
+          const inPoint=Math.max(0,Math.min((source.duration||1)-.2,Number(item.trimStart)||0));
+          duration = Math.min(Math.max(.2,(source.duration||1)-inPoint),Math.max(.2,Number(item.duration)||source.duration||1));
+          source.currentTime = inPoint;
+          if(inPoint>0.01) await new Promise(resolve=>source.addEventListener('seeked',resolve,{once:true}));
         }
         const frames = Math.max(1, Math.ceil(duration * fps));
         if (item.type === 'video') await source.play();
