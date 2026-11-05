@@ -776,12 +776,17 @@
     state.items.forEach((item,index)=>{if(index>0)item.transitionBefore=e.target.value==='none'||e.target.value==='cut'?null:{type:e.target.value,duration:Math.max(.2,Math.min(2,Number($('mcTransitionDuration').value)||.6))};});
     renderTimeline();setStatus('Transition '+e.target.options[e.target.selectedIndex].text+' appliquée aux jonctions du montage.');
   };
-  $('mcCreativeTools').addEventListener('click',e=>{
-    const suggest=e.target.closest('[data-suggest]');
-    if(suggest){ const input=$('text'); if(input){input.value=suggest.dataset.suggest; $('textModal').classList.add('open');} }
-    const look=e.target.closest('[data-look]');
-    if(look){state.look=look.dataset.look;setStatus('Effet sélectionné : '+look.textContent.trim());}
-  });
+  // This optional creative-tools panel is not present in every Studio layout.
+  // Never let its absence abort the rest of the editor's event wiring.
+  const creativeTools = $('mcCreativeTools');
+  if (creativeTools) {
+    creativeTools.addEventListener('click',e=>{
+      const suggest=e.target.closest('[data-suggest]');
+      if(suggest){ const input=$('text'); if(input){input.value=suggest.dataset.suggest; $('textModal').classList.add('open');} }
+      const look=e.target.closest('[data-look]');
+      if(look){state.look=look.dataset.look;setStatus('Effet sélectionné : '+look.textContent.trim());}
+    });
+  }
   function renderLanes(){
     $('mcVideoLane').innerHTML=state.items.map((x,i)=>'<span class="mc-lane-clip">'+(i+1)+'. '+(x.type==='image'?'Photo':'Vidéo')+'</span>').join('')||'<span class="pro-note">Importer les médias principaux</span>';
     $('mcOverlayLane').innerHTML=state.overlayItems.map((x,i)=>'<span class="mc-lane-clip">'+(i+1)+'. '+x.name.replace(/[<>&"]/g,'')+'</span>').join('')||'<span class="pro-note">Aucune superposition</span>';
