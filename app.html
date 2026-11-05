@@ -606,8 +606,13 @@ async function feed(){
  }).join('');
 }
 async function uploadCommunityVideo(path,source,session){
- if(!window.tus?.Upload)throw new Error('Le module de transfert sécurisé ne s’est pas chargé. Recharge la page et réessaie.');
  const config=window.MALICUT_CONFIG||{};
+ if(!window.tus?.Upload){
+  if(source.size>6*1024*1024)throw new Error('Le module de transfert reprenable ne s’est pas chargé. Vérifie ta connexion puis recharge la page.');
+  const fallback=await sb.storage.from('videos').upload(path,source,{upsert:false,contentType:source.type||'video/webm'});
+  if(fallback.error)throw fallback.error;
+  return path;
+ }
  const apiUrl=new URL(config.url);
  const suffix='.supabase.co';
  const endpoint=apiUrl.hostname.endsWith(suffix)
@@ -649,8 +654,9 @@ async function publish(){
    ?(window.MALICUT_LAST_EXPORT.name||'malicut-studio-export.webm')
    :(source.name||'malicut-video.webm');
   uploadedPath=user.id+'/'+Date.now()+'-'+filename.replace(/[^a-z0-9._-]/gi,'_');
+  const uploadSource=(typeof File!=='undefined'&&source instanceof File)?source:new File([source],filename,{type:source.type||'video/webm'});
   if(statusEl)statusEl.textContent='Préparation de l’envoi…';
-  await uploadCommunityVideo(uploadedPath,source,session);
+  await uploadCommunityVideo(uploadedPath,uploadSource,session);
   if(statusEl)statusEl.textContent='Vidéo envoyée. Publication dans la communauté…';
   const inserted=await sb.from('videos').insert({
    user_id:user.id,
