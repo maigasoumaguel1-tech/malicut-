@@ -646,27 +646,40 @@
   // One native, visible input is shared by the legacy preview and Studio Pro.
   // Android browsers can ignore clicks on display:none/hidden file inputs.
   const studioPicker = originalFile;
+  studioPicker.type = 'file';
   studioPicker.multiple = true;
   studioPicker.accept = 'image/*,video/*,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.heic,.heif,.tif,.tiff,.mp4,.m4v,.mov,.webm,.mkv,.3gp,.mpeg,.mpg,.avi';
+  studioPicker.hidden = false;
+  studioPicker.removeAttribute('hidden');
+  studioPicker.style.display = 'block';
+  studioPicker.style.visibility = 'visible';
+  studioPicker.style.opacity = '1';
+  studioPicker.setAttribute('aria-label','Sélectionner des photos et vidéos depuis cet appareil');
   studioPicker.addEventListener('change', e => {
-    const chosen = Array.from(e.currentTarget.files || []);
+    const chosen = Array.from((e.currentTarget || studioPicker).files || []);
     if (!chosen.length) {
       setStatus('Aucun fichier reçu. Sélectionne une photo ou une vidéo puis réessaie.');
       return;
     }
     try {
       addFiles(chosen);
+      setStatus(chosen.length+' fichier(s) reçu(s). Vérification et ajout à la timeline…');
     } catch (error) {
       console.error('[MaliCut Studio] Import error:', error);
       setStatus('Importation impossible : ' + (error && error.message ? error.message : 'erreur de lecture du fichier') + '. Réessaie avec JPG, PNG ou MP4.');
+    } finally {
+      // Reset only the picker value; object URLs keep the selected File objects alive.
+      studioPicker.value = '';
     }
-  });
+  }, true);
   function openStudioPicker(){
     try {
       studioPicker.value = '';
-      studioPicker.click();
+      if (typeof studioPicker.showPicker === 'function') studioPicker.showPicker();
+      else studioPicker.click();
     } catch (error) {
-      setStatus('Ouverture des fichiers impossible : ' + (error.message || error));
+      try { studioPicker.click(); }
+      catch (_) { setStatus('Ouverture des fichiers impossible : ' + (error.message || error)); }
     }
   }
   $('mcImport').onclick=openStudioPicker;
