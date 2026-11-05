@@ -880,7 +880,8 @@
     } catch (_) { recorder = new MediaRecorder(stream); }
     const chunks = [];
     const voicePlayback = state.voiceUrl ? new Audio(state.voiceUrl) : null;
-    if ((musicAudio || voicePlayback) && window.AudioContext) {
+    const videoAudioNodes=[];
+    if ((musicAudio || voicePlayback || state.items.some(item=>item.type==='video')) && window.AudioContext) {
       try {
         if(!musicAudioContext){musicAudioContext=new AudioContext();musicAudioDestination=musicAudioContext.createMediaStreamDestination();}
         audioContext=musicAudioContext;audioDestination=musicAudioDestination;
@@ -974,7 +975,7 @@
           if (!source.complete) await waitEvent(source, 'load');
           duration = Math.max(.5, Number(item.duration)||state.photoSeconds);
         } else {
-          source = document.createElement('video'); source.src = item.url; source.muted = true; source.playsInline = true; source.preload = 'auto';
+          source = document.createElement('video'); source.src = item.url; source.muted = false; source.playsInline = true; source.preload = 'auto';
           source.load();
           if (source.readyState < 2) await waitEvent(source, 'loadeddata');
           const inPoint=Math.max(0,Math.min((source.duration||1)-.2,Number(item.trimStart)||0));
@@ -984,7 +985,10 @@
         const frames=Math.max(1,Math.ceil(duration*fps));
         const transition=item.transitionBefore?.type||'cut';
         const transitionFrames=index>0?Math.max(1,Math.round(Math.max(.2,Math.min(2,Number(item.transitionBefore?.duration)||Number($('mcTransitionDuration').value)||.6))*fps)):0;
-        if(item.type==='video')await source.play();
+        if(item.type==='video'){
+          if(audioContext&&audioDestination){try{const videoSourceNode=audioContext.createMediaElementSource(source);const videoGainNode=audioContext.createGain();videoGainNode.gain.value=1;videoSourceNode.connect(videoGainNode);videoGainNode.connect(audioDestination);videoAudioNodes.push({source:videoSourceNode,gain:videoGainNode});}catch(audioError){console.warn('Clip audio routing unavailable:',audioError);}}
+          await source.play();
+        }
         for(let frame=0;frame<frames;frame++){
           if(item.type==='video'&&source.ended)break;
           const alpha=transition==='fade'&&frame<transitionFrames&&index>0?frame/transitionFrames:1;
@@ -1024,6 +1028,7 @@
       setStatus('Export interrompu : ' + (e.message || e));
     } finally {
       if(voicePlayback)voicePlayback.pause();
+      videoAudioNodes.forEach(node=>{try{node.source.disconnect();node.gain.disconnect();}catch(_){}});
       stream.getTracks().forEach(t => t.stop());
       if (audioContext && musicAudio) { try { musicAudio.pause(); } catch (_) {} }
       state.busy = false;
