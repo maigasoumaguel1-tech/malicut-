@@ -631,6 +631,7 @@
   $('video').controls=false;
   function previewActive() {
     const item = state.items[state.active];
+    const previewEffectFilters={none:'none',fade:'brightness(1.04)',flash:'brightness(1.2)',vignette:'contrast(1.08) saturate(.9)',zoom:'none'};$('screen').style.filter=previewEffectFilters[item?.effect||'none']||'none';
     if (!item) { imagePreview.style.display = 'none'; $('video').pause(); $('video').removeAttribute('src'); $('video').load(); return; }
     if (item.type === 'image') {
       $('video').pause(); $('video').style.display='block';$('video').removeAttribute('src'); $('video').load();
