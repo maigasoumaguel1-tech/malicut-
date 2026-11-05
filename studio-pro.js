@@ -141,6 +141,7 @@
     <div class="panel">
       <div class="pro-head"><b>✦ MaliCut Studio Pro</b><span class="pro-badge">Éditeur multimédia</span></div>
       <p class="pro-note">Assemble des photos et des vidéos dans un même projet, capture une photo avec la caméra et ajoute des transitions entre les séquences.</p>
+      <input id="mcMediaPicker" type="file" accept="image/*,video/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.mp4,.m4v,.mov,.webm,.mkv,.3gp" multiple hidden>
       <div class="pro-actions">
         <button class="btn gold" id="mcImport">＋ Importer médias</button>
         <button class="btn" id="mcCamera">▣ Prendre une photo</button>
@@ -624,12 +625,16 @@
   }
   originalFile.onchange=null;
   originalFile.addEventListener('change',e=>{e.stopImmediatePropagation();const chosen=Array.from(originalFile.files||[]);if(chosen.length)addFiles(chosen);originalFile.value='';},true);
-  $('mcImport').onclick=()=>originalFile.click();
-  $('mcAddClip').onclick=()=>originalFile.click();
-  $('mcAddPhoto').onclick = () => {
-    const picker = document.createElement('input'); picker.type = 'file'; picker.accept = 'image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif'; picker.multiple = true;
-    picker.onchange = () => addFiles(picker.files); picker.click();
-  };
+  const studioPicker=$('mcMediaPicker');
+  studioPicker.addEventListener('change',()=>{
+    const chosen=Array.from(studioPicker.files||[]);
+    if(chosen.length)addFiles(chosen);
+    studioPicker.value='';
+  });
+  function openStudioPicker(){studioPicker.value='';studioPicker.click();}
+  $('mcImport').onclick=openStudioPicker;
+  $('mcAddClip').onclick=openStudioPicker;
+  $('mcAddPhoto').onclick=openStudioPicker;
   $('mcClear').onclick=()=>{
     if(state.items.length)pushHistory();stopSequence();state.items=[];state.active=0;state.player.index=0;state.player.offset=0;
     renderTimeline();previewActive();setStatus('Nouveau projet prêt.');
