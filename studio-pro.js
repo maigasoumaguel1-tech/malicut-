@@ -781,6 +781,7 @@
   };
 
   const voiceAudio = new Audio();
+  $('mcVoiceVolume')?.addEventListener('input',e=>{voiceAudio.volume=Math.max(0,Math.min(1,Number(e.target.value)/100));});
   $('mcVoiceFile').onchange = e => {
     const file = e.target.files && e.target.files[0]; if (!file) return;
     if (state.voiceUrl) URL.revokeObjectURL(state.voiceUrl);
