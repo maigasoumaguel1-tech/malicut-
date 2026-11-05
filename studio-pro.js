@@ -628,10 +628,9 @@
       $('video').onloadedmetadata = () => { $('media').textContent = item.name + ' · ' + ($('video').duration || 0).toFixed(1) + ' s'; };
     }
   }
-  // Keep the legacy editor input intact: app.html owns its onchange handler
-  // for the original preview. Studio Pro uses its own input so selected media
-  // always enters the Pro timeline rather than the legacy preview only.
-  const studioPicker = $('mcMediaPicker');
+  // One native, visible input is shared by the legacy preview and Studio Pro.
+  // Android browsers can ignore clicks on display:none/hidden file inputs.
+  const studioPicker = originalFile;
   studioPicker.multiple = true;
   studioPicker.accept = 'image/*,video/*,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.heic,.heif,.tif,.tiff,.mp4,.m4v,.mov,.webm,.mkv,.3gp,.mpeg,.mpg,.avi';
   studioPicker.addEventListener('change', e => {
@@ -645,8 +644,6 @@
     } catch (error) {
       console.error('[MaliCut Studio] Import error:', error);
       setStatus('Importation impossible : ' + (error && error.message ? error.message : 'erreur de lecture du fichier') + '. Réessaie avec JPG, PNG ou MP4.');
-    } finally {
-      e.currentTarget.value = '';
     }
   });
   function openStudioPicker(){
