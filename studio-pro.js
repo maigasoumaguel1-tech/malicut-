@@ -628,15 +628,13 @@
       $('video').onloadedmetadata = () => { $('media').textContent = item.name + ' · ' + ($('video').duration || 0).toFixed(1) + ' s'; };
     }
   }
-  // Use one canonical file input for the whole editor. Two independent pickers
-  // caused Android's chooser result to be delivered to a different input than
-  // the one the user had opened, leaving the timeline empty.
-  originalFile.onchange = null;
-  originalFile.multiple = true;
-  originalFile.accept = 'image/*,video/*,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.heic,.heif,.tif,.tiff,.mp4,.m4v,.mov,.webm,.mkv,.3gp,.mpeg,.mpg,.avi';
-  originalFile.setAttribute('aria-label', 'Importer des photos et vidéos dans le studio');
-  originalFile.addEventListener('change', e => {
-    e.stopImmediatePropagation();
+  // Keep the legacy editor input intact: app.html owns its onchange handler
+  // for the original preview. Studio Pro uses its own input so selected media
+  // always enters the Pro timeline rather than the legacy preview only.
+  const studioPicker = $('mcMediaPicker');
+  studioPicker.multiple = true;
+  studioPicker.accept = 'image/*,video/*,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.heic,.heif,.tif,.tiff,.mp4,.m4v,.mov,.webm,.mkv,.3gp,.mpeg,.mpg,.avi';
+  studioPicker.addEventListener('change', e => {
     const chosen = Array.from(e.currentTarget.files || []);
     if (!chosen.length) {
       setStatus('Aucun fichier reçu. Sélectionne une photo ou une vidéo puis réessaie.');
@@ -650,11 +648,11 @@
     } finally {
       e.currentTarget.value = '';
     }
-  }, true);
+  });
   function openStudioPicker(){
     try {
-      originalFile.value = '';
-      originalFile.click();
+      studioPicker.value = '';
+      studioPicker.click();
     } catch (error) {
       setStatus('Ouverture des fichiers impossible : ' + (error.message || error));
     }
