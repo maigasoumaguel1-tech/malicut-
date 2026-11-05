@@ -585,7 +585,8 @@
     if(voiceAudio){try{if(voiceAudio.readyState>=1)voiceAudio.currentTime=Math.min(sequenceOffset+player.offset,Math.max(0,(voiceAudio.duration||sequenceOffset+player.offset)-.05));if(player.playing)voiceAudio.play().catch(()=>{});}catch(_){}}
     const transition=item.transitionBefore?.type||'none',stage=$('screen');
     const animationNames={fade:'mcSequenceFade',zoom:'mcSequenceZoom',slide:'mcSequenceSlide',wipe:'mcSequenceWipe',flash:'mcSequenceFlash',blur:'mcSequenceBlur',spin:'mcSequenceSpin',glitch:'mcSequenceGlitch',rise:'mcSequenceSlide',bounce:'mcTextBounce',pulse:'mcTextNeon',rotate:'mcSequenceSpin',parallax:'mcSequenceSlide',kenburns:'mcSequenceZoom','3d':'mcSequenceSpin',elastic:'mcTextBounce',neon:'mcTextNeon',whip:'mcSequenceSlide',mosaic:'mcTextGlitch',push:'mcSequenceSlide',circle:'mcSequenceWipe',vertical:'mcSequenceWipe',diagonal:'mcSequenceWipe',dissolve:'mcSequenceFade',rotate3d:'mcSequenceSpin',stretch:'mcSequenceZoom',spark:'mcTextNeon',wave:'mcTextRise'};
-    const previewAnimation=animationNames[item.animation]||animationNames[transition];
+    const effectFilters={none:'none',fade:'brightness(1.04)',flash:'brightness(1.2)',vignette:'contrast(1.08) saturate(.9)',zoom:'none'};stage.style.filter=effectFilters[item.effect||'none']||'none';
+    const previewAnimation=animationNames[item.animation]||animationNames[item.effect]||animationNames[transition];
     if(previewAnimation){stage.style.animation='none';void stage.offsetWidth;stage.style.animation=previewAnimation+' '+Math.round((Number(item.transitionBefore?.duration)||.8)*1000)+'ms ease both';}
     const clip=$('mcTimeline').querySelector('.mc-clip[data-index="'+index+'"]');
     if(clip&&index>0)$('mcTimeline').scrollTo({left:Math.max(0,clip.offsetLeft-18),behavior:'smooth'});
