@@ -27,7 +27,7 @@ jobs:
           import re
           from pathlib import Path
           html = Path("app.html").read_text(encoding="utf-8")
-          scripts = re.findall(r"<script\\b(?![^>]*\\bsrc=)[^>]*>(.*?)</script>", html, flags=re.I | re.S)
-          Path("/tmp/malicut-inline.js").write_text("\\n;\\n".join(scripts), encoding="utf-8")
+          scripts = re.findall(r"<script\b(?![^>]*\bsrc=)[^>]*>(.*?)</script>", html, flags=re.I | re.S)
+          Path("/tmp/malicut-inline.js").write_text("\n;\n".join(scripts), encoding="utf-8")
           PY
           node --check /tmp/malicut-inline.js
