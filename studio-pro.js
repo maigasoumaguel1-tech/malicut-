@@ -822,6 +822,10 @@
     $('mcVideoLane').innerHTML=state.items.map((x,i)=>'<span class="mc-lane-clip">'+(i+1)+'. '+(x.type==='image'?'Photo':'Vidéo')+'</span>').join('')||'<span class="pro-note">Importer les médias principaux</span>';
     $('mcOverlayLane').innerHTML=state.overlayItems.map((x,i)=>'<span class="mc-lane-clip">'+(i+1)+'. '+x.name.replace(/[<>&"]/g,'')+'</span>').join('')||'<span class="pro-note">Aucune superposition</span>';
     $('mcAudioLane').innerHTML=(musicAudio?'<span class="mc-lane-clip">♫ Musique</span>':'')+(state.voiceUrl?'<span class="mc-lane-clip">🎙 Voix off</span>':'')||'<span class="pro-note">Ajouter musique ou voix</span>';
+    const textLane=$('mcLanes').querySelector('[data-track="text"] .mc-lane-clips');
+    if(textLane)textLane.innerHTML=overlayText?'<span class="mc-lane-clip">'+overlayText.replace(/[<>&"]/g,'')+'</span>':'<span class="pro-note">Ajouter un titre ou sous-titre</span>';
+    const textLaneLabel=$('mcLanes').querySelector('[data-track="text"] .mc-lane-head span');
+    if(textLaneLabel)textLaneLabel.textContent=overlayText?'1 élément texte':'Aucun texte';
     $('mcVideoLaneCount').textContent=state.items.length+' clip(s)';
     $('mcOverlayLaneCount').textContent=state.overlayItems.length+' clip(s)';
     $('mcAudioLaneCount').textContent=(Number(!!musicAudio)+Number(!!state.voiceUrl))+' piste(s)';
