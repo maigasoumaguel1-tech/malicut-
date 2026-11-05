@@ -580,6 +580,9 @@
       video.pause();video.style.display='none';imagePreview.src=item.url;imagePreview.style.display='block';
     }
     player.startedAt=performance.now();
+    let sequenceOffset=0;for(let i=0;i<index;i++)sequenceOffset+=clipDuration(state.items[i]);
+    if(musicAudio){try{if(musicAudio.readyState>=1)musicAudio.currentTime=Math.min(sequenceOffset+player.offset,Math.max(0,(musicAudio.duration||sequenceOffset+player.offset)-.05));if(player.playing)musicAudio.play().catch(()=>{});}catch(_){}}
+    if(voiceAudio){try{if(voiceAudio.readyState>=1)voiceAudio.currentTime=Math.min(sequenceOffset+player.offset,Math.max(0,(voiceAudio.duration||sequenceOffset+player.offset)-.05));if(player.playing)voiceAudio.play().catch(()=>{});}catch(_){}}
     const transition=item.transitionBefore?.type||'none',stage=$('screen');
     const animationNames={fade:'mcSequenceFade',zoom:'mcSequenceZoom',slide:'mcSequenceSlide',wipe:'mcSequenceWipe',flash:'mcSequenceFlash',blur:'mcSequenceBlur',spin:'mcSequenceSpin',glitch:'mcSequenceGlitch',rise:'mcSequenceSlide',bounce:'mcTextBounce',pulse:'mcTextNeon',rotate:'mcSequenceSpin',parallax:'mcSequenceSlide',kenburns:'mcSequenceZoom','3d':'mcSequenceSpin',elastic:'mcTextBounce',neon:'mcTextNeon',whip:'mcSequenceSlide',mosaic:'mcTextGlitch',push:'mcSequenceSlide',circle:'mcSequenceWipe',vertical:'mcSequenceWipe',diagonal:'mcSequenceWipe',dissolve:'mcSequenceFade',rotate3d:'mcSequenceSpin',stretch:'mcSequenceZoom',spark:'mcTextNeon',wave:'mcTextRise'};
     const previewAnimation=animationNames[item.animation]||animationNames[transition];
@@ -595,11 +598,11 @@
       else if(item)player.offset=Math.min(clipDuration(item),player.baseOffset+(performance.now()-player.startedAt)/1000);
     }
     player.playing=false;player.token++;if(player.raf)cancelAnimationFrame(player.raf);player.raf=0;
-    $('video').pause();updatePlaybackButtons();updateTimelinePlayhead();
+    $('video').pause();if(musicAudio)musicAudio.pause();if(voiceAudio)voiceAudio.pause();updatePlaybackButtons();updateTimelinePlayhead();
   }
   function stopSequence(){
     const player=state.player;player.token++;player.playing=false;player.index=Math.max(0,state.active);player.offset=0;player.baseOffset=0;
-    if(player.raf)cancelAnimationFrame(player.raf);player.raf=0;$('video').pause();updatePlaybackButtons();updateTimelinePlayhead();
+    if(player.raf)cancelAnimationFrame(player.raf);player.raf=0;$('video').pause();if(musicAudio){musicAudio.pause();try{musicAudio.currentTime=0;}catch(_){}}if(voiceAudio){voiceAudio.pause();try{voiceAudio.currentTime=0;}catch(_){}}updatePlaybackButtons();updateTimelinePlayhead();
   }
   async function playbackTick(){
     const player=state.player;if(!player.playing)return;
@@ -716,12 +719,15 @@
   }
   let musicUrl = null;
   let musicAudio = null;
+  let musicAudioContext = null, musicAudioSource = null, musicAudioGain = null, musicAudioDestination = null;
   $('musicFile').addEventListener('change', e => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     if (musicUrl) URL.revokeObjectURL(musicUrl);
     musicUrl = URL.createObjectURL(file);
     musicAudio = new Audio(musicUrl);
+    musicAudio.preload='auto';
+    musicAudioSource=null;
     musicAudio.loop = $('musicLoop').checked;
     $('musicName').textContent = file.name;
     setStatus('Piste audio ajoutée au projet.');
@@ -854,7 +860,7 @@
     const canvas = document.createElement('canvas'); canvas.width = dims[0]; canvas.height = dims[1];
     const ctx = canvas.getContext('2d');
     const stream = canvas.captureStream(30);
-    let audioContext = null, musicSource = null, musicGain = null, audioDestination = null;
+    let audioContext = null, audioDestination = null, voiceSourceNode = null, voiceGainNode = null;
     let recorder;
     try {
       recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm', videoBitsPerSecond: state.quality==='2160'?35000000:state.quality==='1440'?20000000:state.quality==='1080'?10000000:5000000 });
@@ -863,10 +869,12 @@
     const voicePlayback = state.voiceUrl ? new Audio(state.voiceUrl) : null;
     if ((musicAudio || voicePlayback) && window.AudioContext) {
       try {
-        audioContext = new AudioContext();
-        audioDestination = audioContext.createMediaStreamDestination();
-        if(musicAudio){ musicSource = audioContext.createMediaElementSource(musicAudio); musicGain = audioContext.createGain(); musicSource.connect(musicGain); musicGain.connect(audioDestination); }
-        audioDestination.stream.getAudioTracks().forEach(track => stream.addTrack(track));
+        if(!musicAudioContext){musicAudioContext=new AudioContext();musicAudioDestination=musicAudioContext.createMediaStreamDestination();}
+        audioContext=musicAudioContext;audioDestination=musicAudioDestination;
+        if(musicAudio&&!musicAudioSource){musicAudioSource=audioContext.createMediaElementSource(musicAudio);musicAudioGain=audioContext.createGain();musicAudioSource.connect(musicAudioGain);musicAudioGain.connect(audioDestination);}
+        if(musicAudioGain)musicAudioGain.gain.setValueAtTime(0,audioContext.currentTime);
+        if(voicePlayback){voiceSourceNode=audioContext.createMediaElementSource(voicePlayback);voiceGainNode=audioContext.createGain();voiceGainNode.gain.value=Math.max(0,Math.min(1.5,Number($('mcVoiceVolume').value)/100));voiceSourceNode.connect(voiceGainNode);voiceGainNode.connect(audioDestination);}
+        audioDestination.stream.getAudioTracks().forEach(track=>stream.addTrack(track));
       } catch (audioError) { console.warn('Audio export unavailable:', audioError); }
     }
     recorder.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
@@ -933,19 +941,15 @@
       setStatus('Préparation de la vidéo…'); recorder.start(250);
       if (audioContext && audioDestination) {
         await audioContext.resume();
-        if(musicAudio && musicGain){
+        if(musicAudio && musicAudioGain){
           musicAudio.currentTime=0; musicAudio.loop=$('musicLoop').checked;
-          musicGain.gain.setValueAtTime(0,audioContext.currentTime);
+          musicAudioGain.gain.setValueAtTime(0,audioContext.currentTime);
           const fadeIn=Math.max(0,Number($('musicFadeIn').value)||0);
           const volume=Math.max(0,Math.min(1,Number($('mcMusicVolume').value)/100));
-          musicGain.gain.linearRampToValueAtTime(volume,audioContext.currentTime+fadeIn);
+          musicAudioGain.gain.linearRampToValueAtTime(volume,audioContext.currentTime+fadeIn);
           musicAudio.play().catch(()=>{});
         }
         if(voicePlayback){
-          const voiceSource=audioContext.createMediaElementSource(voicePlayback);
-          const voiceGain=audioContext.createGain();
-          voiceGain.gain.value=Math.max(0,Math.min(1.5,Number($('mcVoiceVolume').value)/100));
-          voiceSource.connect(voiceGain);voiceGain.connect(audioDestination);
           voicePlayback.currentTime=0;voicePlayback.play().catch(()=>{});
         }
       }
@@ -981,11 +985,11 @@
         previousFrame=document.createElement('canvas');previousFrame.width=canvas.width;previousFrame.height=canvas.height;
         previousFrame.getContext('2d').drawImage(canvas,0,0);
       }
-      if (musicAudio && musicGain && audioContext) {
+      if (musicAudio && musicAudioGain && audioContext) {
         const fadeOut = Math.max(0, Number($('musicFadeOut').value) || 0);
-        musicGain.gain.cancelScheduledValues(audioContext.currentTime);
-        musicGain.gain.setValueAtTime(musicGain.gain.value, audioContext.currentTime);
-        musicGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + fadeOut);
+        musicAudioGain.gain.cancelScheduledValues(audioContext.currentTime);
+        musicAudioGain.gain.setValueAtTime(musicAudioGain.gain.value, audioContext.currentTime);
+        musicAudioGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + fadeOut);
         if (fadeOut) await new Promise(resolve => setTimeout(resolve, fadeOut * 1000));
         musicAudio.pause();
       }
@@ -1008,7 +1012,7 @@
     } finally {
       if(voicePlayback)voicePlayback.pause();
       stream.getTracks().forEach(t => t.stop());
-      if (audioContext) await audioContext.close().catch(() => {});
+      if (audioContext && musicAudio) { try { musicAudio.pause(); } catch (_) {} }
       state.busy = false;
     }
   }
