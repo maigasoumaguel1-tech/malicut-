@@ -669,11 +669,8 @@
     } catch (error) {
       console.error('[MaliCut Studio] Import error:', error);
       setStatus('Importation impossible : ' + (error && error.message ? error.message : 'erreur de lecture du fichier') + '. Réessaie avec JPG, PNG ou MP4.');
-    } finally {
-      // Reset only the picker value; object URLs keep the selected File objects alive.
-      studioPicker.value = '';
     }
-  }, true);
+  });
   function openStudioPicker(){
     try {
       studioPicker.value = '';
