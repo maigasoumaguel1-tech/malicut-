@@ -613,7 +613,7 @@ async function publish(){
  if(!user){alert('Connecte-toi à ton compte MaliCut pour publier.');return;}
  const source=window.MALICUT_LAST_EXPORT?.blob||file.files[0];
  if(!source){alert('Importe une vidéo, puis exporte-la ou sélectionne-la avant de publier.');return;}
- const filename=window.MALICUT_LAST_EXPORT?.blob?'malicut-studio-export.webm':(source.name||'malicut-video');
+ const filename=window.MALICUT_LAST_EXPORT?.blob?(window.MALICUT_LAST_EXPORT.name||'malicut-studio-export.webm'):(source.name||'malicut-video');
  const path=user.id+'/'+Date.now()+'-'+filename.replace(/[^a-z0-9._-]/gi,'_');
  const upload=await sb.storage.from('videos').upload(path,source,{upsert:false,contentType:source.type||'video/webm'});
  if(upload.error){alert('Échec du téléversement : '+upload.error.message);return;}
