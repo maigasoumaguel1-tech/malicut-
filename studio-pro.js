@@ -611,7 +611,7 @@
     else player.offset=Math.min(clipDuration(item),player.baseOffset+(performance.now()-player.startedAt)/1000);
     if(player.offset>=clipDuration(item)-.025){
       $('video').pause();
-      if(player.index>=state.items.length-1){player.offset=clipDuration(item);player.playing=false;updatePlaybackButtons();updateTimelinePlayhead();return;}
+      if(player.index>=state.items.length-1){player.offset=clipDuration(item);player.playing=false;if(musicAudio)musicAudio.pause();if(voiceAudio)voiceAudio.pause();updatePlaybackButtons();updateTimelinePlayhead();return;}
       const token=player.token;
       if(await activatePlaybackClip(player.index+1,0,token)&&player.playing)player.raf=requestAnimationFrame(playbackTick);
       return;
