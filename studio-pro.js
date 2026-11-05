@@ -184,6 +184,18 @@
     </div>`;
   const header = section.querySelector('.head');
   header ? header.after(panel) : section.prepend(panel);
+  // Keep the native file input inside the Pro workspace so it remains
+  // visible in both the Video and Photo tabs of Global Studio.
+  const sourcePanel = originalFile.closest('.panel');
+  const proImportPanel = panel.firstElementChild;
+  if (sourcePanel && proImportPanel && sourcePanel !== proImportPanel) {
+    const sourceHeading = sourcePanel.querySelector('b');
+    const mediaInfo = $('media');
+    if (sourceHeading) proImportPanel.appendChild(sourceHeading);
+    proImportPanel.appendChild(originalFile);
+    if (mediaInfo) proImportPanel.appendChild(mediaInfo);
+    sourcePanel.remove();
+  }
 
   const creative = document.createElement('div');
   creative.className = 'panel';
