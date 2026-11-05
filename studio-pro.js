@@ -920,7 +920,7 @@
       const previewFilter=$('video').style.filter||'none';if(previewFilter!=='none')ctx.filter=[ctx.filter&&ctx.filter!=='none'?ctx.filter:'',previewFilter].filter(Boolean).join(' ');
       if(effect==='fade')alpha*=Math.min(1,progress*5);
       if(effect==='zoom'){const z=1+.08*Math.sin(progress*Math.PI);ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(z,z);ctx.translate(-canvas.width/2,-canvas.height/2);}
-      const transform=$('video').style.transform||'';const rotateMatch=transform.match(/rotate\\((-?[\\d.]+)deg\\)/);const rotation=rotateMatch?Number(rotateMatch[1])||0:0;const mirrored=/scaleX\\(-1\\)/.test(transform);
+      const transform=$('video').style.transform||'';const rotateMatch=transform.match(/rotate\((-?[\d.]+)deg\)/);const rotation=rotateMatch?Number(rotateMatch[1])||0:0;const mirrored=/scaleX\(-1\)/.test(transform);
       ctx.save();if(rotation||mirrored){ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(rotation*Math.PI/180);ctx.scale(mirrored?-1:1,1);ctx.translate(-canvas.width/2,-canvas.height/2);}
       fit(ctx,source,canvas.width,canvas.height,transition==='flash'&&progress<.08?0.35:alpha);ctx.restore();
       if(effect==='flash'&&progress<.12){ctx.fillStyle='rgba(255,255,255,'+(1-progress/.12)*.7+')';ctx.fillRect(0,0,canvas.width,canvas.height);}
