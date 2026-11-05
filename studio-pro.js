@@ -581,7 +581,7 @@
     }
     player.startedAt=performance.now();
     let sequenceOffset=0;for(let i=0;i<index;i++)sequenceOffset+=clipDuration(state.items[i]);
-    if(musicAudio){try{if(musicAudio.readyState>=1)musicAudio.currentTime=Math.min(sequenceOffset+player.offset,Math.max(0,(musicAudio.duration||sequenceOffset+player.offset)-.05));if(player.playing)musicAudio.play().catch(()=>{});}catch(_){}}
+    if(musicAudio){try{if(musicAudioContext&&musicAudioContext.state==='suspended')await musicAudioContext.resume();if(musicAudioGain&&musicAudioContext)musicAudioGain.gain.setTargetAtTime(Math.max(0,Math.min(1,Number($('mcMusicVolume')?.value??65)/100)),musicAudioContext.currentTime,.04);if(musicAudio.readyState>=1)musicAudio.currentTime=Math.min(sequenceOffset+player.offset,Math.max(0,(musicAudio.duration||sequenceOffset+player.offset)-.05));if(player.playing)musicAudio.play().catch(()=>{});}catch(_){}}
     if(voiceAudio){try{if(voiceAudio.readyState>=1)voiceAudio.currentTime=Math.min(sequenceOffset+player.offset,Math.max(0,(voiceAudio.duration||sequenceOffset+player.offset)-.05));if(player.playing)voiceAudio.play().catch(()=>{});}catch(_){}}
     const transition=item.transitionBefore?.type||'none',stage=$('screen');
     const animationNames={fade:'mcSequenceFade',zoom:'mcSequenceZoom',slide:'mcSequenceSlide',wipe:'mcSequenceWipe',flash:'mcSequenceFlash',blur:'mcSequenceBlur',spin:'mcSequenceSpin',glitch:'mcSequenceGlitch',rise:'mcSequenceSlide',bounce:'mcTextBounce',pulse:'mcTextNeon',rotate:'mcSequenceSpin',parallax:'mcSequenceSlide',kenburns:'mcSequenceZoom','3d':'mcSequenceSpin',elastic:'mcTextBounce',neon:'mcTextNeon',whip:'mcSequenceSlide',mosaic:'mcTextGlitch',push:'mcSequenceSlide',circle:'mcSequenceWipe',vertical:'mcSequenceWipe',diagonal:'mcSequenceWipe',dissolve:'mcSequenceFade',rotate3d:'mcSequenceSpin',stretch:'mcSequenceZoom',spark:'mcTextNeon',wave:'mcTextRise'};
@@ -1028,6 +1028,8 @@
       setStatus('Export interrompu : ' + (e.message || e));
     } finally {
       if(voicePlayback)voicePlayback.pause();
+      if(voiceSourceNode){try{voiceSourceNode.disconnect();}catch(_){}}
+      if(voiceGainNode){try{voiceGainNode.disconnect();}catch(_){}}
       videoAudioNodes.forEach(node=>{try{node.source.disconnect();node.gain.disconnect();}catch(_){}});
       stream.getTracks().forEach(t => t.stop());
       if (audioContext && musicAudio) { try { musicAudio.pause(); } catch (_) {} }
