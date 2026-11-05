@@ -555,7 +555,8 @@
     marker.style.left=(clip.offsetLeft+Math.min(1,Math.max(0,local/clipDuration(item)))*clip.offsetWidth)+'px';
     if(player.playing){const markerX=clip.offsetLeft+Math.min(1,Math.max(0,local/clipDuration(item)))*clip.offsetWidth;const viewLeft=target.scrollLeft,viewRight=viewLeft+target.clientWidth;if(markerX>viewRight-54)target.scrollLeft=Math.min(target.scrollWidth-target.clientWidth,markerX-target.clientWidth+72);else if(markerX<viewLeft+18)target.scrollLeft=Math.max(0,markerX-18);}
     let before=0;for(let i=0;i<player.index;i++)before+=clipDuration(state.items[i]);
-    $('mcTimecode').textContent=formatTime(before+local)+' / '+formatTime(sequenceDuration());
+    const timelineTime=before+local;if(textLayer)textLayer.style.display=overlayText&&timelineTime>=overlaySettings.start&&timelineTime<=overlaySettings.start+overlaySettings.duration?'':'none';
+    $('mcTimecode').textContent=formatTime(timelineTime)+' / '+formatTime(sequenceDuration());
   }
   function updatePlaybackButtons(){const b=$('mcPlayToggle');if(b)b.textContent=state.player.playing?'Ⅱ Pause':'▶ Lecture';}
   async function activatePlaybackClip(index,offset,token){
