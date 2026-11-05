@@ -901,7 +901,7 @@
     const stopped = new Promise(resolve => recorder.onstop = resolve);
     let overlaySources=[],previousFrame=null,elapsedSequence=0;
     const fps = 30;
-    const drawFrame=(source,alpha=1,frame=0,total=1,transition='cut',transitionFrames=0,animation='none')=>{
+    const drawFrame=(source,alpha=1,frame=0,total=1,transition='cut',transitionFrames=0,animation='none',effect='none')=>{
       const progress=Math.max(0,Math.min(1,frame/Math.max(1,total)));
       ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);
       if(transition==='fade'&&previousFrame&&frame<transitionFrames)ctx.drawImage(previousFrame,0,0,canvas.width,canvas.height);
@@ -917,7 +917,14 @@
       if(animation==='bounce'||animation==='elastic'){const z=.92+.08*Math.min(1,progress*4);ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(z,z);ctx.translate(-canvas.width/2,-canvas.height/2);}
       if(animation==='blur')ctx.filter='blur('+Math.round(8*(1-progress))+'px)';
       if(animation==='glitch'||animation==='mosaic')ctx.filter='contrast('+(1.25-.25*progress)+') saturate(1.4)';
-      fit(ctx,source,canvas.width,canvas.height,transition==='flash'&&progress<.08?0.35:alpha);
+      const previewFilter=$('video').style.filter||'none';if(previewFilter!=='none')ctx.filter=[ctx.filter&&ctx.filter!=='none'?ctx.filter:'',previewFilter].filter(Boolean).join(' ');
+      if(effect==='fade')alpha*=Math.min(1,progress*5);
+      if(effect==='zoom'){const z=1+.08*Math.sin(progress*Math.PI);ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(z,z);ctx.translate(-canvas.width/2,-canvas.height/2);}
+      const transform=$('video').style.transform||'';const rotateMatch=transform.match(/rotate\\((-?[\\d.]+)deg\\)/);const rotation=rotateMatch?Number(rotateMatch[1])||0:0;const mirrored=/scaleX\\(-1\\)/.test(transform);
+      ctx.save();if(rotation||mirrored){ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(rotation*Math.PI/180);ctx.scale(mirrored?-1:1,1);ctx.translate(-canvas.width/2,-canvas.height/2);}
+      fit(ctx,source,canvas.width,canvas.height,transition==='flash'&&progress<.08?0.35:alpha);ctx.restore();
+      if(effect==='flash'&&progress<.12){ctx.fillStyle='rgba(255,255,255,'+(1-progress/.12)*.7+')';ctx.fillRect(0,0,canvas.width,canvas.height);}
+      if(effect==='vignette'){const vg=ctx.createRadialGradient(canvas.width/2,canvas.height/2,canvas.width*.16,canvas.width/2,canvas.height/2,canvas.width*.78);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.48)');ctx.fillStyle=vg;ctx.fillRect(0,0,canvas.width,canvas.height);}
       if(progress<transitionFrames/total){
         const q=Math.max(0,Math.min(1,progress*total/Math.max(1,transitionFrames)));
         if(transition==='circle'){ctx.globalCompositeOperation='destination-in';ctx.beginPath();ctx.arc(canvas.width/2,canvas.height/2,Math.max(canvas.width,canvas.height)*q,0,Math.PI*2);ctx.fill();}
@@ -998,7 +1005,7 @@
         for(let frame=0;frame<frames;frame++){
           if(item.type==='video'&&source.ended)break;
           const alpha=transition==='fade'&&frame<transitionFrames&&index>0?frame/transitionFrames:1;
-          drawFrame(source,alpha,frame,frames,transition,transitionFrames,item.animation||'none');
+          drawFrame(source,alpha,frame,frames,transition,transitionFrames,item.animation||'none',item.effect||'none');
           if(overlayText&&elapsedSequence+frame/fps>=overlaySettings.start&&elapsedSequence+frame/fps<=overlaySettings.start+overlaySettings.duration){ctx.save();const p=frame/Math.max(1,frames-1);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=(($('mcTextStyle')?.value==='cinema'?'italic 700 ':'bold ')+Math.round(canvas.width*(overlaySettings.size/100))+'px '+($('mcTextStyle')?.value==='cinema'?'Georgia':'sans-serif'));ctx.lineWidth=Math.max(2,canvas.width*.004);ctx.strokeStyle='rgba(0,0,0,.8)';ctx.fillStyle=overlaySettings.color;let shown=overlayText;if(overlayMotion==='type')shown=overlayText.slice(0,Math.max(1,Math.ceil(overlayText.length*p)));if(overlayMotion==='pop'||overlayMotion==='bounce'||overlayMotion==='zoom'||overlayMotion==='elastic')ctx.translate(canvas.width/2,canvas.height/2),ctx.scale(.35+.65*Math.min(1,p*2),.35+.65*Math.min(1,p*2)),ctx.translate(-canvas.width/2,-canvas.height/2);if(overlayMotion==='rise')ctx.translate(0,canvas.height*(.18*(1-p)));if(overlayMotion==='neon'||overlayMotion==='spark')ctx.shadowColor='#27e5a3',ctx.shadowBlur=8+Math.sin(p*30)*8;if(overlayMotion==='glitch'&&Math.floor(p*24)%3===0)ctx.translate(Math.sin(frame*19)*4,0);const words=shown.split(' ');let line='',lines=[];for(const word of words){const test=line?line+' '+word:word;if(ctx.measureText(test).width>canvas.width*.86&&line){lines.push(line);line=word;}else line=test;}if(line)lines.push(line);const lineH=canvas.width*.078,baseY=overlaySettings.position==='top'?canvas.height*.18:overlaySettings.position==='bottom'?canvas.height*.82:canvas.height/2,startY=baseY-(lines.length-1)*lineH/2;if(overlaySettings.background!=='none'){ctx.fillStyle=overlaySettings.background==='dark'?'rgba(7,17,29,.86)':'rgba(7,17,29,.42)';const maxWidth=Math.min(canvas.width*.9,Math.max(...lines.map(t=>ctx.measureText(t).width))+32);ctx.fillRect((canvas.width-maxWidth)/2,startY-lineH*.55,maxWidth,lines.length*lineH+lineH*.1);}lines.forEach((txt,j)=>{ctx.strokeText(txt,canvas.width/2,startY+j*lineH);ctx.fillText(txt,canvas.width/2,startY+j*lineH);});ctx.restore();}
           $('bar').style.width = Math.round(((index + frame/frames) / state.items.length) * 100) + '%';
           setStatus('Export · média ' + (index + 1) + '/' + state.items.length);
