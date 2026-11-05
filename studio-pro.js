@@ -906,12 +906,15 @@
     let overlaySources=[],previousFrame=null,elapsedSequence=0;
     const fps = 30;
     const drawFrame=(source,alpha=1,frame=0,total=1,transition='cut',transitionFrames=0,animation='none',effect='none')=>{
-      const progress=Math.max(0,Math.min(1,frame/Math.max(1,total)));
+      const progress=Math.max(0,Math.min(1,frame/Math.max(1,total)));const transitionProgress=transitionFrames?Math.max(0,Math.min(1,progress*total/transitionFrames)):1;
       ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);
       if(transition==='fade'&&previousFrame&&frame<transitionFrames)ctx.drawImage(previousFrame,0,0,canvas.width,canvas.height);
       ctx.save();
       if(transition==='zoom' && progress<transitionFrames/total){const z=1+(.16*(1-progress*total/transitionFrames));ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(z,z);ctx.translate(-canvas.width/2,-canvas.height/2);}
-      if(transition==='slide' && progress<transitionFrames/total){ctx.translate(canvas.width*(1-progress*total/transitionFrames),0);}
+      if(transition==='slide' && progress<transitionFrames/total){ctx.translate(canvas.width*(1-transitionProgress),0);}
+      if(transition==='push' && progress<transitionFrames/total){ctx.translate(canvas.width*(1-transitionProgress),0);}
+      if(transition==='rotate3d' && progress<transitionFrames/total){ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(Math.max(.06,transitionProgress),1);ctx.translate(-canvas.width/2,-canvas.height/2);}
+      if(transition==='stretch' && progress<transitionFrames/total){ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(.35+.65*transitionProgress,1+.12*(1-transitionProgress));ctx.translate(-canvas.width/2,-canvas.height/2);}
       if(transition==='spin' && progress<transitionFrames/total){ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate((1-progress*total/transitionFrames)*.12);ctx.translate(-canvas.width/2,-canvas.height/2);}
       if(transition==='blur'&&progress<transitionFrames/total)ctx.filter='blur('+Math.round(12*(1-progress*total/transitionFrames))+'px)';
       if(animation==='zoom'||animation==='kenburns'||animation==='parallax'){const z=1+.12*progress;ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(z,z);ctx.translate(-canvas.width/2,-canvas.height/2);}
@@ -936,9 +939,7 @@
         if(transition==='vertical'){ctx.fillStyle='#050505';ctx.fillRect(0,0,canvas.width,canvas.height*(1-q));}
         if(transition==='diagonal'){ctx.fillStyle='#050505';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(canvas.width*(1-q),0);ctx.lineTo(0,canvas.height*(1-q));ctx.closePath();ctx.fill();}
         if(transition==='dissolve'){ctx.globalAlpha=1-q;ctx.fillStyle='#050505';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.globalAlpha=1;}
-        if(transition==='push'){ctx.globalAlpha=1-q;ctx.fillStyle='#050505';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.globalAlpha=1;}
-        if(transition==='rotate3d'){ctx.globalAlpha=Math.max(.15,q);ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.globalAlpha=1;}
-        if(transition==='stretch'){ctx.globalAlpha=Math.max(.2,q);ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.globalAlpha=1;}
+
       }
       ctx.filter='none';ctx.globalCompositeOperation='source-over';ctx.restore();
       overlaySources.forEach((overlay,overlayIndex)=>{ctx.save();ctx.globalAlpha=.92;const scale=Math.min(canvas.width/overlay.naturalWidth,canvas.height/overlay.naturalHeight);const w=overlay.naturalWidth*scale,h=overlay.naturalHeight*scale;ctx.drawImage(overlay,(canvas.width-w)/2,(canvas.height-h)/2,w,h);ctx.restore();});
