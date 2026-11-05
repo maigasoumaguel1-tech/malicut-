@@ -375,8 +375,12 @@
     if(!accepted.length){setStatus('Choisis des photos ou des vidéos compatibles.');return;}
     pauseSequence();pushHistory();
     const first=state.items.length;
+    let imported=0;
     accepted.forEach(file=>{
-      const item=makeItem(file,URL.createObjectURL(file));state.items.push(item);
+      let objectUrl;
+      try { objectUrl=URL.createObjectURL(file); }
+      catch(error) { console.warn('[MaliCut Studio] Could not create media URL:', file && file.name, error); return; }
+      const item=makeItem(file,objectUrl);state.items.push(item);imported++;
       if(item.type==='video'){
         const probe=document.createElement('video');probe.preload='metadata';probe.src=item.url;
         probe.onloadedmetadata=()=>{
@@ -386,8 +390,9 @@
         probe.onerror=()=>{item.durationAuto=false;};
       }
     });
+    if(!imported){setStatus('Les fichiers ont été sélectionnés, mais le navigateur ne peut pas les ouvrir. Essaie un fichier JPG, PNG ou MP4.');return;}
     state.active=first;state.player.index=first;state.player.offset=0;renderTimeline();previewActive();renderLanes();
-    setStatus(accepted.length+' média ajouté(s) à la piste principale · '+state.items.length+' clip(s) au total.');
+    setStatus(imported+' média ajouté(s) à la piste principale · '+state.items.length+' clip(s) au total.');
   }
   let timelineZoom=1;
   const history={undo:[],redo:[]};
@@ -623,15 +628,37 @@
       $('video').onloadedmetadata = () => { $('media').textContent = item.name + ' · ' + ($('video').duration || 0).toFixed(1) + ' s'; };
     }
   }
-  originalFile.onchange=null;
-  originalFile.addEventListener('change',e=>{e.stopImmediatePropagation();const chosen=Array.from(originalFile.files||[]);if(chosen.length)addFiles(chosen);originalFile.value='';},true);
-  const studioPicker=$('mcMediaPicker');
-  studioPicker.addEventListener('change',()=>{
-    const chosen=Array.from(studioPicker.files||[]);
-    if(chosen.length)addFiles(chosen);
-    studioPicker.value='';
-  });
-  function openStudioPicker(){studioPicker.value='';studioPicker.click();}
+  // Use one canonical file input for the whole editor. Two independent pickers
+  // caused Android's chooser result to be delivered to a different input than
+  // the one the user had opened, leaving the timeline empty.
+  originalFile.onchange = null;
+  originalFile.multiple = true;
+  originalFile.accept = 'image/*,video/*,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif,.heic,.heif,.tif,.tiff,.mp4,.m4v,.mov,.webm,.mkv,.3gp,.mpeg,.mpg,.avi';
+  originalFile.setAttribute('aria-label', 'Importer des photos et vidéos dans le studio');
+  originalFile.addEventListener('change', e => {
+    e.stopImmediatePropagation();
+    const chosen = Array.from(e.currentTarget.files || []);
+    if (!chosen.length) {
+      setStatus('Aucun fichier reçu. Sélectionne une photo ou une vidéo puis réessaie.');
+      return;
+    }
+    try {
+      addFiles(chosen);
+    } catch (error) {
+      console.error('[MaliCut Studio] Import error:', error);
+      setStatus('Importation impossible : ' + (error && error.message ? error.message : 'erreur de lecture du fichier') + '. Réessaie avec JPG, PNG ou MP4.');
+    } finally {
+      e.currentTarget.value = '';
+    }
+  }, true);
+  function openStudioPicker(){
+    try {
+      originalFile.value = '';
+      originalFile.click();
+    } catch (error) {
+      setStatus('Ouverture des fichiers impossible : ' + (error.message || error));
+    }
+  }
   $('mcImport').onclick=openStudioPicker;
   $('mcAddClip').onclick=openStudioPicker;
   $('mcAddPhoto').onclick=openStudioPicker;
