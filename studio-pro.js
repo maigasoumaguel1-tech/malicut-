@@ -610,7 +610,7 @@
     const player=state.player;if(!player.playing)return;
     const item=state.items[player.index];if(!item){pauseSequence();return;}
     if(item.type==='video')player.offset=$('video').ended?clipDuration(item):Math.max(0,($('video').currentTime||0)-(Number(item.trimStart)||0));
-    else player.offset=Math.min(clipDuration(item),player.baseOffset+(performance.now()-player.startedAt)/1000);
+    else player.offset=Math.min(clipDuration(item),player.baseOffset+(performance.now()-player.startedAt)/1000*(Number($('video').playbackRate)||1));
     if(player.offset>=clipDuration(item)-.025){
       $('video').pause();
       if(player.index>=state.items.length-1){player.offset=clipDuration(item);player.playing=false;if(musicAudio)musicAudio.pause();if(voiceAudio)voiceAudio.pause();updatePlaybackButtons();updateTimelinePlayhead();return;}
@@ -923,6 +923,7 @@
       if(animation==='glitch'||animation==='mosaic')ctx.filter='contrast('+(1.25-.25*progress)+') saturate(1.4)';
       const previewFilter=$('video').style.filter||'none';if(previewFilter!=='none')ctx.filter=[ctx.filter&&ctx.filter!=='none'?ctx.filter:'',previewFilter].filter(Boolean).join(' ');
       if(effect==='fade')alpha*=Math.min(1,progress*5);
+      const visualFade=Math.max(0,Math.min(100,Number($('videoFade')?.value)||0));alpha*=1-(visualFade/100)*.65;
       if(effect==='zoom'){const z=1+.08*Math.sin(progress*Math.PI);ctx.translate(canvas.width/2,canvas.height/2);ctx.scale(z,z);ctx.translate(-canvas.width/2,-canvas.height/2);}
       const transform=$('video').style.transform||'';const rotateMatch=transform.match(/rotate\((-?[\d.]+)deg\)/);const rotation=rotateMatch?Number(rotateMatch[1])||0:0;const mirrored=/scaleX\(-1\)/.test(transform);
       ctx.save();if(rotation||mirrored){ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(rotation*Math.PI/180);ctx.scale(mirrored?-1:1,1);ctx.translate(-canvas.width/2,-canvas.height/2);}
@@ -987,16 +988,17 @@
       for (let index = 0; index < state.items.length; index++) {
         const item = state.items[index];
         let source, duration;
+        const speedFactor=Math.max(.25,Math.min(4,Number($('video').playbackRate)||1));
         if (item.type === 'image') {
           source = new Image(); source.src = item.url;
           if (!source.complete) await waitEvent(source, 'load');
-          duration = Math.max(.5, Number(item.duration)||state.photoSeconds);
+          duration = Math.max(.5, Number(item.duration)||state.photoSeconds)/speedFactor;
         } else {
-          source = document.createElement('video'); source.src = item.url; source.muted = false; source.playsInline = true; source.preload = 'auto';
+          source = document.createElement('video'); source.src = item.url; source.muted = false; source.playbackRate=speedFactor; source.playsInline = true; source.preload = 'auto';
           source.load();
           if (source.readyState < 2) await waitEvent(source, 'loadeddata');
           const inPoint=Math.max(0,Math.min((source.duration||1)-.2,Number(item.trimStart)||0));
-          duration = Math.min(Math.max(.2,(source.duration||1)-inPoint),Math.max(.2,Number(item.duration)||source.duration||1));
+          duration = Math.min(Math.max(.2,(source.duration||1)-inPoint),Math.max(.2,Number(item.duration)||source.duration||1))/speedFactor;
           if(inPoint>0.01){const seeked=new Promise(resolve=>source.addEventListener('seeked',resolve,{once:true}));source.currentTime=inPoint;await seeked;}else source.currentTime=0;
         }
         const frames=Math.max(1,Math.ceil(duration*fps));
