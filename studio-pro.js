@@ -271,11 +271,6 @@
     textLayer.style.webkitTextStroke=style==='outline'?'1px #111':'0';
     textLayer.style.animation=({fade:'mcSequenceFade',pop:'mcTextPop',rise:'mcTextRise',bounce:'mcTextBounce',type:'mcTextType',neon:'mcTextNeon',glitch:'mcTextGlitch',zoom:'mcSequenceZoom',parallax:'mcSequenceSlide',kenburns:'mcSequenceZoom','3d':'mcSequenceSpin',elastic:'mcTextBounce',whip:'mcSequenceSlide',mosaic:'mcTextGlitch',spark:'mcTextNeon',wave:'mcTextRise'})[overlayMotion]+' .8s ease both';
   }
-  ['mcOverlayPosition','mcOverlaySize','mcOverlayColor','mcOverlayBackground','mcOverlayStart','mcOverlayDuration','mcTextStyle'].forEach(id=>$(id)?.addEventListener('input',()=>{
-    overlaySettings.position=$('mcOverlayPosition').value;overlaySettings.size=Number($('mcOverlaySize').value)||6.5;overlaySettings.color=$('mcOverlayColor').value;overlaySettings.background=$('mcOverlayBackground').value;overlaySettings.start=Math.max(0,Number($('mcOverlayStart')?.value)||0);overlaySettings.duration=Math.max(.1,Number($('mcOverlayDuration')?.value)||30);renderOverlayText();
-  }));
-  $('mcOverlayPosition').onchange=()=>{overlaySettings.position=$('mcOverlayPosition').value;renderOverlayText();};
-  $('mcOverlayBackground').onchange=()=>{overlaySettings.background=$('mcOverlayBackground').value;renderOverlayText();};
   $('mcAddOverlayText').onclick=()=>{const value=$('mcOverlayText').value.trim();if(!value){setStatus('Écris un texte avant de l’ajouter.');return;}const motion=$('mcOverlayMotion').value;const pro=['parallax','kenburns','3d','elastic','whip','mosaic','spark','wave'];if(pro.includes(motion)&&window.MALICUT_IS_PRO!==true){setStatus('Cette animation est réservée à MaliCut Pro.');return;}overlayText=value;overlayMotion=motion;overlaySettings.start=Math.max(0,Number($('mcOverlayStart')?.value)||0);overlaySettings.duration=Math.max(.1,Number($('mcOverlayDuration')?.value)||30);renderOverlayText();renderLanes();setStatus('Texte animé ajouté à la piste texte.');};
   $('mcRemoveOverlayText').onclick=()=>{overlayText='';renderOverlayText();renderLanes();setStatus('Texte retiré de la piste texte.');};
 
@@ -310,6 +305,18 @@
   if(overlayTools)textStudio.appendChild(overlayTools);
   if(textMotionRange)textStudio.appendChild(textMotionRange);
   qualityPanel.after(textStudio);
+  // Bind controls only after the text panel and its inputs exist in the document.
+  ['mcOverlayPosition','mcOverlaySize','mcOverlayColor','mcOverlayBackground','mcOverlayStart','mcOverlayDuration','mcTextStyle'].forEach(id=>$(id)?.addEventListener('input',()=>{
+    overlaySettings.position=$('mcOverlayPosition').value;
+    overlaySettings.size=Number($('mcOverlaySize').value)||6.5;
+    overlaySettings.color=$('mcOverlayColor').value;
+    overlaySettings.background=$('mcOverlayBackground').value;
+    overlaySettings.start=Math.max(0,Number($('mcOverlayStart')?.value)||0);
+    overlaySettings.duration=Math.max(.1,Number($('mcOverlayDuration')?.value)||30);
+    renderOverlayText();
+  }));
+  $('mcOverlayPosition')?.addEventListener('change',()=>{overlaySettings.position=$('mcOverlayPosition').value;renderOverlayText();});
+  $('mcOverlayBackground')?.addEventListener('change',()=>{overlaySettings.background=$('mcOverlayBackground').value;renderOverlayText();});
   const autoPublish=$('mcAutoPublish');
   autoPublish.checked=localStorage.getItem('malicut_auto_publish')==='true';
   autoPublish.addEventListener('change',()=>localStorage.setItem('malicut_auto_publish',String(autoPublish.checked)));
