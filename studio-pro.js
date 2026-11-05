@@ -853,7 +853,8 @@
     window.open(urls[target],'_blank','noopener');
   });
   function enableShare(blob){
-    window.MALICUT_LAST_EXPORT={blob,name:'malicut-studio-pro.webm'};
+    const extension=String(blob.type||'').toLowerCase().includes('mp4')?'mp4':'webm';
+    window.MALICUT_LAST_EXPORT={blob,name:'malicut-studio-pro.'+extension};
     $('mcShareActions').style.opacity='1';
     $('mcShareActions').querySelectorAll('button').forEach(b=>b.disabled=false);
     $('mcShareNote').textContent='Vidéo prête. Choisis une plateforme : Android proposera les applications compatibles si elles acceptent ce format.';
@@ -869,14 +870,15 @@
     const longEdge = Number(state.quality)||720;
     const ratios = {'9:16':[9,16],'16:9':[16,9],'1:1':[1,1],'4:5':[4,5],'4:3':[4,3],'3:4':[3,4],'2:3':[2,3]};
     const pair = ratios[ratioText] || ratios['9:16'];
-    const dims = [Math.round(longEdge*pair[0]/pair[1]),longEdge];
+    const dims = pair[0] < pair[1] ? [longEdge,Math.round(longEdge*pair[1]/pair[0])] : [Math.round(longEdge*pair[0]/pair[1]),longEdge];
     const canvas = document.createElement('canvas'); canvas.width = dims[0]; canvas.height = dims[1];
     const ctx = canvas.getContext('2d');
     const stream = canvas.captureStream(30);
     let audioContext = null, audioDestination = null, voiceSourceNode = null, voiceGainNode = null;
     let recorder;
+    const supportedMime=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));
     try {
-      recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm', videoBitsPerSecond: state.quality==='2160'?35000000:state.quality==='1440'?20000000:state.quality==='1080'?10000000:5000000 });
+      recorder = new MediaRecorder(stream, { ...(supportedMime?{mimeType:supportedMime}:{}), videoBitsPerSecond: state.quality==='2160'?35000000:state.quality==='1440'?20000000:state.quality==='1080'?10000000:5000000 });
     } catch (_) { recorder = new MediaRecorder(stream); }
     const chunks = [];
     const voicePlayback = state.voiceUrl ? new Audio(state.voiceUrl) : null;
@@ -1015,7 +1017,7 @@
       if (!blob.size) throw new Error('Le fichier exporté est vide.');
       enableShare(blob);
       const url = URL.createObjectURL(blob), a = document.createElement('a');
-      a.href = url; a.download = 'malicut-studio-pro.webm'; a.click();
+      a.href = url; a.download = window.MALICUT_LAST_EXPORT?.name || 'malicut-studio-pro.webm'; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 60000);
       localStorage.setItem('malicut_exports', +(localStorage.getItem('malicut_exports') || 0) + 1);
       if ($('exports')) $('exports').textContent = localStorage.getItem('malicut_exports');
