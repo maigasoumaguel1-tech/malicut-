@@ -581,7 +581,7 @@
     }
     player.startedAt=performance.now();
     let sequenceOffset=0;for(let i=0;i<index;i++)sequenceOffset+=clipDuration(state.items[i]);
-    if(musicAudio){try{if(musicAudioContext&&musicAudioContext.state==='suspended')await musicAudioContext.resume();if(musicAudioGain&&musicAudioContext)musicAudioGain.gain.setTargetAtTime(Math.max(0,Math.min(1,Number($('mcMusicVolume')?.value??65)/100)),musicAudioContext.currentTime,.04);if(musicAudio.readyState>=1)musicAudio.currentTime=Math.min(sequenceOffset+player.offset,Math.max(0,(musicAudio.duration||sequenceOffset+player.offset)-.05));if(player.playing)musicAudio.play().catch(()=>{});}catch(_){}}
+    if(musicAudio){try{if(musicAudioContext&&musicAudioContext.state==='suspended')await musicAudioContext.resume();const musicLevel=Math.max(0,Math.min(1,Number($('mcMusicVolume')?.value??65)/100));if(musicAudioGain&&musicAudioContext){musicAudio.volume=1;musicAudioGain.gain.setTargetAtTime(musicLevel,musicAudioContext.currentTime,.04);}else musicAudio.volume=musicLevel;if(musicAudio.readyState>=1)musicAudio.currentTime=Math.min(sequenceOffset+player.offset,Math.max(0,(musicAudio.duration||sequenceOffset+player.offset)-.05));if(player.playing)musicAudio.play().catch(()=>{});}catch(_){}}
     if(voiceAudio){try{if(voiceAudio.readyState>=1)voiceAudio.currentTime=Math.min(sequenceOffset+player.offset,Math.max(0,(voiceAudio.duration||sequenceOffset+player.offset)-.05));if(player.playing)voiceAudio.play().catch(()=>{});}catch(_){}}
     const transition=item.transitionBefore?.type||'none',stage=$('screen');
     const animationNames={fade:'mcSequenceFade',zoom:'mcSequenceZoom',slide:'mcSequenceSlide',wipe:'mcSequenceWipe',flash:'mcSequenceFlash',blur:'mcSequenceBlur',spin:'mcSequenceSpin',glitch:'mcSequenceGlitch',rise:'mcSequenceSlide',bounce:'mcTextBounce',pulse:'mcTextNeon',rotate:'mcSequenceSpin',parallax:'mcSequenceSlide',kenburns:'mcSequenceZoom','3d':'mcSequenceSpin',elastic:'mcTextBounce',neon:'mcTextNeon',whip:'mcSequenceSlide',mosaic:'mcTextGlitch',push:'mcSequenceSlide',circle:'mcSequenceWipe',vertical:'mcSequenceWipe',diagonal:'mcSequenceWipe',dissolve:'mcSequenceFade',rotate3d:'mcSequenceSpin',stretch:'mcSequenceZoom',spark:'mcTextNeon',wave:'mcTextRise'};
@@ -744,10 +744,13 @@
     musicAudio.preload='auto';
     musicAudioSource=null;
     musicAudio.loop = $('musicLoop').checked;
+    musicAudio.volume=Math.max(0,Math.min(1,Number($('musicVolume')?.value??65)/100));
     $('musicName').textContent = file.name;
     setStatus('Piste audio ajoutée au projet.');
   });
   $('musicLoop').addEventListener('change', e => { if (musicAudio) musicAudio.loop = e.target.checked; });
+  $('musicVolume')?.addEventListener('input',e=>{const value=Math.max(0,Math.min(1,Number(e.target.value)/100));if($('mcMusicVolume'))$('mcMusicVolume').value=String(Math.round(value*100));if(musicAudio){if(musicAudioGain&&musicAudioContext){musicAudio.volume=1;musicAudioGain.gain.setTargetAtTime(value,musicAudioContext.currentTime,.04);}else musicAudio.volume=value;}});
+  $('mcMusicVolume')?.addEventListener('input',e=>{const value=Math.max(0,Math.min(1,Number(e.target.value)/100));if($('musicVolume'))$('musicVolume').value=String(Math.round(value*100));if(musicAudio){if(musicAudioGain&&musicAudioContext){musicAudio.volume=1;musicAudioGain.gain.setTargetAtTime(value,musicAudioContext.currentTime,.04);}else musicAudio.volume=value;}});
 
   // Drag and drop clips to reorder the local editing timeline.
   let draggedIndex = null;
@@ -893,7 +896,7 @@
       try {
         if(!musicAudioContext){musicAudioContext=new AudioContext();musicAudioDestination=musicAudioContext.createMediaStreamDestination();}
         audioContext=musicAudioContext;audioDestination=musicAudioDestination;
-        if(musicAudio&&!musicAudioSource){musicAudioSource=audioContext.createMediaElementSource(musicAudio);musicAudioGain=audioContext.createGain();musicAudioSource.connect(musicAudioGain);musicAudioGain.connect(audioDestination);musicAudioGain.connect(audioContext.destination);}
+        if(musicAudio&&!musicAudioSource){musicAudioSource=audioContext.createMediaElementSource(musicAudio);musicAudioGain=audioContext.createGain();musicAudio.volume=1;musicAudioSource.connect(musicAudioGain);musicAudioGain.connect(audioDestination);musicAudioGain.connect(audioContext.destination);}
         if(musicAudioGain)musicAudioGain.gain.setValueAtTime(0,audioContext.currentTime);
         if(voicePlayback){voiceSourceNode=audioContext.createMediaElementSource(voicePlayback);voiceGainNode=audioContext.createGain();voiceGainNode.gain.value=Math.max(0,Math.min(1.5,Number($('mcVoiceVolume').value)/100));voiceSourceNode.connect(voiceGainNode);voiceGainNode.connect(audioDestination);}
         audioDestination.stream.getAudioTracks().forEach(track=>stream.addTrack(track));
@@ -1001,7 +1004,7 @@
         const transition=item.transitionBefore?.type||'cut';
         const transitionFrames=index>0?Math.max(1,Math.round(Math.max(.2,Math.min(2,Number(item.transitionBefore?.duration)||Number($('mcTransitionDuration').value)||.6))*fps)):0;
         if(item.type==='video'){
-          if(audioContext&&audioDestination){try{const videoSourceNode=audioContext.createMediaElementSource(source);const videoGainNode=audioContext.createGain();videoGainNode.gain.value=1;videoSourceNode.connect(videoGainNode);videoGainNode.connect(audioDestination);videoAudioNodes.push({source:videoSourceNode,gain:videoGainNode});}catch(audioError){console.warn('Clip audio routing unavailable:',audioError);}}
+          if(audioContext&&audioDestination){try{const videoSourceNode=audioContext.createMediaElementSource(source);const videoGainNode=audioContext.createGain();videoGainNode.gain.value=Math.max(0,Math.min(1.5,Number($('videoVolume')?.value??100)/100));videoSourceNode.connect(videoGainNode);videoGainNode.connect(audioDestination);videoAudioNodes.push({source:videoSourceNode,gain:videoGainNode});}catch(audioError){console.warn('Clip audio routing unavailable:',audioError);}}
           await source.play();
         }
         for(let frame=0;frame<frames;frame++){
