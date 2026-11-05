@@ -884,7 +884,7 @@
       try {
         if(!musicAudioContext){musicAudioContext=new AudioContext();musicAudioDestination=musicAudioContext.createMediaStreamDestination();}
         audioContext=musicAudioContext;audioDestination=musicAudioDestination;
-        if(musicAudio&&!musicAudioSource){musicAudioSource=audioContext.createMediaElementSource(musicAudio);musicAudioGain=audioContext.createGain();musicAudioSource.connect(musicAudioGain);musicAudioGain.connect(audioDestination);}
+        if(musicAudio&&!musicAudioSource){musicAudioSource=audioContext.createMediaElementSource(musicAudio);musicAudioGain=audioContext.createGain();musicAudioSource.connect(musicAudioGain);musicAudioGain.connect(audioDestination);musicAudioGain.connect(audioContext.destination);}
         if(musicAudioGain)musicAudioGain.gain.setValueAtTime(0,audioContext.currentTime);
         if(voicePlayback){voiceSourceNode=audioContext.createMediaElementSource(voicePlayback);voiceGainNode=audioContext.createGain();voiceGainNode.gain.value=Math.max(0,Math.min(1.5,Number($('mcVoiceVolume').value)/100));voiceSourceNode.connect(voiceGainNode);voiceGainNode.connect(audioDestination);}
         audioDestination.stream.getAudioTracks().forEach(track=>stream.addTrack(track));
