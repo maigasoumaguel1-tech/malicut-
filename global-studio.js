@@ -1,4 +1,4 @@
-/* Malikite Studio — new CapCut/Canva-inspired editing workspace */
+/* MALICUT Studio — new CapCut/Canva-inspired editing workspace */
 (() => {
  'use strict';
  const $ = id => document.getElementById(id);
@@ -125,9 +125,9 @@
  const overlay=document.createElement('div');
  overlay.id='mcGlobalStudio';
  overlay.innerHTML=`
-  <div class="gs-window" role="dialog" aria-modal="true" aria-label="Malikite Studio">
+  <div class="gs-window" role="dialog" aria-modal="true" aria-label="MALICUT Studio">
    <header class="gs-top">
-    <div class="gs-brand">MALIKITE <em>STUDIO</em></div>
+    <div class="gs-brand">MALICUT <em>STUDIO</em></div>
     <div class="gs-top-right"><span class="gs-top-note">Espace de création professionnel</span><button class="gs-back" id="gsClose">✕ Fermer</button></div>
    </header>
    <div class="gs-body">
@@ -264,6 +264,6 @@
  });
  observer.observe(create,{attributes:true,attributeFilter:['class']});
  const createNav=[...document.querySelectorAll('.nav')].find(n=>(n.textContent||'').toLowerCase().includes('créer'));
- if(createNav)createNav.setAttribute('aria-label','Ouvrir Malikite Studio');
+ if(createNav)createNav.setAttribute('aria-label','Ouvrir MALICUT Studio');
  window.MaliCutGlobalStudio={open:()=>{overlay.classList.add('open');showStudio('home');},close:()=>overlay.classList.remove('open'),show:showStudio};
 })();
