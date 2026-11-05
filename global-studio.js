@@ -34,7 +34,7 @@
  #mcGlobalStudio .gs-preview .screen{max-height:48vh;aspect-ratio:16/9}
  #mcGlobalStudio .gs-panels{min-width:0}
  #mcGlobalStudio .gs-panels>.panel{margin:0 0 10px}
- #mcGlobalStudio .gs-panels>.panel.gs-hidden{display:none!important}
+ #mcGlobalStudio .gs-panels>.panel.gs-hidden,#mcGlobalStudio .gs-panels>.gs-panel.gs-hidden{display:none!important}
  #mcGlobalStudio .gs-back{border:1px solid var(--line);border-radius:10px;padding:8px 11px;background:var(--p2);color:var(--txt)}
  #mcGlobalStudio .gs-mobile-tabs{display:none}
  #mcGlobalStudio .gs-main .head{display:none!important}
